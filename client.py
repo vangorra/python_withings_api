@@ -1,0 +1,115 @@
+#!/usr/bin/env python
+from withings import *
+from optparse import OptionParser
+import sys
+import ConfigParser
+import os
+
+
+parser = OptionParser()
+parser.add_option('-k', '--consumer-key', dest='consumer_key', help="Consumer Key")
+parser.add_option('-s', '--consumer-secret', dest='consumer_secret', help="Consumer Secret")
+parser.add_option('-a', '--access-token', dest='access_token', help="Access Token")
+parser.add_option('-t', '--access-token-secret', dest='access_token_secret', help="Access Token Secret")
+parser.add_option('-u', '--userid', dest='user_id', help="User ID")
+parser.add_option('-c', '--config', dest='config', help="Config file")
+
+(options, args) = parser.parse_args()
+
+if len(args) == 0:
+    print "Missing command!"
+    sys.exit(1)
+command = args.pop(0)
+
+if not options.config is None and os.path.exists(options.config):
+    config = ConfigParser.ConfigParser(vars(options))
+    config.read(options.config)
+    options.consumer_key = config.get('withings', 'consumer_key')
+    options.consumer_secret = config.get('withings', 'consumer_secret')
+    options.access_token = config.get('withings', 'access_token')
+    options.access_token_secret = config.get('withings', 'access_token_secret')
+    options.user_id = config.get('withings', 'user_id')
+
+if options.consumer_key is None or options.consumer_secret is None:
+    print "You must provide a consumer key and consumer secret"
+    print "Create an Oauth application here: https://oauth.withings.com/partner/add"
+    sys.exit(1)
+
+if options.access_token is None or options.access_token_secret is None or options.user_id is None:
+    print "Missing authentification information!"
+    print "Starting authentification process..."
+    auth = WithingsAuth(options.consumer_key, options.consumer_secret)
+    authorize_url = auth.get_authorize_url()
+    print "Go to %s allow the app and copy your oauth_verifier" % authorize_url
+    oauth_verifier = raw_input('Please enter your oauth_verifier: ')
+    creds = auth.get_credentials(oauth_verifier)
+    options.access_token = creds.access_token
+    options.access_token_secret = creds.access_token_secret
+    options.user_id = creds.user_id
+    print ""
+else:
+    creds = WithingsCredentials(options.access_token, options.access_token_secret, 
+                                    options.consumer_key, options.consumer_secret, 
+                                    options.user_id)
+
+client = WithingsApi(creds)
+
+if command == 'saveconfig':
+    if options.config is None:
+        print "Missing config filename"
+        sys.exit(1)
+    config = ConfigParser.ConfigParser()
+    config.add_section('withings')
+    config.set('withings', 'consumer_key', options.consumer_key)
+    config.set('withings', 'consumer_secret', options.consumer_secret)
+    config.set('withings', 'access_token', options.access_token)
+    config.set('withings', 'access_token_secret', options.access_token_secret)
+    config.set('withings', 'user_id', options.user_id)
+    with open(options.config, 'wb') as f:
+        config.write(f)
+    print "Config file saved to %s" % options.config
+    sys.exit(0)
+
+
+if command == 'userinfo':
+    print client.get_user()
+    sys.exit(0)
+
+
+if command == 'last':
+    m = client.get_measures(limit=1)[0]
+    if len(args) == 1:
+        for n, t in WithingsMeasureGroup.MEASURE_TYPES:
+            if n == args[0]:
+                print m.get_measure(t)
+    else:
+        for n, t in WithingsMeasureGroup.MEASURE_TYPES:
+            print "%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t))
+    sys.exit(0)
+
+
+if command == 'subscribe':
+    client.subscribe(args[0], args[1])
+    print "Subscribed %s" % args[0]
+    sys.exit(0)
+
+
+if command == 'unsubscribe':
+    client.unsubscribe(args[0])
+    print "Unsubscribed %s" % args[0]
+    sys.exit(0)
+
+
+if command == 'list_subscriptions':
+    l = client.list_subscriptions()
+    if len(l) > 0:
+        for s in l:
+            print " - %s " % s['comment']
+    else:
+        print "No subscriptions"
+    sys.exit(0)
+
+
+print "Unknown command"
+print "Available commands: saveconfig, userinfo, last, subscribe, unsubscribe, list_subscriptions"
+sys.exit(1)
