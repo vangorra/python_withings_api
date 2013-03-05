@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='withings',
-    version='0.1',
+    version='0.2',
     description="Library for the Withings API",
     author='Maxime Bouroumeau-Fuseau',
     author_email='maxime.bouroumeau@gmail.com',
