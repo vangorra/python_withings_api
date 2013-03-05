@@ -1,0 +1,3 @@
+requests==1.0.4
+requests-oauth==0.4.1
+requests-oauthlib==0.3.0
