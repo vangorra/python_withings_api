@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 
+#
 """
 Python library for the Withings API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -21,7 +21,7 @@ creds = auth.get_credentials(oauth_verifier)
 
 client = WithingsApi(creds)
 measures = client.get_measures(limit=1)
-print "Your last measured weight: %skg" % measures[0].weight 
+print "Your last measured weight: %skg" % measures[0].weight
 
 """
 
@@ -31,18 +31,18 @@ __author__ = 'Maxime Bouroumeau-Fuseau'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2012 Maxime Bouroumeau-Fuseau'
 
-__all__ = ['WithingsCredentials', 'WithingsAuth', 'WithingsApi', 'WithingsMeasures', 'WithingsMeasureGroup']
+__all__ = ['WithingsCredentials', 'WithingsAuth', 'WithingsApi',
+           'WithingsMeasures', 'WithingsMeasureGroup']
 
 import requests
-from requests_oauthlib import OAuth1
-from oauth_hook import OAuthHook
-from urlparse import parse_qs
+from requests_oauthlib import OAuth1, OAuth1Session
 import json
 import datetime
 
 
 class WithingsCredentials(object):
-    def __init__(self, access_token=None, access_token_secret=None, consumer_key=None, consumer_secret=None, user_id=None):
+    def __init__(self, access_token=None, access_token_secret=None,
+                 consumer_key=None, consumer_secret=None, user_id=None):
         self.access_token = access_token
         self.access_token_secret = access_token_secret
         self.consumer_key = consumer_key
@@ -56,22 +56,31 @@ class WithingsAuth(object):
     def __init__(self, consumer_key, consumer_secret):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
+        self.oauth_token = None
+        self.oauth_secret = None
 
     def get_authorize_url(self):
-        oauth_hook = OAuthHook(consumer_key=self.consumer_key, consumer_secret=self.consumer_secret)
-        response = requests.post('%s/request_token' % self.URL, hooks={'pre_request': oauth_hook})
-        qs = parse_qs(response.text)
-        self.oauth_token = qs['oauth_token'][0]
-        self.oauth_secret = qs['oauth_token_secret'][0]
-        return "%s/authorize?oauth_token=%s" % (self.URL, self.oauth_token)
+        oauth = OAuth1Session(self.consumer_key,
+                              client_secret=self.consumer_secret)
+
+        tokens = oauth.fetch_request_token('%s/request_token' % self.URL)
+        self.oauth_token = tokens['oauth_token']
+        self.oauth_secret = tokens['oauth_token_secret']
+
+        return oauth.authorization_url('%s/authorize' % self.URL)
 
     def get_credentials(self, oauth_verifier):
-        oauth_hook = OAuthHook(self.oauth_token, self.oauth_secret, self.consumer_key, self.consumer_secret)
-        response = requests.post('%s/access_token' % self.URL, {'oauth_verifier': oauth_verifier}, 
-                                 hooks={'pre_request': oauth_hook})
-        response = parse_qs(response.content)
-        return WithingsCredentials(response['oauth_token'][0], response['oauth_token_secret'][0], 
-                              self.consumer_key, self.consumer_secret, response['userid'][0])
+        oauth = OAuth1Session(self.consumer_key,
+                              client_secret=self.consumer_secret,
+                              resource_owner_key=self.oauth_token,
+                              resource_owner_secret=self.oauth_secret,
+                              verifier=oauth_verifier)
+        tokens = oauth.fetch_access_token('%s/access_token' % self.URL)
+        return WithingsCredentials(access_token=tokens['oauth_token'],
+                                   access_token_secret=tokens['oauth_token_secret'],
+                                   consumer_key=self.consumer_key,
+                                   consumer_secret=self.consumer_secret,
+                                   user_id=tokens['userid'])
 
 
 class WithingsApi(object):
@@ -79,9 +88,11 @@ class WithingsApi(object):
 
     def __init__(self, credentials):
         self.credentials = credentials
-        self.oauth = OAuth1(unicode(credentials.consumer_key), unicode(credentials.consumer_secret),
-                    unicode(credentials.access_token), unicode(credentials.access_token_secret),
-                    signature_type='query')
+        self.oauth = OAuth1(unicode(credentials.consumer_key),
+                            unicode(credentials.consumer_secret),
+                            unicode(credentials.access_token),
+                            unicode(credentials.access_token_secret),
+                            signature_type='query')
         self.client = requests.Session()
         self.client.auth = self.oauth
         self.client.params.update({'userid': credentials.user_id})
