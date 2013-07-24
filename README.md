@@ -9,7 +9,7 @@ here: <https://oauth.withings.com/partner/add>
 
 Installation:
 
-    pip install -e git+https://github.com/carlosescri/python-withings.git#egg=withings-dev
+    pip install withings
 
 Usage:
 
