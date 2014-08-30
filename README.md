@@ -1,7 +1,7 @@
 # Python library for the Withings API
 
 Withings Body metrics Services API
-<http://www.withings.com/en/api/wbsapiv2>
+<http://oauth.withings.com/api/doc>
 
 Uses Oauth 1.0 to authentify. You need to obtain a consumer key
 and consumer secret from Withings by creating an application
