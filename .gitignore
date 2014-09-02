@@ -1,4 +1,5 @@
 *.pyc
 .tox
+.coverage
 withings.conf
 withings.egg-info
