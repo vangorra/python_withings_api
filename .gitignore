@@ -1,2 +1,4 @@
 *.pyc
+.tox
 withings.conf
+withings.egg-info
