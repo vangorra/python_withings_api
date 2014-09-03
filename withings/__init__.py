@@ -25,14 +25,16 @@ print "Your last measured weight: %skg" % measures[0].weight
 
 """
 
+from __future__ import unicode_literals
+
 __title__ = 'withings'
 __version__ = '0.1'
 __author__ = 'Maxime Bouroumeau-Fuseau'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2012 Maxime Bouroumeau-Fuseau'
 
-__all__ = ['WithingsCredentials', 'WithingsAuth', 'WithingsApi',
-           'WithingsMeasures', 'WithingsMeasureGroup']
+__all__ = [str('WithingsCredentials'), str('WithingsAuth'), str('WithingsApi'),
+           str('WithingsMeasures'), str('WithingsMeasureGroup')]
 
 import requests
 from requests_oauthlib import OAuth1, OAuth1Session
@@ -88,10 +90,10 @@ class WithingsApi(object):
 
     def __init__(self, credentials):
         self.credentials = credentials
-        self.oauth = OAuth1(unicode(credentials.consumer_key),
-                            unicode(credentials.consumer_secret),
-                            unicode(credentials.access_token),
-                            unicode(credentials.access_token_secret),
+        self.oauth = OAuth1(credentials.consumer_key,
+                            credentials.consumer_secret,
+                            credentials.access_token,
+                            credentials.access_token_secret,
                             signature_type='query')
         self.client = requests.Session()
         self.client.auth = self.oauth
@@ -102,7 +104,7 @@ class WithingsApi(object):
             params = {}
         params['action'] = action
         r = self.client.request(method, '%s/%s' % (self.URL, service), params=params)
-        response = json.loads(r.content)
+        response = json.loads(r.content.decode())
         if response['status'] != 0:
             raise Exception("Error code %s" % response['status'])
         return response.get('body', None)
