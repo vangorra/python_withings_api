@@ -5,6 +5,7 @@ import unittest
 from datetime import datetime
 from requests import Session
 from withings import (
+    WithingsActivity,
     WithingsApi,
     WithingsCredentials,
     WithingsMeasureGroup,
@@ -108,6 +109,61 @@ class TestWithingsApi(unittest.TestCase):
         self.assertEqual(len(resp['users']), 1)
         self.assertEqual(resp['users'][0]['firstname'], 'Frodo')
         self.assertEqual(resp['users'][0]['lastname'], 'Baggins')
+
+    def test_get_activities(self):
+        """
+        Check that get_activities fetches the appropriate URL, the response
+        looks correct, and the return value is a dict
+        """
+        body = {
+           "date": "2013-04-10",
+           "steps": 6523,
+           "distance": 4600,
+           "calories": 408.52,
+           "elevation": 18.2,
+           "soft": 5880,
+           "moderate": 1080,
+           "intense": 540,
+           "timezone": "Europe/Berlin"
+        }
+        self.mock_request(body)
+        resp = self.api.get_activities()
+        Session.request.assert_called_once_with(
+            'GET', 'http://wbsapi.withings.net/v2/measure',
+            params={'action': 'getactivity'})
+        self.assertEqual(type(resp), list)
+        self.assertEqual(len(resp), 1)
+        self.assertEqual(type(resp[0]), WithingsActivity)
+        # No need to assert all attributes, that happens elsewhere
+        self.assertEqual(resp[0].data, body)
+
+        # Test multiple activities
+        new_body = {
+            'activities': [
+                body, {
+                   "date": "2013-04-11",
+                   "steps": 223,
+                   "distance": 400,
+                   "calories": 108.52,
+                   "elevation": 1.2,
+                   "soft": 160,
+                   "moderate": 42,
+                   "intense": 21,
+                   "timezone": "Europe/Berlin"
+                }
+            ]
+        }
+        self.mock_request(new_body)
+        resp = self.api.get_activities()
+        Session.request.assert_called_once_with(
+            'GET', 'http://wbsapi.withings.net/v2/measure',
+            params={'action': 'getactivity'})
+        self.assertEqual(type(resp), list)
+        self.assertEqual(len(resp), 2)
+        self.assertEqual(type(resp[0]), WithingsActivity)
+        self.assertEqual(type(resp[1]), WithingsActivity)
+        self.assertEqual(resp[0].data, new_body['activities'][0])
+        self.assertEqual(resp[1].data, new_body['activities'][1])
 
     def test_get_measures(self):
         """

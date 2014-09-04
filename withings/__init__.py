@@ -36,10 +36,11 @@ __copyright__ = 'Copyright 2012 Maxime Bouroumeau-Fuseau'
 __all__ = [str('WithingsCredentials'), str('WithingsAuth'), str('WithingsApi'),
            str('WithingsMeasures'), str('WithingsMeasureGroup')]
 
-import requests
-from requests_oauthlib import OAuth1, OAuth1Session
 import json
-import datetime
+import requests
+
+from datetime import datetime
+from requests_oauthlib import OAuth1, OAuth1Session
 
 
 class WithingsCredentials(object):
@@ -99,11 +100,13 @@ class WithingsApi(object):
         self.client.auth = self.oauth
         self.client.params.update({'userid': credentials.user_id})
 
-    def request(self, service, action, params=None, method='GET'):
+    def request(self, service, action, params=None, method='GET',
+                version=None):
         if params is None:
             params = {}
         params['action'] = action
-        r = self.client.request(method, '%s/%s' % (self.URL, service), params=params)
+        url_parts = filter(None, [self.URL, version, service])
+        r = self.client.request(method, '/'.join(url_parts), params=params)
         response = json.loads(r.content.decode())
         if response['status'] != 0:
             raise Exception("Error code %s" % response['status'])
@@ -111,6 +114,11 @@ class WithingsApi(object):
 
     def get_user(self):
         return self.request('user', 'getbyuserid')
+
+    def get_activities(self, **kwargs):
+        r = self.request('measure', 'getactivity', params=kwargs, version='v2')
+        activities = r['activities'] if 'activities' in r else [r]
+        return [WithingsActivity(act) for act in activities]
 
     def get_measures(self, **kwargs):
         r = self.request('measure', 'getmeas', kwargs)
@@ -139,25 +147,46 @@ class WithingsApi(object):
         return r['profiles']
 
 
+class WithingsObject(object):
+    def __init__(self, data):
+        self.data = data
+        for key, val in data.items():
+            setattr(self, key, val if key != 'date' else self.parse_date(val))
+
+    def parse_date(self, date):
+        """
+        Try to parse the date in a couple different formats, and if that
+        fails, just return it as it came.
+        """
+        try:
+            return datetime.strptime(date, '%Y-%m-%d')
+        except Exception:
+            pass
+        try:
+            return datetime.fromtimestamp(date)
+        except Exception:
+            pass
+        return date
+
+
+class WithingsActivity(WithingsObject):
+    pass
+
+
 class WithingsMeasures(list):
     def __init__(self, data):
         super(WithingsMeasures, self).__init__([WithingsMeasureGroup(g) for g in data['measuregrps']])
-        self.updatetime = datetime.datetime.fromtimestamp(data['updatetime'])
+        self.updatetime = datetime.fromtimestamp(data['updatetime'])
 
 
-class WithingsMeasureGroup(object):
+class WithingsMeasureGroup(WithingsObject):
     MEASURE_TYPES = (('weight', 1), ('height', 4), ('fat_free_mass', 5),
                      ('fat_ratio', 6), ('fat_mass_weight', 8),
                      ('diastolic_blood_pressure', 9), ('systolic_blood_pressure', 10),
                      ('heart_pulse', 11))
 
     def __init__(self, data):
-        self.data = data
-        self.grpid = data['grpid']
-        self.attrib = data['attrib']
-        self.category = data['category']
-        self.date = datetime.datetime.fromtimestamp(data['date'])
-        self.measures = data['measures']
+        super(WithingsMeasureGroup, self).__init__(data)
         for n, t in self.MEASURE_TYPES:
             self.__setattr__(n, self.get_measure(t))
 
