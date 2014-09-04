@@ -9,7 +9,9 @@ from withings import (
     WithingsApi,
     WithingsCredentials,
     WithingsMeasureGroup,
-    WithingsMeasures
+    WithingsMeasures,
+    WithingsSleep,
+    WithingsSleepSeries
 )
 
 try:
@@ -110,10 +112,46 @@ class TestWithingsApi(unittest.TestCase):
         self.assertEqual(resp['users'][0]['firstname'], 'Frodo')
         self.assertEqual(resp['users'][0]['lastname'], 'Baggins')
 
+    def test_get_sleep(self):
+        """
+        Check that get_sleep fetches the appropriate URL, the response looks
+        correct, and the return value is a WithingsSleep object with the
+        correct attributes
+        """
+        body = {
+            "series": [{
+                "startdate": 1387235398,
+                "state": 0,
+                "enddate": 1387235758
+            }, {
+                "startdate": 1387243618,
+                "state": 1,
+                "enddate": 1387244518
+            }],
+            "model": 16
+        }
+        self.mock_request(body)
+        resp = self.api.get_sleep()
+        Session.request.assert_called_once_with(
+            'GET', 'http://wbsapi.withings.net/v2/sleep',
+            params={'action': 'get'})
+        self.assertEqual(type(resp), WithingsSleep)
+        self.assertEqual(resp.model, body['model'])
+        self.assertEqual(type(resp.series), list)
+        self.assertEqual(len(resp.series), 2)
+        self.assertEqual(type(resp.series[0]), WithingsSleepSeries)
+        self.assertEqual(time.mktime(resp.series[0].startdate.timetuple()),
+                         body['series'][0]['startdate'])
+        self.assertEqual(time.mktime(resp.series[0].enddate.timetuple()),
+                         body['series'][0]['enddate'])
+        self.assertEqual(resp.series[1].state, 1)
+
+
     def test_get_activities(self):
         """
         Check that get_activities fetches the appropriate URL, the response
-        looks correct, and the return value is a dict
+        looks correct, and the return value is a list of WithingsActivity
+        objects
         """
         body = {
            "date": "2013-04-10",
