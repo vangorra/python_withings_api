@@ -22,6 +22,11 @@ class TestWithingsMeasures(unittest.TestCase):
         }
         measures = WithingsMeasures(data)
         self.assertEqual(type(measures), WithingsMeasures)
+        self.assertEqual(measures.data, data)
+        self.assertEqual(type(measures.measuregrps), list)
+        self.assertEqual(len(measures.measuregrps), 2)
+        self.assertEqual(measures.measuregrps[0], data['measuregrps'][0])
+        self.assertEqual(measures.measuregrps[1], data['measuregrps'][1])
         self.assertEqual(len(measures), 2)
         self.assertEqual(type(measures[0]), WithingsMeasureGroup)
         self.assertEqual(measures[0].weight, 86.0)

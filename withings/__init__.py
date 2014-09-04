@@ -153,6 +153,9 @@ class WithingsApi(object):
 
 class WithingsObject(object):
     def __init__(self, data):
+        self.set_attributes(data)
+
+    def set_attributes(self, data):
         self.data = data
         for key, val in data.items():
             setattr(self, key, self.parse_date(val) if 'date' in key else val)
@@ -177,10 +180,10 @@ class WithingsActivity(WithingsObject):
     pass
 
 
-class WithingsMeasures(list):
+class WithingsMeasures(list, WithingsObject):
     def __init__(self, data):
         super(WithingsMeasures, self).__init__([WithingsMeasureGroup(g) for g in data['measuregrps']])
-        self.updatetime = datetime.fromtimestamp(data['updatetime'])
+        self.set_attributes(data)
 
 
 class WithingsMeasureGroup(WithingsObject):
