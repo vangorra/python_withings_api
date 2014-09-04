@@ -122,6 +122,10 @@ class WithingsApi(object):
         r = self.request('measure', 'getmeas', kwargs)
         return WithingsMeasures(r)
 
+    def get_sleep(self, **kwargs):
+        r = self.request('sleep', 'get', params=kwargs, version='v2')
+        return WithingsSleep(r)
+
     def subscribe(self, callback_url, comment, appli=1):
         params = {'callbackurl': callback_url,
                   'comment': comment,
@@ -149,7 +153,7 @@ class WithingsObject(object):
     def __init__(self, data):
         self.data = data
         for key, val in data.items():
-            setattr(self, key, val if key != 'date' else self.parse_date(val))
+            setattr(self, key, self.parse_date(val) if 'date' in key else val)
 
     def parse_date(self, date):
         """
@@ -202,3 +206,15 @@ class WithingsMeasureGroup(WithingsObject):
             if m['type'] == measure_type:
                 return m['value'] * pow(10, m['unit'])
         return None
+
+
+class WithingsSleepSeries(WithingsObject):
+    def __init__(self, data):
+        super(WithingsSleepSeries, self).__init__(data)
+        self.timedelta = self.enddate - self.startdate
+
+
+class WithingsSleep(WithingsObject):
+    def __init__(self, data):
+        super(WithingsSleep, self).__init__(data)
+        self.series = [WithingsSleepSeries(series) for series in self.series]

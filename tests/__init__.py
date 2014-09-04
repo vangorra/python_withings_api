@@ -7,6 +7,8 @@ from .test_withings_credentials import TestWithingsCredentials
 from .test_withings_measure_group import TestWithingsMeasureGroup
 from .test_withings_measures import TestWithingsMeasures
 from .test_withings_object import TestWithingsObject
+from .test_withings_sleep import TestWithingsSleep
+from .test_withings_sleep_series import TestWithingsSleepSeries
 
 
 def all_tests():
@@ -18,4 +20,6 @@ def all_tests():
     suite.addTest(unittest.makeSuite(TestWithingsMeasureGroup))
     suite.addTest(unittest.makeSuite(TestWithingsMeasures))
     suite.addTest(unittest.makeSuite(TestWithingsObject))
+    suite.addTest(unittest.makeSuite(TestWithingsSleep))
+    suite.addTest(unittest.makeSuite(TestWithingsSleepSeries))
     return suite
