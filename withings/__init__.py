@@ -62,9 +62,10 @@ class WithingsAuth(object):
         self.oauth_token = None
         self.oauth_secret = None
 
-    def get_authorize_url(self):
+    def get_authorize_url(self, callback_uri=None):
         oauth = OAuth1Session(self.consumer_key,
-                              client_secret=self.consumer_secret)
+                              client_secret=self.consumer_secret,
+                              callback_uri=callback_uri)
 
         tokens = oauth.fetch_request_token('%s/request_token' % self.URL)
         self.oauth_token = tokens['oauth_token']
