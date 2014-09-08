@@ -129,14 +129,14 @@ class WithingsApi(object):
         r = self.request('sleep', 'get', params=kwargs, version='v2')
         return WithingsSleep(r)
 
-    def subscribe(self, callback_url, comment, appli=1):
-        params = {'callbackurl': callback_url,
-                  'comment': comment,
-                  'appli': appli}
+    def subscribe(self, callback_url, comment, **kwargs):
+        params = {'callbackurl': callback_url, 'comment': comment}
+        params.update(kwargs)
         self.request('notify', 'subscribe', params)
 
-    def unsubscribe(self, callback_url, appli=1):
-        params = {'callbackurl': callback_url, 'appli': appli}
+    def unsubscribe(self, callback_url, **kwargs):
+        params = {'callbackurl': callback_url}
+        params.update(kwargs)
         self.request('notify', 'revoke', params)
 
     def is_subscribed(self, callback_url, appli=1):

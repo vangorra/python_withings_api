@@ -245,8 +245,19 @@ class TestWithingsApi(unittest.TestCase):
         Check that subscribe fetches the right URL and returns the expected
         results
         """
+        # Unspecified appli
         self.mock_request(None)
         resp = self.api.subscribe('http://www.example.com/', 'fake_comment')
+        Session.request.assert_called_once_with(
+            'GET', 'http://wbsapi.withings.net/notify',
+            params={'action': 'subscribe', 'comment': 'fake_comment',
+                    'callbackurl': 'http://www.example.com/'})
+        self.assertEqual(resp, None)
+
+        # appli=1
+        self.mock_request(None)
+        resp = self.api.subscribe('http://www.example.com/', 'fake_comment',
+                                  appli=1)
         Session.request.assert_called_once_with(
             'GET', 'http://wbsapi.withings.net/notify',
             params={'action': 'subscribe', 'appli': 1,
@@ -259,8 +270,18 @@ class TestWithingsApi(unittest.TestCase):
         Check that unsubscribe fetches the right URL and returns the expected
         results
         """
+        # Unspecified appli
         self.mock_request(None)
         resp = self.api.unsubscribe('http://www.example.com/')
+        Session.request.assert_called_once_with(
+            'GET', 'http://wbsapi.withings.net/notify',
+            params={'action': 'revoke',
+                    'callbackurl': 'http://www.example.com/'})
+        self.assertEqual(resp, None)
+
+        # appli=1
+        self.mock_request(None)
+        resp = self.api.unsubscribe('http://www.example.com/', appli=1)
         Session.request.assert_called_once_with(
             'GET', 'http://wbsapi.withings.net/notify',
             params={'action': 'revoke', 'appli': 1,
