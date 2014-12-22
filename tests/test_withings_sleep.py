@@ -23,7 +23,7 @@ class TestWithingsSleep(unittest.TestCase):
         self.assertEqual(type(sleep.series), list)
         self.assertEqual(len(sleep.series), 2)
         self.assertEqual(type(sleep.series[0]), WithingsSleepSeries)
-        self.assertEqual(time.mktime(sleep.series[0].startdate.timetuple()),
+        self.assertEqual(sleep.series[0].startdate.timestamp,
                          data['series'][0]['startdate'])
-        self.assertEqual(time.mktime(sleep.series[0].enddate.timetuple()),
+        self.assertEqual(sleep.series[0].enddate.timestamp,
                          data['series'][0]['enddate'])

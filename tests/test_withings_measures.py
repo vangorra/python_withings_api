@@ -31,5 +31,4 @@ class TestWithingsMeasures(unittest.TestCase):
         self.assertEqual(type(measures[0]), WithingsMeasureGroup)
         self.assertEqual(measures[0].weight, 86.0)
         self.assertEqual(measures[1].height, 1.85)
-        self.assertEqual(time.mktime(measures.updatetime.timetuple()),
-                         1409596058)
+        self.assertEqual(measures.updatetime.timestamp, 1409596058)

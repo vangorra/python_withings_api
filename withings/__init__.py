@@ -36,9 +36,11 @@ __copyright__ = 'Copyright 2012 Maxime Bouroumeau-Fuseau'
 __all__ = [str('WithingsCredentials'), str('WithingsAuth'), str('WithingsApi'),
            str('WithingsMeasures'), str('WithingsMeasureGroup')]
 
+import arrow
 import json
 import requests
 
+from arrow.parser import ParserError
 from datetime import datetime
 from requests_oauthlib import OAuth1, OAuth1Session
 
@@ -159,22 +161,10 @@ class WithingsObject(object):
     def set_attributes(self, data):
         self.data = data
         for key, val in data.items():
-            setattr(self, key, self.parse_date(val) if 'date' in key else val)
-
-    def parse_date(self, date):
-        """
-        Try to parse the date in a couple different formats, and if that
-        fails, just return it as it came.
-        """
-        try:
-            return datetime.strptime(date, '%Y-%m-%d')
-        except Exception:
-            pass
-        try:
-            return datetime.fromtimestamp(date)
-        except Exception:
-            pass
-        return date
+            try:
+                setattr(self, key, arrow.get(val) if 'date' in key else val)
+            except ParserError:
+                setattr(self, key, val)
 
 
 class WithingsActivity(WithingsObject):

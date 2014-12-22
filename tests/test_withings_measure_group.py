@@ -24,7 +24,7 @@ class TestWithingsMeasureGroup(unittest.TestCase):
         self.assertEqual(group.grpid, data['grpid'])
         self.assertEqual(group.attrib, data['attrib'])
         self.assertEqual(group.category, data['category'])
-        self.assertEqual(time.mktime(group.date.timetuple()), 1409361740)
+        self.assertEqual(group.date.timestamp, 1409361740)
         self.assertEqual(group.measures, data['measures'])
         for _type, type_id in WithingsMeasureGroup.MEASURE_TYPES:
             assert hasattr(group, _type)

@@ -14,7 +14,7 @@ class TestWithingsObject(unittest.TestCase):
            "float": 5.67
         }
         obj = WithingsObject(data)
-        self.assertEqual(datetime.strftime(obj.date, '%Y-%m-%d'), data['date'])
+        self.assertEqual(obj.date.date().isoformat(), data['date'])
         self.assertEqual(obj.string, data['string'])
         self.assertEqual(obj.integer, data['integer'])
         self.assertEqual(obj.float, data['float'])
@@ -22,7 +22,7 @@ class TestWithingsObject(unittest.TestCase):
         # Test time as epoch
         data = {"date": 1409596058}
         obj = WithingsObject(data)
-        self.assertEqual(time.mktime(obj.date.timetuple()), data['date'])
+        self.assertEqual(obj.date.timestamp, data['date'])
 
         # Test funky time
         data = {"date": "weird and wacky date format"}

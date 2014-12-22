@@ -1,3 +1,4 @@
+import arrow
 import unittest
 
 from datetime import datetime
@@ -18,7 +19,7 @@ class TestWithingsActivity(unittest.TestCase):
            "timezone": "Europe/Berlin"
         }
         act = WithingsActivity(data)
-        self.assertEqual(datetime.strftime(act.date, '%Y-%m-%d'), data['date'])
+        self.assertEqual(act.date.date().isoformat(), data['date'])
         self.assertEqual(act.steps, data['steps'])
         self.assertEqual(act.distance, data['distance'])
         self.assertEqual(act.calories, data['calories'])

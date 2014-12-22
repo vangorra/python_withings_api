@@ -140,9 +140,9 @@ class TestWithingsApi(unittest.TestCase):
         self.assertEqual(type(resp.series), list)
         self.assertEqual(len(resp.series), 2)
         self.assertEqual(type(resp.series[0]), WithingsSleepSeries)
-        self.assertEqual(time.mktime(resp.series[0].startdate.timetuple()),
+        self.assertEqual(resp.series[0].startdate.timestamp,
                          body['series'][0]['startdate'])
-        self.assertEqual(time.mktime(resp.series[0].enddate.timetuple()),
+        self.assertEqual(resp.series[0].enddate.timestamp,
                          body['series'][0]['enddate'])
         self.assertEqual(resp.series[1].state, 1)
 

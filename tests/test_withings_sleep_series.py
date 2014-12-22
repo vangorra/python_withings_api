@@ -14,9 +14,7 @@ class TestWithingsSleepSeries(unittest.TestCase):
         }
         series = WithingsSleepSeries(data)
         self.assertEqual(type(series), WithingsSleepSeries)
-        self.assertEqual(time.mktime(series.startdate.timetuple()),
-                         data['startdate'])
+        self.assertEqual(series.startdate.timestamp, data['startdate'])
         self.assertEqual(series.state, data['state'])
-        self.assertEqual(time.mktime(series.enddate.timetuple()),
-                         data['enddate'])
+        self.assertEqual(series.enddate.timestamp, data['enddate'])
         self.assertEqual(series.timedelta, timedelta(seconds=21600))
