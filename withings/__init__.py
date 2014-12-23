@@ -28,7 +28,7 @@ print "Your last measured weight: %skg" % measures[0].weight
 from __future__ import unicode_literals
 
 __title__ = 'withings'
-__version__ = '0.2dev'
+__version__ = '0.4.0'
 __author__ = 'Maxime Bouroumeau-Fuseau'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2012 Maxime Bouroumeau-Fuseau'

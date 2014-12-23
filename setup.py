@@ -5,7 +5,7 @@ required = [line for line in open('requirements/base.txt').read().split("\n")]
 
 setup(
     name='withings',
-    version='0.3',
+    version='0.4.0',
     description="Library for the Withings API",
     author='Maxime Bouroumeau-Fuseau',
     author_email='maxime.bouroumeau@gmail.com',
