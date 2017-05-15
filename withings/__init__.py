@@ -41,7 +41,6 @@ import json
 import requests
 
 from arrow.parser import ParserError
-from datetime import datetime
 from requests_oauthlib import OAuth1, OAuth1Session
 
 
@@ -82,11 +81,13 @@ class WithingsAuth(object):
                               resource_owner_secret=self.oauth_secret,
                               verifier=oauth_verifier)
         tokens = oauth.fetch_access_token('%s/access_token' % self.URL)
-        return WithingsCredentials(access_token=tokens['oauth_token'],
-                                   access_token_secret=tokens['oauth_token_secret'],
-                                   consumer_key=self.consumer_key,
-                                   consumer_secret=self.consumer_secret,
-                                   user_id=tokens['userid'])
+        return WithingsCredentials(
+            access_token=tokens['oauth_token'],
+            access_token_secret=tokens['oauth_token_secret'],
+            consumer_key=self.consumer_key,
+            consumer_secret=self.consumer_secret,
+            user_id=tokens['userid'],
+        )
 
 
 class WithingsApi(object):
@@ -173,15 +174,22 @@ class WithingsActivity(WithingsObject):
 
 class WithingsMeasures(list, WithingsObject):
     def __init__(self, data):
-        super(WithingsMeasures, self).__init__([WithingsMeasureGroup(g) for g in data['measuregrps']])
+        super(WithingsMeasures, self).__init__(
+            [WithingsMeasureGroup(g) for g in data['measuregrps']])
         self.set_attributes(data)
 
 
 class WithingsMeasureGroup(WithingsObject):
-    MEASURE_TYPES = (('weight', 1), ('height', 4), ('fat_free_mass', 5),
-                     ('fat_ratio', 6), ('fat_mass_weight', 8),
-                     ('diastolic_blood_pressure', 9), ('systolic_blood_pressure', 10),
-                     ('heart_pulse', 11))
+    MEASURE_TYPES = (
+        ('weight', 1),
+        ('height', 4),
+        ('fat_free_mass', 5),
+        ('fat_ratio', 6),
+        ('fat_mass_weight', 8),
+        ('diastolic_blood_pressure', 9),
+        ('systolic_blood_pressure', 10),
+        ('heart_pulse', 11),
+    )
 
     def __init__(self, data):
         super(WithingsMeasureGroup, self).__init__(data)
