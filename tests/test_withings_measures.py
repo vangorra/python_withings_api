@@ -1,7 +1,7 @@
-import time
 import unittest
 
 from withings import WithingsMeasureGroup, WithingsMeasures
+
 
 class TestWithingsMeasures(unittest.TestCase):
     def test_withings_measures_init(self):
