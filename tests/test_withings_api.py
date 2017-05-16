@@ -1,8 +1,6 @@
 import json
-import time
 import unittest
 
-from datetime import datetime
 from requests import Session
 from withings import (
     WithingsActivity,
@@ -31,7 +29,7 @@ class TestWithingsApi(unittest.TestCase):
         if self.mock_api:
             self.creds = WithingsCredentials()
         else:
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read('withings.conf')
             self.creds = WithingsCredentials(
                 consumer_key=config.get('withings', 'consumer_key'),
@@ -145,7 +143,6 @@ class TestWithingsApi(unittest.TestCase):
         self.assertEqual(resp.series[0].enddate.timestamp,
                          body['series'][0]['enddate'])
         self.assertEqual(resp.series[1].state, 1)
-
 
     def test_get_activities(self):
         """
@@ -288,7 +285,6 @@ class TestWithingsApi(unittest.TestCase):
                     'callbackurl': 'http://www.example.com/'})
         self.assertEqual(resp, None)
 
-
     def test_is_subscribed(self):
         """
         Check that is_subscribed fetches the right URL and returns the
@@ -340,7 +336,7 @@ class TestWithingsApi(unittest.TestCase):
     def mock_request(self, body, status=0):
         if self.mock_api:
             json_content = {'status': status}
-            if body != None:
+            if body is not None:
                 json_content['body'] = body
             response = MagicMock()
             response.content = json.dumps(json_content).encode('utf8')
