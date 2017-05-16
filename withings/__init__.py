@@ -37,6 +37,7 @@ __all__ = [str('WithingsCredentials'), str('WithingsAuth'), str('WithingsApi'),
            str('WithingsMeasures'), str('WithingsMeasureGroup')]
 
 import arrow
+import datetime
 import json
 import requests
 
@@ -90,6 +91,14 @@ class WithingsAuth(object):
         )
 
 
+def is_date(key):
+    return 'date' in key
+
+
+def is_date_class(val):
+    return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
+
+
 class WithingsApi(object):
     URL = 'http://wbsapi.withings.net'
 
@@ -106,9 +115,11 @@ class WithingsApi(object):
 
     def request(self, service, action, params=None, method='GET',
                 version=None):
-        if params is None:
-            params = {}
+        params = params or {}
         params['action'] = action
+        for key, val in params.items():
+            if is_date(key) and is_date_class(val):
+                params[key] = arrow.get(val).timestamp
         url_parts = filter(None, [self.URL, version, service])
         r = self.client.request(method, '/'.join(url_parts), params=params)
         response = json.loads(r.content.decode())
@@ -163,7 +174,7 @@ class WithingsObject(object):
         self.data = data
         for key, val in data.items():
             try:
-                setattr(self, key, arrow.get(val) if 'date' in key else val)
+                setattr(self, key, arrow.get(val) if is_date(key) else val)
             except ParserError:
                 setattr(self, key, val)
 
