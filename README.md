@@ -1,5 +1,7 @@
 # Python library for the Withings API
 
+[![Build Status](https://travis-ci.org/orcasgit/python-withings.svg?branch=master)](https://travis-ci.org/orcasgit/python-withings) [![Coverage Status](https://coveralls.io/repos/orcasgit/python-withings/badge.png?branch=master)](https://coveralls.io/r/orcasgit/python-withings?branch=master) [![Requirements Status](https://requires.io/github/orcasgit/python-withings/requirements.svg?branch=requires-io-master)](https://requires.io/github/orcasgit/python-withings/requirements/?branch=requires-io-master)
+
 Withings Body metrics Services API
 <http://oauth.withings.com/api/doc>
 
@@ -9,7 +11,7 @@ here: <https://oauth.withings.com/partner/add>
 
 Installation:
 
-    pip install withings
+    pip install https://github.com/orcasgit/python-withings/archive/master.zip#egg=withings-0.4.0
 
 Usage:
 
