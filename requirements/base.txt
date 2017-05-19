@@ -1,4 +1,4 @@
-arrow>=0.4,<0.6
-requests>=2.5,<2.6
-requests-oauth>=0.4.1,<0.5
-requests-oauthlib>=0.4.2,<0.5
+arrow>=0.4
+requests>=2.5
+requests-oauth>=0.4.1
+requests-oauthlib>=0.4.2

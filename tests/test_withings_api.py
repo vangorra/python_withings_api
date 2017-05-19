@@ -1,8 +1,8 @@
+import arrow
+import datetime
 import json
-import time
 import unittest
 
-from datetime import datetime
 from requests import Session
 from withings import (
     WithingsActivity,
@@ -31,7 +31,7 @@ class TestWithingsApi(unittest.TestCase):
         if self.mock_api:
             self.creds = WithingsCredentials()
         else:
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read('withings.conf')
             self.creds = WithingsCredentials(
                 consumer_key=config.get('withings', 'consumer_key'),
@@ -146,7 +146,6 @@ class TestWithingsApi(unittest.TestCase):
                          body['series'][0]['enddate'])
         self.assertEqual(resp.series[1].state, 1)
 
-
     def test_get_activities(self):
         """
         Check that get_activities fetches the appropriate URL, the response
@@ -240,6 +239,36 @@ class TestWithingsApi(unittest.TestCase):
         self.assertEqual(len(resp), 1)
         self.assertEqual(resp[0].weight, 86.0)
 
+    def test_get_measures_lastupdate_date(self):
+        """Check that dates get converted to timestampse for API calls"""
+        self.mock_request({'updatetime': 1409596058, 'measuregrps': []})
+
+        self.api.get_measures(lastupdate=datetime.date(2014, 9, 1))
+
+        Session.request.assert_called_once_with(
+            'GET', 'http://wbsapi.withings.net/measure',
+            params={'action': 'getmeas', 'lastupdate': 1409529600})
+
+    def test_get_measures_lastupdate_datetime(self):
+        """Check that datetimes get converted to timestampse for API calls"""
+        self.mock_request({'updatetime': 1409596058, 'measuregrps': []})
+
+        self.api.get_measures(lastupdate=datetime.datetime(2014, 9, 1))
+
+        Session.request.assert_called_once_with(
+            'GET', 'http://wbsapi.withings.net/measure',
+            params={'action': 'getmeas', 'lastupdate': 1409529600})
+
+    def test_get_measures_lastupdate_arrow(self):
+        """Check that arrow dates get converted to timestampse for API calls"""
+        self.mock_request({'updatetime': 1409596058, 'measuregrps': []})
+
+        self.api.get_measures(lastupdate=arrow.get('2014-09-01'))
+
+        Session.request.assert_called_once_with(
+            'GET', 'http://wbsapi.withings.net/measure',
+            params={'action': 'getmeas', 'lastupdate': 1409529600})
+
     def test_subscribe(self):
         """
         Check that subscribe fetches the right URL and returns the expected
@@ -287,7 +316,6 @@ class TestWithingsApi(unittest.TestCase):
             params={'action': 'revoke', 'appli': 1,
                     'callbackurl': 'http://www.example.com/'})
         self.assertEqual(resp, None)
-
 
     def test_is_subscribed(self):
         """
@@ -340,7 +368,7 @@ class TestWithingsApi(unittest.TestCase):
     def mock_request(self, body, status=0):
         if self.mock_api:
             json_content = {'status': status}
-            if body != None:
+            if body is not None:
                 json_content['body'] = body
             response = MagicMock()
             response.content = json.dumps(json_content).encode('utf8')

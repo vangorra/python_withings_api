@@ -37,11 +37,11 @@ __all__ = [str('WithingsCredentials'), str('WithingsAuth'), str('WithingsApi'),
            str('WithingsMeasures'), str('WithingsMeasureGroup')]
 
 import arrow
+import datetime
 import json
 import requests
 
 from arrow.parser import ParserError
-from datetime import datetime
 from requests_oauthlib import OAuth1, OAuth1Session
 
 
@@ -82,11 +82,21 @@ class WithingsAuth(object):
                               resource_owner_secret=self.oauth_secret,
                               verifier=oauth_verifier)
         tokens = oauth.fetch_access_token('%s/access_token' % self.URL)
-        return WithingsCredentials(access_token=tokens['oauth_token'],
-                                   access_token_secret=tokens['oauth_token_secret'],
-                                   consumer_key=self.consumer_key,
-                                   consumer_secret=self.consumer_secret,
-                                   user_id=tokens['userid'])
+        return WithingsCredentials(
+            access_token=tokens['oauth_token'],
+            access_token_secret=tokens['oauth_token_secret'],
+            consumer_key=self.consumer_key,
+            consumer_secret=self.consumer_secret,
+            user_id=tokens['userid'],
+        )
+
+
+def is_date(key):
+    return 'date' in key
+
+
+def is_date_class(val):
+    return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
 
 class WithingsApi(object):
@@ -105,9 +115,11 @@ class WithingsApi(object):
 
     def request(self, service, action, params=None, method='GET',
                 version=None):
-        if params is None:
-            params = {}
+        params = params or {}
         params['action'] = action
+        for key, val in params.items():
+            if is_date(key) and is_date_class(val):
+                params[key] = arrow.get(val).timestamp
         url_parts = filter(None, [self.URL, version, service])
         r = self.client.request(method, '/'.join(url_parts), params=params)
         response = json.loads(r.content.decode())
@@ -162,7 +174,7 @@ class WithingsObject(object):
         self.data = data
         for key, val in data.items():
             try:
-                setattr(self, key, arrow.get(val) if 'date' in key else val)
+                setattr(self, key, arrow.get(val) if is_date(key) else val)
             except ParserError:
                 setattr(self, key, val)
 
@@ -173,15 +185,22 @@ class WithingsActivity(WithingsObject):
 
 class WithingsMeasures(list, WithingsObject):
     def __init__(self, data):
-        super(WithingsMeasures, self).__init__([WithingsMeasureGroup(g) for g in data['measuregrps']])
+        super(WithingsMeasures, self).__init__(
+            [WithingsMeasureGroup(g) for g in data['measuregrps']])
         self.set_attributes(data)
 
 
 class WithingsMeasureGroup(WithingsObject):
-    MEASURE_TYPES = (('weight', 1), ('height', 4), ('fat_free_mass', 5),
-                     ('fat_ratio', 6), ('fat_mass_weight', 8),
-                     ('diastolic_blood_pressure', 9), ('systolic_blood_pressure', 10),
-                     ('heart_pulse', 11))
+    MEASURE_TYPES = (
+        ('weight', 1),
+        ('height', 4),
+        ('fat_free_mass', 5),
+        ('fat_ratio', 6),
+        ('fat_mass_weight', 8),
+        ('diastolic_blood_pressure', 9),
+        ('systolic_blood_pressure', 10),
+        ('heart_pulse', 11),
+    )
 
     def __init__(self, data):
         super(WithingsMeasureGroup, self).__init__(data)
