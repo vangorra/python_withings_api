@@ -4,12 +4,12 @@ from setuptools import setup
 required = [line for line in open('requirements/base.txt').read().split("\n")]
 
 setup(
-    name='withings',
+    name='pywithings',
     version='0.4.0',
     description="Library for the Withings API",
-    author='Maxime Bouroumeau-Fuseau',
-    author_email='maxime.bouroumeau@gmail.com',
-    url="https://github.com/maximebf/python-withings",
+    author='Maxime Bouroumeau-Fuseau, and ORCAS',
+    author_email='developer@orcasinc.com',
+    url="https://github.com/orcasgit/python-withings",
     license = "MIT License",
     packages = ['withings'],
     install_requires = required,
