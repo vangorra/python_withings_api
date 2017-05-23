@@ -7,7 +7,7 @@ setup(
     name='pywithings',
     version='0.4.0',
     description="Library for the Withings API",
-    author='Maxime Bouroumeau-Fuseau, and ORCAS',
+    author='ORCAS',
     author_email='developer@orcasinc.com',
     url="https://github.com/orcasgit/python-withings",
     license = "MIT License",
