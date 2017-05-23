@@ -9,6 +9,9 @@ Uses Oauth 1.0 to authentify. You need to obtain a consumer key
 and consumer secret from Withings by creating an application
 here: <https://oauth.withings.com/partner/add>
 
+This is a maintained fork of the `python-withings` library, the origin version
+is [here](https://github.com/maximebf/python-withings).
+
 Installation:
 
     pip install pywithings
