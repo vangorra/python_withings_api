@@ -9,9 +9,12 @@ Uses Oauth 1.0 to authentify. You need to obtain a consumer key
 and consumer secret from Withings by creating an application
 here: <https://oauth.withings.com/partner/add>
 
+This is a maintained fork of the `python-withings` library, the origin version
+is [here](https://github.com/maximebf/python-withings).
+
 Installation:
 
-    pip install https://github.com/orcasgit/python-withings/archive/master.zip#egg=withings-0.4.0
+    pip install pywithings
 
 Usage:
 
@@ -28,5 +31,5 @@ creds = auth.get_credentials(oauth_verifier)
 
 client = WithingsApi(creds)
 measures = client.get_measures(limit=1)
-print "Your last measured weight: %skg" % measures[0].weight 
+print "Your last measured weight: %skg" % measures[0].weight
 ```

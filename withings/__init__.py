@@ -27,11 +27,11 @@ print "Your last measured weight: %skg" % measures[0].weight
 
 from __future__ import unicode_literals
 
-__title__ = 'withings'
+__title__ = 'pywithings'
 __version__ = '0.4.0'
-__author__ = 'Maxime Bouroumeau-Fuseau'
+__author__ = 'Maxime Bouroumeau-Fuseau, and ORCAS'
 __license__ = 'MIT'
-__copyright__ = 'Copyright 2012 Maxime Bouroumeau-Fuseau'
+__copyright__ = 'Copyright 2012-2017 Maxime Bouroumeau-Fuseau, and ORCAS'
 
 __all__ = [str('WithingsCredentials'), str('WithingsAuth'), str('WithingsApi'),
            str('WithingsMeasures'), str('WithingsMeasureGroup')]
