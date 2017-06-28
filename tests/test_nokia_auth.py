@@ -37,7 +37,7 @@ class TestNokiaAuth(unittest.TestCase):
     def test_attribute_defaults(self):
         """ Make sure NokiaAuth attributes have the proper defaults """
         self.assertEqual(NokiaAuth.URL,
-                         'https://developer.health.nokia.com/account/')
+                         'https://developer.health.nokia.com/account')
         auth = NokiaAuth(self.consumer_key, self.consumer_secret)
         self.assertEqual(auth.oauth_token, None)
         self.assertEqual(auth.oauth_secret, None)
