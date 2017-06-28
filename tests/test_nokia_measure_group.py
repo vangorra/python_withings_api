@@ -1,14 +1,14 @@
 import time
 import unittest
 
-from withings import WithingsMeasureGroup
+from nokia import NokiaMeasureGroup
 
 
-class TestWithingsMeasureGroup(unittest.TestCase):
+class TestNokiaMeasureGroup(unittest.TestCase):
     def test_attributes(self):
         """
         Check that attributes get set as expected when creating a
-        WithingsMeasureGroup object
+        NokiaMeasureGroup object
         """
         data = {
             'attrib': 2,
@@ -19,14 +19,14 @@ class TestWithingsMeasureGroup(unittest.TestCase):
             'category': 1,
             'grpid': 111111111
         }
-        group = WithingsMeasureGroup(data)
+        group = NokiaMeasureGroup(data)
         self.assertEqual(group.data, data)
         self.assertEqual(group.grpid, data['grpid'])
         self.assertEqual(group.attrib, data['attrib'])
         self.assertEqual(group.category, data['category'])
         self.assertEqual(group.date.timestamp, 1409361740)
         self.assertEqual(group.measures, data['measures'])
-        for _type, type_id in WithingsMeasureGroup.MEASURE_TYPES:
+        for _type, type_id in NokiaMeasureGroup.MEASURE_TYPES:
             assert hasattr(group, _type)
             self.assertEqual(getattr(group, _type),
                              86.0 if _type == 'weight' else None)
@@ -35,7 +35,7 @@ class TestWithingsMeasureGroup(unittest.TestCase):
         """
         Check that all the different measure types are working as expected
         """
-        for _, type_id in WithingsMeasureGroup.MEASURE_TYPES:
+        for _, type_id in NokiaMeasureGroup.MEASURE_TYPES:
             data = {
                 'attrib': 2,
                 'measures': [
@@ -45,8 +45,8 @@ class TestWithingsMeasureGroup(unittest.TestCase):
                 'category': 1,
                 'grpid': 111111111
             }
-            group = WithingsMeasureGroup(data)
-            for _type, type_id2 in WithingsMeasureGroup.MEASURE_TYPES:
+            group = NokiaMeasureGroup(data)
+            for _type, type_id2 in NokiaMeasureGroup.MEASURE_TYPES:
                 assert hasattr(group, _type)
                 self.assertEqual(getattr(group, _type),
                                  86.0 if type_id == type_id2 else None)
@@ -67,8 +67,8 @@ class TestWithingsMeasureGroup(unittest.TestCase):
             'category': 1,
             'grpid': 111111111
         }
-        group = WithingsMeasureGroup(data)
-        for _type, type_id in WithingsMeasureGroup.MEASURE_TYPES:
+        group = NokiaMeasureGroup(data)
+        for _type, type_id in NokiaMeasureGroup.MEASURE_TYPES:
             assert hasattr(group, _type)
             if _type == 'diastolic_blood_pressure':
                 self.assertEqual(getattr(group, _type), 80.0)
@@ -83,29 +83,29 @@ class TestWithingsMeasureGroup(unittest.TestCase):
         """ Test the is_ambiguous method """
         data = {'attrib': 0, 'measures': [], 'date': 1409361740, 'category': 1,
                 'grpid': 111111111}
-        self.assertEqual(WithingsMeasureGroup(data).is_ambiguous(), False)
+        self.assertEqual(NokiaMeasureGroup(data).is_ambiguous(), False)
         data['attrib'] = 1
-        assert WithingsMeasureGroup(data).is_ambiguous()
+        assert NokiaMeasureGroup(data).is_ambiguous()
         data['attrib'] = 2
-        self.assertEqual(WithingsMeasureGroup(data).is_ambiguous(), False)
+        self.assertEqual(NokiaMeasureGroup(data).is_ambiguous(), False)
         data['attrib'] = 4
-        assert WithingsMeasureGroup(data).is_ambiguous()
+        assert NokiaMeasureGroup(data).is_ambiguous()
 
     def test_is_measure(self):
         """ Test the is_measure method """
         data = {'attrib': 0, 'measures': [], 'date': 1409361740, 'category': 1,
                 'grpid': 111111111}
-        assert WithingsMeasureGroup(data).is_measure()
+        assert NokiaMeasureGroup(data).is_measure()
         data['category'] = 2
-        self.assertEqual(WithingsMeasureGroup(data).is_measure(), False)
+        self.assertEqual(NokiaMeasureGroup(data).is_measure(), False)
 
     def test_is_target(self):
         """ Test the is_target method """
         data = {'attrib': 0, 'measures': [], 'date': 1409361740, 'category': 1,
                 'grpid': 111111111}
-        self.assertEqual(WithingsMeasureGroup(data).is_target(), False)
+        self.assertEqual(NokiaMeasureGroup(data).is_target(), False)
         data['category'] = 2
-        assert WithingsMeasureGroup(data).is_target()
+        assert NokiaMeasureGroup(data).is_target()
 
     def test_get_measure(self):
         """
@@ -122,7 +122,7 @@ class TestWithingsMeasureGroup(unittest.TestCase):
             'category': 1,
             'grpid': 111111111
         }
-        group = WithingsMeasureGroup(data)
+        group = NokiaMeasureGroup(data)
         self.assertEqual(group.get_measure(9), 80.0)
         self.assertEqual(group.get_measure(10), 120.0)
         self.assertEqual(group.get_measure(11), 86.0)

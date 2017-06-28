@@ -4,14 +4,14 @@ import json
 import unittest
 
 from requests import Session
-from withings import (
-    WithingsActivity,
-    WithingsApi,
-    WithingsCredentials,
-    WithingsMeasureGroup,
-    WithingsMeasures,
-    WithingsSleep,
-    WithingsSleepSeries
+from nokia import (
+    NokiaActivity,
+    NokiaApi,
+    NokiaCredentials,
+    NokiaMeasureGroup,
+    NokiaMeasures,
+    NokiaSleep,
+    NokiaSleepSeries
 )
 
 try:
@@ -25,39 +25,39 @@ except ImportError:  # Python 2.x fallback
     from mock import MagicMock
 
 
-class TestWithingsApi(unittest.TestCase):
+class TestNokiaApi(unittest.TestCase):
     def setUp(self):
         self.mock_api = True
         if self.mock_api:
-            self.creds = WithingsCredentials()
+            self.creds = NokiaCredentials()
         else:
             config = configparser.ConfigParser()
-            config.read('withings.conf')
-            self.creds = WithingsCredentials(
-                consumer_key=config.get('withings', 'consumer_key'),
-                consumer_secret=config.get('withings', 'consumer_secret'),
-                access_token=config.get('withings', 'access_token'),
-                access_token_secret=config.get('withings',
+            config.read('nokia.conf')
+            self.creds = NokiaCredentials(
+                consumer_key=config.get('nokia', 'consumer_key'),
+                consumer_secret=config.get('nokia', 'consumer_secret'),
+                access_token=config.get('nokia', 'access_token'),
+                access_token_secret=config.get('nokia',
                                                'access_token_secret'),
-                user_id=config.get('withings', 'user_id'))
-        self.api = WithingsApi(self.creds)
+                user_id=config.get('nokia', 'user_id'))
+        self.api = NokiaApi(self.creds)
 
     def test_attributes(self):
-        """ Make sure the WithingsApi objects have the right attributes """
-        assert hasattr(WithingsApi, 'URL')
-        creds = WithingsCredentials(user_id='FAKEID')
-        api = WithingsApi(creds)
+        """ Make sure the NokiaApi objects have the right attributes """
+        assert hasattr(NokiaApi, 'URL')
+        creds = NokiaCredentials(user_id='FAKEID')
+        api = NokiaApi(creds)
         assert hasattr(api, 'credentials')
         assert hasattr(api, 'oauth')
         assert hasattr(api, 'client')
 
     def test_attribute_defaults(self):
         """
-        Make sure WithingsApi object attributes have the correct defaults
+        Make sure NokiaApi object attributes have the correct defaults
         """
-        self.assertEqual(WithingsApi.URL, 'http://wbsapi.withings.net')
-        creds = WithingsCredentials(user_id='FAKEID')
-        api = WithingsApi(creds)
+        self.assertEqual(NokiaApi.URL, 'https://api.health.nokia.com')
+        creds = NokiaCredentials(user_id='FAKEID')
+        api = NokiaApi(creds)
         self.assertEqual(api.credentials, creds)
         self.assertEqual(api.client.auth, api.oauth)
         self.assertEqual(api.client.params, {'userid': creds.user_id})
@@ -70,7 +70,7 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request({})
         resp = self.api.request('fake_service', 'fake_action')
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/fake_service',
+            'GET', 'https://api.health.nokia.com/fake_service',
             params={'action': 'fake_action'})
         self.assertEqual(resp, {})
 
@@ -83,7 +83,7 @@ class TestWithingsApi(unittest.TestCase):
         resp = self.api.request('user', 'getbyuserid', params={'p2': 'p2'},
                                 method='POST')
         Session.request.assert_called_once_with(
-            'POST', 'http://wbsapi.withings.net/user',
+            'POST', 'https://api.health.nokia.com/user',
             params={'p2': 'p2', 'action': 'getbyuserid'})
         self.assertEqual(resp, {})
 
@@ -103,7 +103,7 @@ class TestWithingsApi(unittest.TestCase):
         })
         resp = self.api.get_user()
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/user',
+            'GET', 'https://api.health.nokia.com/user',
             params={'action': 'getbyuserid'})
         self.assertEqual(type(resp), dict)
         assert 'users' in resp
@@ -115,7 +115,7 @@ class TestWithingsApi(unittest.TestCase):
     def test_get_sleep(self):
         """
         Check that get_sleep fetches the appropriate URL, the response looks
-        correct, and the return value is a WithingsSleep object with the
+        correct, and the return value is a NokiaSleep object with the
         correct attributes
         """
         body = {
@@ -133,13 +133,13 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request(body)
         resp = self.api.get_sleep()
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/v2/sleep',
+            'GET', 'https://api.health.nokia.com/v2/sleep',
             params={'action': 'get'})
-        self.assertEqual(type(resp), WithingsSleep)
+        self.assertEqual(type(resp), NokiaSleep)
         self.assertEqual(resp.model, body['model'])
         self.assertEqual(type(resp.series), list)
         self.assertEqual(len(resp.series), 2)
-        self.assertEqual(type(resp.series[0]), WithingsSleepSeries)
+        self.assertEqual(type(resp.series[0]), NokiaSleepSeries)
         self.assertEqual(resp.series[0].startdate.timestamp,
                          body['series'][0]['startdate'])
         self.assertEqual(resp.series[0].enddate.timestamp,
@@ -149,7 +149,7 @@ class TestWithingsApi(unittest.TestCase):
     def test_get_activities(self):
         """
         Check that get_activities fetches the appropriate URL, the response
-        looks correct, and the return value is a list of WithingsActivity
+        looks correct, and the return value is a list of NokiaActivity
         objects
         """
         body = {
@@ -166,11 +166,11 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request(body)
         resp = self.api.get_activities()
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/v2/measure',
+            'GET', 'https://api.health.nokia.com/v2/measure',
             params={'action': 'getactivity'})
         self.assertEqual(type(resp), list)
         self.assertEqual(len(resp), 1)
-        self.assertEqual(type(resp[0]), WithingsActivity)
+        self.assertEqual(type(resp[0]), NokiaActivity)
         # No need to assert all attributes, that happens elsewhere
         self.assertEqual(resp[0].data, body)
 
@@ -193,19 +193,19 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request(new_body)
         resp = self.api.get_activities()
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/v2/measure',
+            'GET', 'https://api.health.nokia.com/v2/measure',
             params={'action': 'getactivity'})
         self.assertEqual(type(resp), list)
         self.assertEqual(len(resp), 2)
-        self.assertEqual(type(resp[0]), WithingsActivity)
-        self.assertEqual(type(resp[1]), WithingsActivity)
+        self.assertEqual(type(resp[0]), NokiaActivity)
+        self.assertEqual(type(resp[1]), NokiaActivity)
         self.assertEqual(resp[0].data, new_body['activities'][0])
         self.assertEqual(resp[1].data, new_body['activities'][1])
 
     def test_get_measures(self):
         """
         Check that get_measures fetches the appriate URL, the response looks
-        correct, and the return value is a WithingsMeasures object
+        correct, and the return value is a NokiaMeasures object
         """
         body = {
             'updatetime': 1409596058,
@@ -221,11 +221,11 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request(body)
         resp = self.api.get_measures()
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/measure',
+            'GET', 'https://api.health.nokia.com/measure',
             params={'action': 'getmeas'})
-        self.assertEqual(type(resp), WithingsMeasures)
+        self.assertEqual(type(resp), NokiaMeasures)
         self.assertEqual(len(resp), 2)
-        self.assertEqual(type(resp[0]), WithingsMeasureGroup)
+        self.assertEqual(type(resp[0]), NokiaMeasureGroup)
         self.assertEqual(resp[0].weight, 86.0)
         self.assertEqual(resp[1].height, 1.85)
 
@@ -234,7 +234,7 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request(body)
         resp = self.api.get_measures(limit=1)
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/measure',
+            'GET', 'https://api.health.nokia.com/measure',
             params={'action': 'getmeas', 'limit': 1})
         self.assertEqual(len(resp), 1)
         self.assertEqual(resp[0].weight, 86.0)
@@ -246,7 +246,7 @@ class TestWithingsApi(unittest.TestCase):
         self.api.get_measures(lastupdate=datetime.date(2014, 9, 1))
 
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/measure',
+            'GET', 'https://api.health.nokia.com/measure',
             params={'action': 'getmeas', 'lastupdate': 1409529600})
 
     def test_get_measures_lastupdate_datetime(self):
@@ -256,7 +256,7 @@ class TestWithingsApi(unittest.TestCase):
         self.api.get_measures(lastupdate=datetime.datetime(2014, 9, 1))
 
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/measure',
+            'GET', 'https://api.health.nokia.com/measure',
             params={'action': 'getmeas', 'lastupdate': 1409529600})
 
     def test_get_measures_lastupdate_arrow(self):
@@ -266,7 +266,7 @@ class TestWithingsApi(unittest.TestCase):
         self.api.get_measures(lastupdate=arrow.get('2014-09-01'))
 
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/measure',
+            'GET', 'https://api.health.nokia.com/measure',
             params={'action': 'getmeas', 'lastupdate': 1409529600})
 
     def test_subscribe(self):
@@ -278,7 +278,7 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request(None)
         resp = self.api.subscribe('http://www.example.com/', 'fake_comment')
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/notify',
+            'GET', 'https://api.health.nokia.com/notify',
             params={'action': 'subscribe', 'comment': 'fake_comment',
                     'callbackurl': 'http://www.example.com/'})
         self.assertEqual(resp, None)
@@ -288,7 +288,7 @@ class TestWithingsApi(unittest.TestCase):
         resp = self.api.subscribe('http://www.example.com/', 'fake_comment',
                                   appli=1)
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/notify',
+            'GET', 'https://api.health.nokia.com/notify',
             params={'action': 'subscribe', 'appli': 1,
                     'comment': 'fake_comment',
                     'callbackurl': 'http://www.example.com/'})
@@ -303,7 +303,7 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request(None)
         resp = self.api.unsubscribe('http://www.example.com/')
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/notify',
+            'GET', 'https://api.health.nokia.com/notify',
             params={'action': 'revoke',
                     'callbackurl': 'http://www.example.com/'})
         self.assertEqual(resp, None)
@@ -312,7 +312,7 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request(None)
         resp = self.api.unsubscribe('http://www.example.com/', appli=1)
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/notify',
+            'GET', 'https://api.health.nokia.com/notify',
             params={'action': 'revoke', 'appli': 1,
                     'callbackurl': 'http://www.example.com/'})
         self.assertEqual(resp, None)
@@ -322,7 +322,7 @@ class TestWithingsApi(unittest.TestCase):
         Check that is_subscribed fetches the right URL and returns the
         expected results
         """
-        url = 'http://wbsapi.withings.net/notify'
+        url = 'https://api.health.nokia.com/notify'
         params = {
             'callbackurl': 'http://www.example.com/',
             'action': 'get',
@@ -349,7 +349,7 @@ class TestWithingsApi(unittest.TestCase):
         ]})
         resp = self.api.list_subscriptions()
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/notify',
+            'GET', 'https://api.health.nokia.com/notify',
             params={'action': 'list', 'appli': 1})
         self.assertEqual(type(resp), list)
         self.assertEqual(len(resp), 1)
@@ -360,7 +360,7 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request({'profiles': []})
         resp = self.api.list_subscriptions()
         Session.request.assert_called_once_with(
-            'GET', 'http://wbsapi.withings.net/notify',
+            'GET', 'https://api.health.nokia.com/notify',
             params={'action': 'list', 'appli': 1})
         self.assertEqual(type(resp), list)
         self.assertEqual(len(resp), 0)

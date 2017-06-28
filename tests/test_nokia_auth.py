@@ -1,6 +1,6 @@
 import unittest
 
-from withings import WithingsAuth, WithingsCredentials
+from nokia import NokiaAuth, NokiaCredentials
 from requests_oauthlib import OAuth1Session
 
 try:
@@ -9,7 +9,7 @@ except ImportError:
     from mock import MagicMock
 
 
-class TestWithingsAuth(unittest.TestCase):
+class TestNokiaAuth(unittest.TestCase):
     def setUp(self):
         self.consumer_key = 'fake_consumer_key'
         self.consumer_secret = 'fake_consumer_secret'
@@ -26,25 +26,25 @@ class TestWithingsAuth(unittest.TestCase):
             return_value=self.access_token)
 
     def test_attributes(self):
-        """ Make sure the WithingsAuth objects have the right attributes """
-        assert hasattr(WithingsAuth, 'URL')
-        auth = WithingsAuth(self.consumer_key, self.consumer_secret)
+        """ Make sure the NokiaAuth objects have the right attributes """
+        assert hasattr(NokiaAuth, 'URL')
+        auth = NokiaAuth(self.consumer_key, self.consumer_secret)
         assert hasattr(auth, 'consumer_key')
         self.assertEqual(auth.consumer_key, self.consumer_key)
         assert hasattr(auth, 'consumer_secret')
         self.assertEqual(auth.consumer_secret, self.consumer_secret)
 
     def test_attribute_defaults(self):
-        """ Make sure WithingsAuth attributes have the proper defaults """
-        self.assertEqual(WithingsAuth.URL,
-                         'https://oauth.withings.com/account')
-        auth = WithingsAuth(self.consumer_key, self.consumer_secret)
+        """ Make sure NokiaAuth attributes have the proper defaults """
+        self.assertEqual(NokiaAuth.URL,
+                         'https://developer.health.nokia.com/account/')
+        auth = NokiaAuth(self.consumer_key, self.consumer_secret)
         self.assertEqual(auth.oauth_token, None)
         self.assertEqual(auth.oauth_secret, None)
 
     def test_get_authorize_url(self):
         """ Make sure the get_authorize_url function works as expected """
-        auth = WithingsAuth(self.consumer_key, self.consumer_secret)
+        auth = NokiaAuth(self.consumer_key, self.consumer_secret)
         # Returns the OAuth1Session.authorization_url results
         self.assertEqual(auth.get_authorize_url(), 'URL')
         # oauth_token and oauth_secret have now been set to the values
@@ -54,11 +54,11 @@ class TestWithingsAuth(unittest.TestCase):
 
     def test_get_credentials(self):
         """ Make sure the get_credentials function works as expected """
-        auth = WithingsAuth(self.consumer_key, self.consumer_secret)
-        # Returns an authorized WithingsCredentials object
+        auth = NokiaAuth(self.consumer_key, self.consumer_secret)
+        # Returns an authorized NokiaCredentials object
         creds = auth.get_credentials('FAKE_OAUTH_VERIFIER')
-        assert isinstance(creds, WithingsCredentials)
-        # Check that the attributes of the WithingsCredentials object are
+        assert isinstance(creds, NokiaCredentials)
+        # Check that the attributes of the NokiaCredentials object are
         # correct.
         self.assertEqual(creds.access_token, 'fake_oauth_token')
         self.assertEqual(creds.access_token_secret, 'fake_oauth_token_secret')

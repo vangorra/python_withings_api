@@ -1,12 +1,12 @@
 import unittest
 
-from withings import WithingsMeasureGroup, WithingsMeasures
+from nokia import NokiaMeasureGroup, NokiaMeasures
 
 
-class TestWithingsMeasures(unittest.TestCase):
-    def test_withings_measures_init(self):
+class TestNokiaMeasures(unittest.TestCase):
+    def test_nokia_measures_init(self):
         """
-        Check that WithingsMeasures create groups correctly and that the
+        Check that NokiaMeasures create groups correctly and that the
         update time is parsed correctly
         """
         data = {
@@ -20,15 +20,15 @@ class TestWithingsMeasures(unittest.TestCase):
                  'grpid': 111111112}
             ]
         }
-        measures = WithingsMeasures(data)
-        self.assertEqual(type(measures), WithingsMeasures)
+        measures = NokiaMeasures(data)
+        self.assertEqual(type(measures), NokiaMeasures)
         self.assertEqual(measures.data, data)
         self.assertEqual(type(measures.measuregrps), list)
         self.assertEqual(len(measures.measuregrps), 2)
         self.assertEqual(measures.measuregrps[0], data['measuregrps'][0])
         self.assertEqual(measures.measuregrps[1], data['measuregrps'][1])
         self.assertEqual(len(measures), 2)
-        self.assertEqual(type(measures[0]), WithingsMeasureGroup)
+        self.assertEqual(type(measures[0]), NokiaMeasureGroup)
         self.assertEqual(measures[0].weight, 86.0)
         self.assertEqual(measures[1].height, 1.85)
         self.assertEqual(measures.updatetime.timestamp, 1409596058)

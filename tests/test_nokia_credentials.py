@@ -1,17 +1,17 @@
 import unittest
 
-from withings import WithingsAuth, WithingsCredentials
+from nokia import NokiaAuth, NokiaCredentials
 
 
-class TestWithingsCredentials(unittest.TestCase):
+class TestNokiaCredentials(unittest.TestCase):
 
     def test_attributes(self):
         """
-        Make sure the WithingsCredentials objects have the right attributes
+        Make sure the NokiaCredentials objects have the right attributes
         """
-        creds = WithingsCredentials(access_token=1, access_token_secret=1,
-                                    consumer_key=1, consumer_secret=1,
-                                    user_id=1)
+        creds = NokiaCredentials(access_token=1, access_token_secret=1,
+                                 consumer_key=1, consumer_secret=1,
+                                 user_id=1)
         assert hasattr(creds, 'access_token')
         self.assertEqual(creds.access_token, 1)
         assert hasattr(creds, 'access_token_secret')
@@ -25,9 +25,9 @@ class TestWithingsCredentials(unittest.TestCase):
 
     def test_attribute_defaults(self):
         """
-        Make sure WithingsCredentials attributes have the proper defaults
+        Make sure NokiaCredentials attributes have the proper defaults
         """
-        creds = WithingsCredentials()
+        creds = NokiaCredentials()
         self.assertEqual(creds.access_token, None)
         self.assertEqual(creds.access_token_secret, None)
         self.assertEqual(creds.consumer_key, None)
