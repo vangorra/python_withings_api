@@ -4,18 +4,18 @@ from setuptools import setup
 required = [line for line in open('requirements/base.txt').read().split("\n")]
 
 setup(
-    name='pywithings',
+    name='nokia',
     version='0.4.0',
-    description="Library for the Withings API",
+    description="Library for the Nokia Health API",
     author='ORCAS',
     author_email='developer@orcasinc.com',
-    url="https://github.com/orcasgit/python-withings",
+    url="https://github.com/orcasgit/python-nokia",
     license = "MIT License",
-    packages = ['withings'],
+    packages = ['nokia'],
     install_requires = required,
     test_suite='tests.all_tests',
-    scripts=['bin/withings'],
-    keywords="withings",
+    scripts=['bin/nokia'],
+    keywords="withings nokia",
     zip_safe = True,
     classifiers=[
         "Development Status :: 3 - Alpha",

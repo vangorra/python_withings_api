@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-from withings import *
 from optparse import OptionParser
 import sys
 import os
+
+import nokia
 
 try:
     import configparser
@@ -28,21 +29,21 @@ command = args.pop(0)
 if not options.config is None and os.path.exists(options.config):
     config = configparser.ConfigParser(vars(options))
     config.read(options.config)
-    options.consumer_key = config.get('withings', 'consumer_key')
-    options.consumer_secret = config.get('withings', 'consumer_secret')
-    options.access_token = config.get('withings', 'access_token')
-    options.access_token_secret = config.get('withings', 'access_token_secret')
-    options.user_id = config.get('withings', 'user_id')
+    options.consumer_key = config.get('nokia', 'consumer_key')
+    options.consumer_secret = config.get('nokia', 'consumer_secret')
+    options.access_token = config.get('nokia', 'access_token')
+    options.access_token_secret = config.get('nokia', 'access_token_secret')
+    options.user_id = config.get('nokia', 'user_id')
 
 if options.consumer_key is None or options.consumer_secret is None:
     print("You must provide a consumer key and consumer secret")
-    print("Create an Oauth application here: https://oauth.withings.com/partner/add")
+    print("Create an Oauth application here: https://developer.health.nokia.com/en/partner/add")
     sys.exit(1)
 
 if options.access_token is None or options.access_token_secret is None or options.user_id is None:
     print("Missing authentification information!")
     print("Starting authentification process...")
-    auth = WithingsAuth(options.consumer_key, options.consumer_secret)
+    auth = nokia.NokiaAuth(options.consumer_key, options.consumer_secret)
     authorize_url = auth.get_authorize_url()
     print("Go to %s allow the app and copy your oauth_verifier") % authorize_url
     oauth_verifier = raw_input('Please enter your oauth_verifier: ')
@@ -52,23 +53,23 @@ if options.access_token is None or options.access_token_secret is None or option
     options.user_id = creds.user_id
     print("")
 else:
-    creds = WithingsCredentials(options.access_token, options.access_token_secret,
-                                    options.consumer_key, options.consumer_secret,
-                                    options.user_id)
+    creds = nokia.NokiaCredentials(options.access_token, options.access_token_secret,
+                                   options.consumer_key, options.consumer_secret,
+                                   options.user_id)
 
-client = WithingsApi(creds)
+client = nokia.NokiaApi(creds)
 
 if command == 'saveconfig':
     if options.config is None:
         print("Missing config filename")
         sys.exit(1)
     config = configparser.ConfigParser()
-    config.add_section('withings')
-    config.set('withings', 'consumer_key', options.consumer_key)
-    config.set('withings', 'consumer_secret', options.consumer_secret)
-    config.set('withings', 'access_token', options.access_token)
-    config.set('withings', 'access_token_secret', options.access_token_secret)
-    config.set('withings', 'user_id', options.user_id)
+    config.add_section('nokia')
+    config.set('nokia', 'consumer_key', options.consumer_key)
+    config.set('nokia', 'consumer_secret', options.consumer_secret)
+    config.set('nokia', 'access_token', options.access_token)
+    config.set('nokia', 'access_token_secret', options.access_token_secret)
+    config.set('nokia', 'user_id', options.user_id)
     with open(options.config, 'wb') as f:
         config.write(f)
     print("Config file saved to %s" % options.config)
@@ -83,11 +84,11 @@ if command == 'userinfo':
 if command == 'last':
     m = client.get_measures(limit=1)[0]
     if len(args) == 1:
-        for n, t in WithingsMeasureGroup.MEASURE_TYPES:
+        for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
             if n == args[0]:
                 print(m.get_measure(t))
     else:
-        for n, t in WithingsMeasureGroup.MEASURE_TYPES:
+        for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
             print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
     sys.exit(0)
 

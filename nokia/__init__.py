@@ -1,40 +1,40 @@
 # -*- coding: utf-8 -*-
 #
 """
-Python library for the Withings API
+Python library for the Nokia Health API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Withings Body metrics Services API
-<http://www.withings.com/en/api/wbsapiv2>
+Nokia Health API
+<https://developer.health.nokia.com/api>
 
 Uses Oauth 1.0 to authentify. You need to obtain a consumer key
-and consumer secret from Withings by creating an application
-here: <https://oauth.withings.com/partner/add>
+and consumer secret from Nokia by creating an application
+here: <https://developer.health.nokia.com/en/partner/add>
 
 Usage:
 
-auth = WithingsAuth(CONSUMER_KEY, CONSUMER_SECRET)
+auth = NokiaAuth(CONSUMER_KEY, CONSUMER_SECRET)
 authorize_url = auth.get_authorize_url()
-print "Go to %s allow the app and copy your oauth_verifier" % authorize_url
+print("Go to %s allow the app and copy your oauth_verifier" % authorize_url)
 oauth_verifier = raw_input('Please enter your oauth_verifier: ')
 creds = auth.get_credentials(oauth_verifier)
 
-client = WithingsApi(creds)
+client = NokiaApi(creds)
 measures = client.get_measures(limit=1)
-print "Your last measured weight: %skg" % measures[0].weight
+print("Your last measured weight: %skg" % measures[0].weight)
 
 """
 
 from __future__ import unicode_literals
 
-__title__ = 'pywithings'
+__title__ = 'nokia'
 __version__ = '0.4.0'
 __author__ = 'Maxime Bouroumeau-Fuseau, and ORCAS'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2012-2017 Maxime Bouroumeau-Fuseau, and ORCAS'
 
-__all__ = [str('WithingsCredentials'), str('WithingsAuth'), str('WithingsApi'),
-           str('WithingsMeasures'), str('WithingsMeasureGroup')]
+__all__ = [str('NokiaCredentials'), str('NokiaAuth'), str('NokiaApi'),
+           str('NokiaMeasures'), str('NokiaMeasureGroup')]
 
 import arrow
 import datetime
@@ -45,7 +45,7 @@ from arrow.parser import ParserError
 from requests_oauthlib import OAuth1, OAuth1Session
 
 
-class WithingsCredentials(object):
+class NokiaCredentials(object):
     def __init__(self, access_token=None, access_token_secret=None,
                  consumer_key=None, consumer_secret=None, user_id=None):
         self.access_token = access_token
@@ -55,8 +55,8 @@ class WithingsCredentials(object):
         self.user_id = user_id
 
 
-class WithingsAuth(object):
-    URL = 'https://oauth.withings.com/account'
+class NokiaAuth(object):
+    URL = 'https://developer.health.nokia.com/account'
 
     def __init__(self, consumer_key, consumer_secret):
         self.consumer_key = consumer_key
@@ -82,7 +82,7 @@ class WithingsAuth(object):
                               resource_owner_secret=self.oauth_secret,
                               verifier=oauth_verifier)
         tokens = oauth.fetch_access_token('%s/access_token' % self.URL)
-        return WithingsCredentials(
+        return NokiaCredentials(
             access_token=tokens['oauth_token'],
             access_token_secret=tokens['oauth_token_secret'],
             consumer_key=self.consumer_key,
@@ -99,8 +99,8 @@ def is_date_class(val):
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
 
-class WithingsApi(object):
-    URL = 'http://wbsapi.withings.net'
+class NokiaApi(object):
+    URL = 'https://api.health.nokia.com'
 
     def __init__(self, credentials):
         self.credentials = credentials
@@ -133,15 +133,15 @@ class WithingsApi(object):
     def get_activities(self, **kwargs):
         r = self.request('measure', 'getactivity', params=kwargs, version='v2')
         activities = r['activities'] if 'activities' in r else [r]
-        return [WithingsActivity(act) for act in activities]
+        return [NokiaActivity(act) for act in activities]
 
     def get_measures(self, **kwargs):
         r = self.request('measure', 'getmeas', kwargs)
-        return WithingsMeasures(r)
+        return NokiaMeasures(r)
 
     def get_sleep(self, **kwargs):
         r = self.request('sleep', 'get', params=kwargs, version='v2')
-        return WithingsSleep(r)
+        return NokiaSleep(r)
 
     def subscribe(self, callback_url, comment, **kwargs):
         params = {'callbackurl': callback_url, 'comment': comment}
@@ -166,7 +166,7 @@ class WithingsApi(object):
         return r['profiles']
 
 
-class WithingsObject(object):
+class NokiaObject(object):
     def __init__(self, data):
         self.set_attributes(data)
 
@@ -179,18 +179,18 @@ class WithingsObject(object):
                 setattr(self, key, val)
 
 
-class WithingsActivity(WithingsObject):
+class NokiaActivity(NokiaObject):
     pass
 
 
-class WithingsMeasures(list, WithingsObject):
+class NokiaMeasures(list, NokiaObject):
     def __init__(self, data):
-        super(WithingsMeasures, self).__init__(
-            [WithingsMeasureGroup(g) for g in data['measuregrps']])
+        super(NokiaMeasures, self).__init__(
+            [NokiaMeasureGroup(g) for g in data['measuregrps']])
         self.set_attributes(data)
 
 
-class WithingsMeasureGroup(WithingsObject):
+class NokiaMeasureGroup(NokiaObject):
     MEASURE_TYPES = (
         ('weight', 1),
         ('height', 4),
@@ -203,7 +203,7 @@ class WithingsMeasureGroup(WithingsObject):
     )
 
     def __init__(self, data):
-        super(WithingsMeasureGroup, self).__init__(data)
+        super(NokiaMeasureGroup, self).__init__(data)
         for n, t in self.MEASURE_TYPES:
             self.__setattr__(n, self.get_measure(t))
 
@@ -223,13 +223,13 @@ class WithingsMeasureGroup(WithingsObject):
         return None
 
 
-class WithingsSleepSeries(WithingsObject):
+class NokiaSleepSeries(NokiaObject):
     def __init__(self, data):
-        super(WithingsSleepSeries, self).__init__(data)
+        super(NokiaSleepSeries, self).__init__(data)
         self.timedelta = self.enddate - self.startdate
 
 
-class WithingsSleep(WithingsObject):
+class NokiaSleep(NokiaObject):
     def __init__(self, data):
-        super(WithingsSleep, self).__init__(data)
-        self.series = [WithingsSleepSeries(series) for series in self.series]
+        super(NokiaSleep, self).__init__(data)
+        self.series = [NokiaSleepSeries(series) for series in self.series]

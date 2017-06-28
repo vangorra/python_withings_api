@@ -1,5 +1,5 @@
 *.pyc
 .tox
 .coverage
-withings.conf
-withings.egg-info
+nokia.conf
+nokia.egg-info
