@@ -39,15 +39,11 @@ print("Your last measured weight: %skg" % measures[0].weight)
  
  **Using Saved Credentials**
   
-```
+``` python
 from nokia import NokiaAuth, NokiaApi, NokiaCredentials
 from settings import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET, USER_ID
 
-creds = NokiaCredentials(ACCESS_TOKEN, 
-						ACCESS_TOKEN_SECRET, 
-						CONSUMER_KEY, 
-						CONSUMER_SECRET, 
-						USER_ID)
+creds = NokiaCredentials(ACCESS_TOKEN, ACCESS_TOKEN_SECRET, CONSUMER_KEY, CONSUMER_SECRET, USER_ID)
 client = NokiaApi(creds)
 
 measures = client.get_measures(limit=1)
@@ -57,7 +53,6 @@ print("Your last measured weight: %skg" % measures[0].weight)
  
  **Running From Command line:**
 
-```
-nokia [command] --config nokia.cfg 
-```
+	nokia [command] --config nokia.cfg 
+
 
