@@ -200,6 +200,14 @@ class NokiaMeasureGroup(NokiaObject):
         ('diastolic_blood_pressure', 9),
         ('systolic_blood_pressure', 10),
         ('heart_pulse', 11),
+        ('temperature', 12),
+        ('spo2', 54),
+        ('body_temperature', 71),
+        ('skin_temperature', 72),
+        ('muscle_mass', 76),
+        ('hydration', 77),
+        ('bone_mass', 88),
+        ('pulse_wave_velocity', 91)
     )
 
     def __init__(self, data):
