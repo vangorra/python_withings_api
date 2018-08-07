@@ -7,21 +7,23 @@ Python library for the Nokia Health API
 Nokia Health API
 <https://developer.health.nokia.com/api>
 
-Uses Oauth 1.0 to authentify. You need to obtain a consumer key
+Uses Oauth 2.0 to authentify. You need to obtain a consumer key
 and consumer secret from Nokia by creating an application
 here: <https://developer.health.nokia.com/en/partner/add>
 
 Usage:
 
-auth = NokiaAuth(CONSUMER_KEY, CONSUMER_SECRET)
+auth = NokiaAuth(CONSUMER_KEY, CONSUMER_SECRET, CALLBACK_URL)
 authorize_url = auth.get_authorize_url()
-print("Go to %s allow the app and copy your oauth_verifier" % authorize_url)
-oauth_verifier = raw_input('Please enter your oauth_verifier: ')
-creds = auth.get_credentials(oauth_verifier)
+print("Go to %s allow the app and copy the url you are redirected to." % authorize_url)
+authorization_response = raw_input('Please enter your full authorization response url: ')
+creds = auth.get_credentials(authorization_response)
 
 client = NokiaApi(creds)
 measures = client.get_measures(limit=1)
 print("Your last measured weight: %skg" % measures[0].weight)
+
+creds = client.get_credentials()
 
 """
 
@@ -39,55 +41,56 @@ __all__ = [str('NokiaCredentials'), str('NokiaAuth'), str('NokiaApi'),
 import arrow
 import datetime
 import json
-import requests
 
 from arrow.parser import ParserError
-from requests_oauthlib import OAuth1, OAuth1Session
-
+from requests_oauthlib import OAuth2Session
 
 class NokiaCredentials(object):
-    def __init__(self, access_token=None, access_token_secret=None,
-                 consumer_key=None, consumer_secret=None, user_id=None):
+    def __init__(self, access_token=None, token_expiry=None, token_type=None,
+                 refresh_token=None, user_id=None, 
+                 consumer_key=None, consumer_secret=None):
         self.access_token = access_token
-        self.access_token_secret = access_token_secret
+        self.token_expiry = token_expiry
+        self.token_type = token_type
+        self.refresh_token = refresh_token
+        self.user_id = user_id
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
-        self.user_id = user_id
 
 
 class NokiaAuth(object):
-    URL = 'https://developer.health.nokia.com/account'
+    URL = 'https://account.health.nokia.com'
 
-    def __init__(self, consumer_key, consumer_secret):
+    def __init__(self, consumer_key, consumer_secret, redirect_uri):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
-        self.oauth_token = None
-        self.oauth_secret = None
+        self.redirect_uri = redirect_uri
 
-    def get_authorize_url(self, callback_uri=None):
-        oauth = OAuth1Session(self.consumer_key,
-                              client_secret=self.consumer_secret,
-                              callback_uri=callback_uri)
+    def get_authorize_url(self):
+        oauth = OAuth2Session(self.consumer_key,
+                              redirect_uri=self.redirect_uri, 
+                              scope='user.metrics')
 
-        tokens = oauth.fetch_request_token('%s/request_token' % self.URL)
-        self.oauth_token = tokens['oauth_token']
-        self.oauth_secret = tokens['oauth_token_secret']
+        return oauth.authorization_url('%s/oauth2_user/authorize2'%self.URL)[0]
 
-        return oauth.authorization_url('%s/authorize' % self.URL)
-
-    def get_credentials(self, oauth_verifier):
-        oauth = OAuth1Session(self.consumer_key,
-                              client_secret=self.consumer_secret,
-                              resource_owner_key=self.oauth_token,
-                              resource_owner_secret=self.oauth_secret,
-                              verifier=oauth_verifier)
-        tokens = oauth.fetch_access_token('%s/access_token' % self.URL)
+    def get_credentials(self, authorization_response):
+        
+        oauth = OAuth2Session(self.consumer_key,
+                              redirect_uri=self.redirect_uri, 
+                              scope='user.metrics')
+        
+        tokens = oauth.fetch_token('%s/oauth2/token' % self.URL,
+            authorization_response=authorization_response,
+            client_secret=self.consumer_secret)
+        
         return NokiaCredentials(
-            access_token=tokens['oauth_token'],
-            access_token_secret=tokens['oauth_token_secret'],
+            access_token=tokens['access_token'],
+            token_expiry=str(ts()+int(tokens['expires_in'])),
+            token_type=tokens['token_type'],
+            refresh_token=tokens['refresh_token'],
+            user_id=tokens['userid'],
             consumer_key=self.consumer_key,
             consumer_secret=self.consumer_secret,
-            user_id=tokens['userid'],
         )
 
 
@@ -98,24 +101,46 @@ def is_date(key):
 def is_date_class(val):
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
+def ts():
+    return int(datetime.datetime.now(tz=datetime.timezone.utc).timestamp())
+
 
 class NokiaApi(object):
     URL = 'https://api.health.nokia.com'
 
     def __init__(self, credentials):
-        self.credentials = credentials
-        self.oauth = OAuth1(credentials.consumer_key,
-                            credentials.consumer_secret,
-                            credentials.access_token,
-                            credentials.access_token_secret,
-                            signature_type='query')
-        self.client = requests.Session()
-        self.client.auth = self.oauth
-        self.client.params.update({'userid': credentials.user_id})
+        self.credentials = credentials        
+        self.token = {
+            'access_token': credentials.access_token,
+            'refresh_token': credentials.refresh_token,
+            'token_type': credentials.token_type,
+            'expires_in': str(int(credentials.token_expiry) - ts()),
+        }
+        extra = {
+            'client_id': credentials.consumer_key,
+            'client_secret': credentials.consumer_secret,
+        }
+        refresh_url = 'https://account.health.nokia.com/oauth2/token'
+        self.client = OAuth2Session(credentials.consumer_key, 
+                                    token=self.token, 
+                                    auto_refresh_url=refresh_url, 
+                                    auto_refresh_kwargs=extra, 
+                                    token_updater=self.set_token)
+        
+    def get_credentials(self):
+        return self.credentials
+    
+    def set_token(self, token):
+        self.token = token
+        self.credentials.token_expiry = str(ts()+int(self.token['expires_in']))
+        self.credentials.access_token = self.token['access_token']
+        self.credentials.refresh_token = self.token['refresh_token']
 
     def request(self, service, action, params=None, method='GET',
                 version=None):
         params = params or {}
+        params['access_token'] = self.token['access_token']
+        params['userid'] = self.credentials.user_id
         params['action'] = action
         for key, val in params.items():
             if is_date(key) and is_date_class(val):
@@ -223,6 +248,9 @@ class NokiaMeasureGroup(NokiaObject):
 
     def is_target(self):
         return self.category == 2
+    
+    def get_date(self):
+        return self.mesarues.date
 
     def get_measure(self, measure_type):
         for m in self.measures:

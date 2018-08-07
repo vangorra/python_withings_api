@@ -5,9 +5,9 @@
 Nokia Health API
 <https://developer.health.nokia.com/api/doc>
 
-Uses Oauth 1.0 to authentify. You need to obtain a consumer key
+Uses OAuth 2.0 to authenticate. You need to obtain a consumer key
 and consumer secret from Nokia by creating an application
-here: <https://developer.health.nokia.com/en/partner/add>
+here: <https://account.health.nokia.com/partner/add_oauth2>
 
 **Installation:**
 
@@ -17,23 +17,24 @@ here: <https://developer.health.nokia.com/en/partner/add>
 
 ``` python
 from nokia import NokiaAuth, NokiaApi
-from settings import CONSUMER_KEY, CONSUMER_SECRET
+from settings import CONSUMER_KEY, CONSUMER_SECRET, CALLBACK_URL
 
-auth = NokiaAuth(CONSUMER_KEY, CONSUMER_SECRET)
+auth = NokiaAuth(CONSUMER_KEY, CONSUMER_SECRET, CALLBACK_URL)
 authorize_url = auth.get_authorize_url()
-print("Go to %s allow the app and copy your oauth_verifier" % authorize_url)
-
-oauth_verifier = raw_input('Please enter your oauth_verifier: ')
-creds = auth.get_credentials(oauth_verifier)
+print("Go to %s allow the app and copy the url you are redirected to." % authorize_url)
+authorization_response = raw_input('Please enter your full authorization response url: ')
+creds = auth.get_credentials(authorization_response)
 
 client = NokiaApi(creds)
 measures = client.get_measures(limit=1)
 print("Your last measured weight: %skg" % measures[0].weight)
+
+creds = client.get_credentials()
 ```
 **Saving Credentials:**
 
 
-	nokia saveconfig --consumer-key [consumerkey] --consumer-secret [consumersecret] --config nokia.cfg`
+	nokia saveconfig --consumer-key [consumerkey] --consumer-secret [consumersecret] --callback-url [callbackurl] --config nokia.cfg`
 
  Which will save the necessary credentials to `nokia.cfg`
  
@@ -41,9 +42,9 @@ print("Your last measured weight: %skg" % measures[0].weight)
   
 ``` python
 from nokia import NokiaAuth, NokiaApi, NokiaCredentials
-from settings import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET, USER_ID
+from settings import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID
 
-creds = NokiaCredentials(ACCESS_TOKEN, ACCESS_TOKEN_SECRET, CONSUMER_KEY, CONSUMER_SECRET, USER_ID)
+creds = NokiaCredentials(ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID, CONSUMER_KEY, CONSUMER_SECRET )
 client = NokiaApi(creds)
 
 measures = client.get_measures(limit=1)
