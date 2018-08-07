@@ -248,9 +248,6 @@ class NokiaMeasureGroup(NokiaObject):
 
     def is_target(self):
         return self.category == 2
-    
-    def get_date(self):
-        return self.mesarues.date
 
     def get_measure(self, measure_type):
         for m in self.measures:
