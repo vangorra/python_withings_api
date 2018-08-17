@@ -9,7 +9,7 @@ Nokia Health API
 
 Uses Oauth 2.0 to authentify. You need to obtain a consumer key
 and consumer secret from Nokia by creating an application
-here: <https://developer.health.nokia.com/en/partner/add>
+here: <https://account.health.nokia.com/partner/add_oauth2>
 
 Usage:
 
@@ -48,39 +48,40 @@ from requests_oauthlib import OAuth2Session
 class NokiaCredentials(object):
     def __init__(self, access_token=None, token_expiry=None, token_type=None,
                  refresh_token=None, user_id=None, 
-                 consumer_key=None, consumer_secret=None):
+                 client_id=None, consumer_secret=None):
         self.access_token = access_token
         self.token_expiry = token_expiry
         self.token_type = token_type
         self.refresh_token = refresh_token
         self.user_id = user_id
-        self.consumer_key = consumer_key
+        self.client_id = client_id
         self.consumer_secret = consumer_secret
 
 
 class NokiaAuth(object):
     URL = 'https://account.health.nokia.com'
 
-    def __init__(self, consumer_key, consumer_secret, redirect_uri):
-        self.consumer_key = consumer_key
+    def __init__(self, client_id, consumer_secret, callback_uri):
+        self.client_id = client_id
         self.consumer_secret = consumer_secret
-        self.redirect_uri = redirect_uri
+        self.callback_uri = callback_uri
 
-    def get_authorize_url(self):
-        oauth = OAuth2Session(self.consumer_key,
-                              redirect_uri=self.redirect_uri, 
-                              scope='user.metrics')
+    def get_authorize_url(self, scope='user.metrics'):
+        oauth = OAuth2Session(self.client_id,
+                              redirect_uri=self.callback_uri, 
+                              scope=scope)
 
         return oauth.authorization_url('%s/oauth2_user/authorize2'%self.URL)[0]
 
-    def get_credentials(self, authorization_response):
+    def get_credentials(self, code):
         
-        oauth = OAuth2Session(self.consumer_key,
-                              redirect_uri=self.redirect_uri, 
+        oauth = OAuth2Session(self.client_id,
+                              redirect_uri=self.callback_uri, 
                               scope='user.metrics')
         
-        tokens = oauth.fetch_token('%s/oauth2/token' % self.URL,
-            authorization_response=authorization_response,
+        tokens = oauth.fetch_token(
+            '%s/oauth2/token' % self.URL,
+            code=code,
             client_secret=self.consumer_secret)
         
         return NokiaCredentials(
@@ -89,7 +90,7 @@ class NokiaAuth(object):
             token_type=tokens['token_type'],
             refresh_token=tokens['refresh_token'],
             user_id=tokens['userid'],
-            consumer_key=self.consumer_key,
+            client_id=self.client_id,
             consumer_secret=self.consumer_secret,
         )
 
@@ -117,11 +118,11 @@ class NokiaApi(object):
             'expires_in': str(int(credentials.token_expiry) - ts()),
         }
         extra = {
-            'client_id': credentials.consumer_key,
+            'client_id': credentials.client_id,
             'client_secret': credentials.consumer_secret,
         }
         refresh_url = 'https://account.health.nokia.com/oauth2/token'
-        self.client = OAuth2Session(credentials.consumer_key, 
+        self.client = OAuth2Session(credentials.client_id, 
                                     token=self.token, 
                                     auto_refresh_url=refresh_url, 
                                     auto_refresh_kwargs=extra, 

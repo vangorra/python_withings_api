@@ -2,7 +2,10 @@
 from optparse import OptionParser
 import sys
 import os
+import threading
+import webbrowser
 
+import cherrypy
 import nokia
 
 try:
@@ -11,110 +14,155 @@ except ImportError:  # Python 2.x fallback
     import ConfigParser as configparser
 
 
-parser = OptionParser()
-parser.add_option('-k', '--consumer-key', dest='consumer_key', help="Consumer Key")
-parser.add_option('-s', '--consumer-secret', dest='consumer_secret', help="Consumer Secret")
-parser.add_option('-a', '--access-token', dest='access_token', help="Access Token")
-parser.add_option('-t', '--access-token-secret', dest='access_token_secret', help="Access Token Secret")
-parser.add_option('-u', '--userid', dest='user_id', help="User ID")
-parser.add_option('-c', '--config', dest='config', help="Config file")
+class NokiaOAuth2Server:
+    def __init__(self, client_id, consumer_secret, callback_uri):
+        """ Initialize the NokiaAuth client """
+        self.success_html = """
+            <h1>You are now authorized to access the Nokia API!</h1>
+            <br/><h3>You can close this window</h3>"""
+        self.failure_html = """
+            <h1>ERROR: %s</h1><br/><h3>You can close this window</h3>%s"""
 
-(options, args) = parser.parse_args()
+        self.auth = nokia.NokiaAuth(client_id, consumer_secret, callback_uri)
 
-if len(args) == 0:
-    print("Missing command!")
-    sys.exit(1)
-command = args.pop(0)
+    def browser_authorize(self):
+        """
+        Open a browser to the authorization url and spool up a CherryPy
+        server to accept the response
+        """
+        url = self.auth.get_authorize_url(scope='user.info,user.metrics,user.activity')
+        print(url)
+        # Open the web browser in a new thread for command-line browser support
+        threading.Timer(1, webbrowser.open, args=(url,)).start()
+        cherrypy.quickstart(self)
 
-if not options.config is None and os.path.exists(options.config):
-    config = configparser.ConfigParser(vars(options))
-    config.read(options.config)
-    options.consumer_key = config.get('nokia', 'consumer_key')
-    options.consumer_secret = config.get('nokia', 'consumer_secret')
-    options.access_token = config.get('nokia', 'access_token')
-    options.access_token_secret = config.get('nokia', 'access_token_secret')
-    options.user_id = config.get('nokia', 'user_id')
+    @cherrypy.expose
+    def index(self, state, code=None, error=None):
+        """
+        Receive a Nokia response containing a code. Use the code to fetch the
+        credentials.
+        """
+        error = None
+        if code:
+            self.creds = self.auth.get_credentials(code)
+        else:
+            error = self._fmt_failure('Unknown error while authenticating')
+        # Use a thread to shutdown cherrypy so we can return HTML first
+        self._shutdown_cherrypy()
+        return error if error else self.success_html
 
-if options.consumer_key is None or options.consumer_secret is None:
-    print("You must provide a consumer key and consumer secret")
-    print("Create an Oauth application here: https://developer.health.nokia.com/en/partner/add")
-    sys.exit(1)
+    def _fmt_failure(self, message):
+        tb = traceback.format_tb(sys.exc_info()[2])
+        tb_html = '<pre>%s</pre>' % ('\n'.join(tb)) if tb else ''
+        return self.failure_html % (message, tb_html)
 
-if options.access_token is None or options.access_token_secret is None or options.user_id is None:
-    print("Missing authentification information!")
-    print("Starting authentification process...")
-    auth = nokia.NokiaAuth(options.consumer_key, options.consumer_secret)
-    authorize_url = auth.get_authorize_url()
-    print("Go to %s allow the app and copy your oauth_verifier") % authorize_url
-    oauth_verifier = raw_input('Please enter your oauth_verifier: ')
-    creds = auth.get_credentials(oauth_verifier)
-    options.access_token = creds.access_token
-    options.access_token_secret = creds.access_token_secret
-    options.user_id = creds.user_id
-    print("")
-else:
-    creds = nokia.NokiaCredentials(options.access_token, options.access_token_secret,
-                                   options.consumer_key, options.consumer_secret,
-                                   options.user_id)
+    def _shutdown_cherrypy(self):
+        """ Shutdown cherrypy in one second, if it's running """
+        if cherrypy.engine.state == cherrypy.engine.states.STARTED:
+            threading.Timer(1, cherrypy.engine.exit).start()
 
-client = nokia.NokiaApi(creds)
 
-if command == 'saveconfig':
-    if options.config is None:
-        print("Missing config filename")
+if __name__ == '__main__':
+    parser = OptionParser()
+    parser.add_option('-i', '--client-id', dest='client_id', help="Client ID")
+    parser.add_option('-s', '--consumer-secret', dest='consumer_secret', help="Consumer Secret")
+    parser.add_option('-b', '--callback-uri', dest='callback_uri', help="Callback URI")
+    parser.add_option('-u', '--userid', dest='user_id', help="User ID")
+    parser.add_option('-c', '--config', dest='config', help="Config file")
+
+    (options, args) = parser.parse_args()
+
+    if len(args) == 0:
+        print("Missing command!")
         sys.exit(1)
-    config = configparser.ConfigParser()
-    config.add_section('nokia')
-    config.set('nokia', 'consumer_key', options.consumer_key)
-    config.set('nokia', 'consumer_secret', options.consumer_secret)
-    config.set('nokia', 'access_token', options.access_token)
-    config.set('nokia', 'access_token_secret', options.access_token_secret)
-    config.set('nokia', 'user_id', options.user_id)
-    with open(options.config, 'wb') as f:
-        config.write(f)
-    print("Config file saved to %s" % options.config)
-    sys.exit(0)
+    command = args.pop(0)
 
+    req_auth_attrs = ['client_id', 'consumer_secret']
+    req_creds_attrs = [
+        'access_token',
+        'token_expiry',
+        'token_type',
+        'refresh_token',
+        'user_id'
+    ] + req_auth_attrs
+    if not options.config is None and os.path.exists(options.config):
+        config = configparser.ConfigParser(vars(options))
+        config.read(options.config)
+        for attr in req_creds_attrs:
+            setattr(options, attr, config.get('nokia', attr))
+        options.callback_uri = config.get('nokia', 'callback_uri')
 
-if command == 'userinfo':
-    print(client.get_user())
-    sys.exit(0)
+    req_auth_args = [getattr(options, a, 0) for a in req_auth_attrs]
+    if not all(req_auth_args):
+        print("You must provide a client id and consumer secret")
+        print("Create an Oauth 2 application here: https://account.health.nokia.com/partner/add_oauth2")
+        sys.exit(1)
 
+    req_creds_args = {a: getattr(options, a, 0) for a in req_creds_attrs}
+    if not all(req_creds_args.values()):
+        print("Missing authentification information!")
+        print("Starting authentification process...")
+        server = NokiaOAuth2Server(*(req_auth_args + [options.callback_uri]))
+        server.browser_authorize()
+        print(
+            'We attempted to open a browser to the URL above, if a browser '
+            'does not open, please navigate there manually'
+        )
 
-if command == 'last':
-    m = client.get_measures(limit=1)[0]
-    if len(args) == 1:
-        for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
-            if n == args[0]:
-                print(m.get_measure(t))
+        creds = server.creds
+        print("")
     else:
-        for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
-            print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
-    sys.exit(0)
+        creds = nokia.NokiaCredentials(**req_creds_args)
 
+    client = nokia.NokiaApi(creds)
 
-if command == 'subscribe':
-    client.subscribe(args[0], args[1])
-    print("Subscribed %s" % args[0])
-    sys.exit(0)
+    if command == 'saveconfig':
+        if options.config is None:
+            print("Missing config filename")
+            sys.exit(1)
+        config = configparser.ConfigParser()
+        config.add_section('nokia')
+        for attr in req_creds_attrs:
+            config.set('nokia', attr, getattr(creds, attr))
+        with open(options.config, 'w') as f:
+            config.write(f)
+        print("Config file saved to %s" % options.config)
+        sys.exit(0)
 
+    if command == 'userinfo':
+        print(client.get_user())
+        sys.exit(0)
 
-if command == 'unsubscribe':
-    client.unsubscribe(args[0])
-    print("Unsubscribed %s" % args[0])
-    sys.exit(0)
+    if command == 'last':
+        m = client.get_measures(limit=1)[0]
+        if len(args) == 1:
+            for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
+                if n == args[0]:
+                    print(m.get_measure(t))
+        else:
+            for n, t in nokia.NokiaMeasureGroup.MEASURE_TYPES:
+                print("%s: %s" % (n.replace('_', ' ').capitalize(), m.get_measure(t)))
+        sys.exit(0)
 
+    if command == 'subscribe':
+        client.subscribe(args[0], args[1])
+        print("Subscribed %s" % args[0])
+        sys.exit(0)
 
-if command == 'list_subscriptions':
-    l = client.list_subscriptions()
-    if len(l) > 0:
-        for s in l:
-            print(" - %s " % s['comment'])
-    else:
-        print("No subscriptions")
-    sys.exit(0)
+    if command == 'unsubscribe':
+        client.unsubscribe(args[0])
+        print("Unsubscribed %s" % args[0])
+        sys.exit(0)
 
+    if command == 'list_subscriptions':
+        l = client.list_subscriptions()
+        if len(l) > 0:
+            for s in l:
+                print(" - %s " % s['comment'])
+        else:
+            print("No subscriptions")
+        sys.exit(0)
 
-print("Unknown command")
-print("Available commands: saveconfig, userinfo, last, subscribe, unsubscribe, list_subscriptions")
-sys.exit(1)
+    print("Unknown command")
+    print("Available commands: saveconfig, userinfo, last, subscribe, unsubscribe, list_subscriptions")
+    sys.exit(1)
