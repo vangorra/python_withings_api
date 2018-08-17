@@ -23,14 +23,23 @@ class NokiaOAuth2Server:
         self.failure_html = """
             <h1>ERROR: %s</h1><br/><h3>You can close this window</h3>%s"""
 
-        self.auth = nokia.NokiaAuth(client_id, consumer_secret, callback_uri)
+        self.auth = nokia.NokiaAuth(
+            client_id,
+            consumer_secret,
+            callback_uri,
+            scope='user.info,user.metrics,user.activity'
+        )
 
     def browser_authorize(self):
         """
         Open a browser to the authorization url and spool up a CherryPy
         server to accept the response
         """
-        url = self.auth.get_authorize_url(scope='user.info,user.metrics,user.activity')
+        url = self.auth.get_authorize_url()
+        print(
+            'NOTE: We are going to try to open a browser to the URL below. If '
+            'a browser tab/window does not open, please navigate there manually'
+        )
         print(url)
         # Open the web browser in a new thread for command-line browser support
         threading.Timer(1, webbrowser.open, args=(url,)).start()
@@ -104,10 +113,6 @@ if __name__ == '__main__':
         print("Starting authentification process...")
         server = NokiaOAuth2Server(*(req_auth_args + [options.callback_uri]))
         server.browser_authorize()
-        print(
-            'We attempted to open a browser to the URL above, if a browser '
-            'does not open, please navigate there manually'
-        )
 
         creds = server.creds
         print("")

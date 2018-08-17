@@ -45,6 +45,7 @@ import json
 from arrow.parser import ParserError
 from requests_oauthlib import OAuth2Session
 
+
 class NokiaCredentials(object):
     def __init__(self, access_token=None, token_expiry=None, token_type=None,
                  refresh_token=None, user_id=None, 
@@ -61,25 +62,25 @@ class NokiaCredentials(object):
 class NokiaAuth(object):
     URL = 'https://account.health.nokia.com'
 
-    def __init__(self, client_id, consumer_secret, callback_uri):
+    def __init__(self, client_id, consumer_secret, callback_uri,
+                 scope='user.metrics'):
         self.client_id = client_id
         self.consumer_secret = consumer_secret
         self.callback_uri = callback_uri
+        self.scope = scope
 
-    def get_authorize_url(self, scope='user.metrics'):
-        oauth = OAuth2Session(self.client_id,
-                              redirect_uri=self.callback_uri, 
-                              scope=scope)
+    def _oauth(self):
+        return OAuth2Session(self.client_id,
+                             redirect_uri=self.callback_uri,
+                             scope=self.scope)
 
-        return oauth.authorization_url('%s/oauth2_user/authorize2'%self.URL)[0]
+    def get_authorize_url(self):
+        return self._oauth().authorization_url(
+            '%s/oauth2_user/authorize2'%self.URL
+        )[0]
 
-    def get_credentials(self, code):
-        
-        oauth = OAuth2Session(self.client_id,
-                              redirect_uri=self.callback_uri, 
-                              scope='user.metrics')
-        
-        tokens = oauth.fetch_token(
+    def get_credentials(self, code):        
+        tokens = self._oauth().fetch_token(
             '%s/oauth2/token' % self.URL,
             code=code,
             client_secret=self.consumer_secret)
