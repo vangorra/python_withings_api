@@ -41,13 +41,6 @@ __all__ = [str('NokiaCredentials'), str('NokiaAuth'), str('NokiaApi'),
 import arrow
 import datetime
 import json
-import time
-
-try:
-    utc = datetime.timezone.utc
-except AttributeError:
-    # Fallback for Python 2.x
-    from pytz import utc
 
 from arrow.parser import ParserError
 from requests_oauthlib import OAuth2Session
@@ -111,7 +104,9 @@ def is_date_class(val):
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
 def ts():
-    return int(time.mktime(datetime.datetime.now(tz=utc).utctimetuple()))
+    return int((
+        datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
+    ).total_seconds())
 
 
 class NokiaApi(object):

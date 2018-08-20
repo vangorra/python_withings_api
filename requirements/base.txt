@@ -1,6 +1,5 @@
 arrow>=0.4
 cherrypy>=17.3.0
-pytz>=2018.5
 requests>=2.5
 requests-oauth>=0.4.1
 requests-oauthlib>=0.4.2
