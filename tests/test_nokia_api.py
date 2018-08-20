@@ -28,27 +28,48 @@ except ImportError:  # Python 2.x fallback
 class TestNokiaApi(unittest.TestCase):
     def setUp(self):
         self.mock_api = True
+        creds_attrs = [
+            'access_token',
+            'token_expiry',
+            'token_type',
+            'refresh_token',
+            'user_id',
+            'client_id',
+            'consumer_secret',
+        ]
         if self.mock_api:
-            self.creds = NokiaCredentials()
+            creds_args = {a: 'fake' + a for a in creds_attrs}
+            creds_args.update({
+                'token_expiry': '123412341234',
+                'token_type': 'Bearer',
+            })
+            self.creds = NokiaCredentials(**creds_args)
         else:
             config = configparser.ConfigParser()
             config.read('nokia.conf')
-            self.creds = NokiaCredentials(
-                consumer_key=config.get('nokia', 'consumer_key'),
-                consumer_secret=config.get('nokia', 'consumer_secret'),
-                access_token=config.get('nokia', 'access_token'),
-                access_token_secret=config.get('nokia',
-                                               'access_token_secret'),
-                user_id=config.get('nokia', 'user_id'))
+            creds_args = {a: config.get('nokia', a) for a in creds_attrs}
+            self.creds = NokiaCredentials(**creds_args)
         self.api = NokiaApi(self.creds)
+
+    def _req_kwargs(self, extra_params):
+        params = {
+            'access_token': 'fakeaccess_token',
+            'userid': 'fakeuser_id',
+        }
+        params.update(extra_params)
+        return {
+            'data': None,
+            'headers': {'Authorization': 'Bearer fakeaccess_token'},
+            'params': params,
+        }
 
     def test_attributes(self):
         """ Make sure the NokiaApi objects have the right attributes """
         assert hasattr(NokiaApi, 'URL')
-        creds = NokiaCredentials(user_id='FAKEID')
+        creds = NokiaCredentials(user_id='FAKEID', token_expiry='123412341234')
         api = NokiaApi(creds)
         assert hasattr(api, 'credentials')
-        assert hasattr(api, 'oauth')
+        assert hasattr(api, 'token')
         assert hasattr(api, 'client')
 
     def test_attribute_defaults(self):
@@ -56,11 +77,11 @@ class TestNokiaApi(unittest.TestCase):
         Make sure NokiaApi object attributes have the correct defaults
         """
         self.assertEqual(NokiaApi.URL, 'https://api.health.nokia.com')
-        creds = NokiaCredentials(user_id='FAKEID')
+        creds = NokiaCredentials(user_id='FAKEID', token_expiry='123412341234')
         api = NokiaApi(creds)
         self.assertEqual(api.credentials, creds)
-        self.assertEqual(api.client.auth, api.oauth)
-        self.assertEqual(api.client.params, {'userid': creds.user_id})
+        self.assertEqual(api.client.params, {})
+        self.assertEqual(api.client.token, api.token)
 
     def test_request(self):
         """
@@ -70,8 +91,10 @@ class TestNokiaApi(unittest.TestCase):
         self.mock_request({})
         resp = self.api.request('fake_service', 'fake_action')
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/fake_service',
-            params={'action': 'fake_action'})
+            'GET',
+            'https://api.health.nokia.com/fake_service',
+            **self._req_kwargs({'action': 'fake_action'})
+        )
         self.assertEqual(resp, {})
 
     def test_request_params(self):
@@ -83,8 +106,10 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.request('user', 'getbyuserid', params={'p2': 'p2'},
                                 method='POST')
         Session.request.assert_called_once_with(
-            'POST', 'https://api.health.nokia.com/user',
-            params={'p2': 'p2', 'action': 'getbyuserid'})
+            'POST',
+            'https://api.health.nokia.com/user',
+            **self._req_kwargs({'p2': 'p2', 'action': 'getbyuserid'})
+        )
         self.assertEqual(resp, {})
 
     def test_request_error(self):
@@ -103,8 +128,10 @@ class TestNokiaApi(unittest.TestCase):
         })
         resp = self.api.get_user()
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/user',
-            params={'action': 'getbyuserid'})
+            'GET',
+            'https://api.health.nokia.com/user',
+            **self._req_kwargs({'action': 'getbyuserid'})
+        )
         self.assertEqual(type(resp), dict)
         assert 'users' in resp
         self.assertEqual(type(resp['users']), list)
@@ -133,8 +160,10 @@ class TestNokiaApi(unittest.TestCase):
         self.mock_request(body)
         resp = self.api.get_sleep()
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/v2/sleep',
-            params={'action': 'get'})
+            'GET',
+            'https://api.health.nokia.com/v2/sleep',
+            **self._req_kwargs({'action': 'get'})
+        )
         self.assertEqual(type(resp), NokiaSleep)
         self.assertEqual(resp.model, body['model'])
         self.assertEqual(type(resp.series), list)
@@ -166,8 +195,10 @@ class TestNokiaApi(unittest.TestCase):
         self.mock_request(body)
         resp = self.api.get_activities()
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/v2/measure',
-            params={'action': 'getactivity'})
+            'GET',
+            'https://api.health.nokia.com/v2/measure',
+            **self._req_kwargs({'action': 'getactivity'})
+        )
         self.assertEqual(type(resp), list)
         self.assertEqual(len(resp), 1)
         self.assertEqual(type(resp[0]), NokiaActivity)
@@ -193,8 +224,10 @@ class TestNokiaApi(unittest.TestCase):
         self.mock_request(new_body)
         resp = self.api.get_activities()
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/v2/measure',
-            params={'action': 'getactivity'})
+            'GET',
+            'https://api.health.nokia.com/v2/measure',
+            **self._req_kwargs({'action': 'getactivity'})
+        )
         self.assertEqual(type(resp), list)
         self.assertEqual(len(resp), 2)
         self.assertEqual(type(resp[0]), NokiaActivity)
@@ -221,8 +254,10 @@ class TestNokiaApi(unittest.TestCase):
         self.mock_request(body)
         resp = self.api.get_measures()
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/measure',
-            params={'action': 'getmeas'})
+            'GET',
+            'https://api.health.nokia.com/measure',
+            **self._req_kwargs({'action': 'getmeas'})
+        )
         self.assertEqual(type(resp), NokiaMeasures)
         self.assertEqual(len(resp), 2)
         self.assertEqual(type(resp[0]), NokiaMeasureGroup)
@@ -234,8 +269,10 @@ class TestNokiaApi(unittest.TestCase):
         self.mock_request(body)
         resp = self.api.get_measures(limit=1)
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/measure',
-            params={'action': 'getmeas', 'limit': 1})
+            'GET',
+            'https://api.health.nokia.com/measure',
+            **self._req_kwargs({'action': 'getmeas', 'limit': 1})
+        )
         self.assertEqual(len(resp), 1)
         self.assertEqual(resp[0].weight, 86.0)
 
@@ -246,8 +283,10 @@ class TestNokiaApi(unittest.TestCase):
         self.api.get_measures(lastupdate=datetime.date(2014, 9, 1))
 
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/measure',
-            params={'action': 'getmeas', 'lastupdate': 1409529600})
+            'GET',
+            'https://api.health.nokia.com/measure',
+            **self._req_kwargs({'action': 'getmeas', 'lastupdate': 1409529600})
+        )
 
     def test_get_measures_lastupdate_datetime(self):
         """Check that datetimes get converted to timestampse for API calls"""
@@ -256,8 +295,10 @@ class TestNokiaApi(unittest.TestCase):
         self.api.get_measures(lastupdate=datetime.datetime(2014, 9, 1))
 
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/measure',
-            params={'action': 'getmeas', 'lastupdate': 1409529600})
+            'GET',
+            'https://api.health.nokia.com/measure',
+            **self._req_kwargs({'action': 'getmeas', 'lastupdate': 1409529600})
+        )
 
     def test_get_measures_lastupdate_arrow(self):
         """Check that arrow dates get converted to timestampse for API calls"""
@@ -266,8 +307,10 @@ class TestNokiaApi(unittest.TestCase):
         self.api.get_measures(lastupdate=arrow.get('2014-09-01'))
 
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/measure',
-            params={'action': 'getmeas', 'lastupdate': 1409529600})
+            'GET',
+            'https://api.health.nokia.com/measure',
+            **self._req_kwargs({'action': 'getmeas', 'lastupdate': 1409529600})
+        )
 
     def test_subscribe(self):
         """
@@ -278,9 +321,14 @@ class TestNokiaApi(unittest.TestCase):
         self.mock_request(None)
         resp = self.api.subscribe('http://www.example.com/', 'fake_comment')
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/notify',
-            params={'action': 'subscribe', 'comment': 'fake_comment',
-                    'callbackurl': 'http://www.example.com/'})
+            'GET',
+            'https://api.health.nokia.com/notify',
+            **self._req_kwargs({
+                'action': 'subscribe',
+                'comment': 'fake_comment',
+                'callbackurl': 'http://www.example.com/',
+            })
+        )
         self.assertEqual(resp, None)
 
         # appli=1
@@ -288,10 +336,15 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.subscribe('http://www.example.com/', 'fake_comment',
                                   appli=1)
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/notify',
-            params={'action': 'subscribe', 'appli': 1,
-                    'comment': 'fake_comment',
-                    'callbackurl': 'http://www.example.com/'})
+            'GET',
+            'https://api.health.nokia.com/notify',
+            **self._req_kwargs({
+                'action': 'subscribe',
+                'appli': 1,
+                'comment': 'fake_comment',
+                'callbackurl': 'http://www.example.com/',
+            })
+        )
         self.assertEqual(resp, None)
 
     def test_unsubscribe(self):
@@ -303,18 +356,26 @@ class TestNokiaApi(unittest.TestCase):
         self.mock_request(None)
         resp = self.api.unsubscribe('http://www.example.com/')
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/notify',
-            params={'action': 'revoke',
-                    'callbackurl': 'http://www.example.com/'})
+            'GET',
+            'https://api.health.nokia.com/notify',
+            **self._req_kwargs({
+                'action': 'revoke',
+                'callbackurl': 'http://www.example.com/',
+            })
+        )
         self.assertEqual(resp, None)
 
         # appli=1
         self.mock_request(None)
         resp = self.api.unsubscribe('http://www.example.com/', appli=1)
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/notify',
-            params={'action': 'revoke', 'appli': 1,
-                    'callbackurl': 'http://www.example.com/'})
+            'GET',
+            'https://api.health.nokia.com/notify',
+            **self._req_kwargs({
+                'action': 'revoke', 'appli': 1,
+                'callbackurl': 'http://www.example.com/',
+            })
+        )
         self.assertEqual(resp, None)
 
     def test_is_subscribed(self):
@@ -330,13 +391,15 @@ class TestNokiaApi(unittest.TestCase):
         }
         self.mock_request({'expires': 2147483647, 'comment': 'fake_comment'})
         resp = self.api.is_subscribed('http://www.example.com/')
-        Session.request.assert_called_once_with('GET', url, params=params)
+        Session.request.assert_called_once_with(
+            'GET', url, **self._req_kwargs(params))
         self.assertEquals(resp, True)
 
         # Not subscribed
         self.mock_request(None, status=343)
         resp = self.api.is_subscribed('http://www.example.com/')
-        Session.request.assert_called_once_with('GET', url, params=params)
+        Session.request.assert_called_once_with(
+            'GET', url, **self._req_kwargs(params))
         self.assertEquals(resp, False)
 
     def test_list_subscriptions(self):
@@ -349,8 +412,10 @@ class TestNokiaApi(unittest.TestCase):
         ]})
         resp = self.api.list_subscriptions()
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/notify',
-            params={'action': 'list', 'appli': 1})
+            'GET',
+            'https://api.health.nokia.com/notify',
+            **self._req_kwargs({'action': 'list', 'appli': 1})
+        )
         self.assertEqual(type(resp), list)
         self.assertEqual(len(resp), 1)
         self.assertEqual(resp[0]['comment'], 'fake_comment')
@@ -360,8 +425,10 @@ class TestNokiaApi(unittest.TestCase):
         self.mock_request({'profiles': []})
         resp = self.api.list_subscriptions()
         Session.request.assert_called_once_with(
-            'GET', 'https://api.health.nokia.com/notify',
-            params={'action': 'list', 'appli': 1})
+            'GET',
+            'https://api.health.nokia.com/notify',
+            **self._req_kwargs({'action': 'list', 'appli': 1})
+        )
         self.assertEqual(type(resp), list)
         self.assertEqual(len(resp), 0)
 

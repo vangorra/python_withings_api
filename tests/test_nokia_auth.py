@@ -1,7 +1,8 @@
+import datetime
 import unittest
 
 from nokia import NokiaAuth, NokiaCredentials
-from requests_oauthlib import OAuth1Session
+from requests_oauthlib import OAuth2Session
 
 try:
     from unittest.mock import MagicMock
@@ -11,57 +12,61 @@ except ImportError:
 
 class TestNokiaAuth(unittest.TestCase):
     def setUp(self):
-        self.consumer_key = 'fake_consumer_key'
+        self.client_id = 'fake_client_id'
         self.consumer_secret = 'fake_consumer_secret'
-        self.request_token = {
-            'oauth_token': 'fake_oauth_token',
-            'oauth_token_secret': 'fake_oauth_token_secret'
-        }
-        self.access_token = self.request_token
-        self.access_token.update({'userid': 'FAKEID'})
-        OAuth1Session.fetch_request_token = MagicMock(
-            return_value=self.request_token)
-        OAuth1Session.authorization_url = MagicMock(return_value='URL')
-        OAuth1Session.fetch_access_token = MagicMock(
-            return_value=self.access_token)
+        self.callback_uri = 'http://127.0.0.1:8080'
+        self.auth_args = (
+            self.client_id,
+            self.consumer_secret,
+            self.callback_uri,
+        )
+        OAuth2Session.authorization_url = MagicMock(return_value=('URL', ''))
+        OAuth2Session.fetch_token = MagicMock(return_value={
+            'access_token': 'fake_access_token',
+            'expires_in': 0,
+            'token_type': 'Bearer',
+            'refresh_token': 'fake_refresh_token',
+            'userid': 'fake_user_id'
+        })
 
     def test_attributes(self):
         """ Make sure the NokiaAuth objects have the right attributes """
         assert hasattr(NokiaAuth, 'URL')
-        auth = NokiaAuth(self.consumer_key, self.consumer_secret)
-        assert hasattr(auth, 'consumer_key')
-        self.assertEqual(auth.consumer_key, self.consumer_key)
+        self.assertEqual(NokiaAuth.URL,
+                         'https://account.health.nokia.com')
+        auth = NokiaAuth(*self.auth_args)
+        assert hasattr(auth, 'client_id')
+        self.assertEqual(auth.client_id, self.client_id)
         assert hasattr(auth, 'consumer_secret')
         self.assertEqual(auth.consumer_secret, self.consumer_secret)
-
-    def test_attribute_defaults(self):
-        """ Make sure NokiaAuth attributes have the proper defaults """
-        self.assertEqual(NokiaAuth.URL,
-                         'https://developer.health.nokia.com/account')
-        auth = NokiaAuth(self.consumer_key, self.consumer_secret)
-        self.assertEqual(auth.oauth_token, None)
-        self.assertEqual(auth.oauth_secret, None)
+        assert hasattr(auth, 'callback_uri')
+        self.assertEqual(auth.callback_uri, self.callback_uri)
+        assert hasattr(auth, 'scope')
+        self.assertEqual(auth.scope, 'user.metrics')
 
     def test_get_authorize_url(self):
         """ Make sure the get_authorize_url function works as expected """
-        auth = NokiaAuth(self.consumer_key, self.consumer_secret)
-        # Returns the OAuth1Session.authorization_url results
+        auth = NokiaAuth(*self.auth_args)
+        # Returns the OAuth2Session.authorization_url results
         self.assertEqual(auth.get_authorize_url(), 'URL')
-        # oauth_token and oauth_secret have now been set to the values
-        # returned by OAuth1Session.fetch_request_token
-        self.assertEqual(auth.oauth_token, 'fake_oauth_token')
-        self.assertEqual(auth.oauth_secret, 'fake_oauth_token_secret')
+        OAuth2Session.authorization_url.assert_called_once_with(
+            '{}/oauth2_user/authorize2'.format(NokiaAuth.URL)
+        )
 
     def test_get_credentials(self):
         """ Make sure the get_credentials function works as expected """
-        auth = NokiaAuth(self.consumer_key, self.consumer_secret)
+        auth = NokiaAuth(*self.auth_args)
         # Returns an authorized NokiaCredentials object
-        creds = auth.get_credentials('FAKE_OAUTH_VERIFIER')
+        creds = auth.get_credentials('FAKE_CODE')
         assert isinstance(creds, NokiaCredentials)
         # Check that the attributes of the NokiaCredentials object are
         # correct.
-        self.assertEqual(creds.access_token, 'fake_oauth_token')
-        self.assertEqual(creds.access_token_secret, 'fake_oauth_token_secret')
-        self.assertEqual(creds.consumer_key, self.consumer_key)
+        self.assertEqual(creds.access_token, 'fake_access_token')
+        self.assertEqual(creds.token_expiry, str(int(
+            datetime.datetime.now(tz=datetime.timezone.utc).timestamp()
+        )))
+        self.assertEqual(creds.token_type, 'Bearer')
+        self.assertEqual(creds.refresh_token, 'fake_refresh_token')
+        self.assertEqual(creds.client_id, self.client_id)
         self.assertEqual(creds.consumer_secret, self.consumer_secret)
-        self.assertEqual(creds.user_id, 'FAKEID')
+        self.assertEqual(creds.user_id, 'fake_user_id')

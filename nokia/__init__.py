@@ -79,7 +79,7 @@ class NokiaAuth(object):
             '%s/oauth2_user/authorize2'%self.URL
         )[0]
 
-    def get_credentials(self, code):        
+    def get_credentials(self, code):
         tokens = self._oauth().fetch_token(
             '%s/oauth2/token' % self.URL,
             code=code,
@@ -118,16 +118,16 @@ class NokiaApi(object):
             'token_type': credentials.token_type,
             'expires_in': str(int(credentials.token_expiry) - ts()),
         }
-        extra = {
-            'client_id': credentials.client_id,
-            'client_secret': credentials.consumer_secret,
-        }
-        refresh_url = 'https://account.health.nokia.com/oauth2/token'
-        self.client = OAuth2Session(credentials.client_id, 
-                                    token=self.token, 
-                                    auto_refresh_url=refresh_url, 
-                                    auto_refresh_kwargs=extra, 
-                                    token_updater=self.set_token)
+        self.client = OAuth2Session(
+            credentials.client_id,
+            token=self.token,
+            auto_refresh_url='{}/oauth2/token'.format(NokiaAuth.URL),
+            auto_refresh_kwargs={
+                'client_id': credentials.client_id,
+                'client_secret': credentials.consumer_secret,
+            },
+            token_updater=self.set_token
+        )
         
     def get_credentials(self):
         return self.credentials
