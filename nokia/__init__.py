@@ -44,7 +44,7 @@ import json
 
 try:
     utc = datetime.timezone.utc
-except ImportError:
+except AttributeError:
     # Fallback for Python 2.x
     from pytz import utc
 
