@@ -43,7 +43,7 @@ import datetime
 import json
 
 from arrow.parser import ParserError
-from requests_oauthlib import OAuth2Session
+from requests_oauthlib import OAuth2Session, TokenUpdated
 
 
 class NokiaCredentials(object):
@@ -131,8 +131,7 @@ class NokiaApi(object):
             auto_refresh_kwargs={
                 'client_id': credentials.client_id,
                 'client_secret': credentials.consumer_secret,
-            },
-            token_updater=self.set_token
+            }
         )
         
     def get_credentials(self):
@@ -156,7 +155,13 @@ class NokiaApi(object):
             if is_date(key) and is_date_class(val):
                 params[key] = arrow.get(val).timestamp
         url_parts = filter(None, [self.URL, version, service])
-        r = self.client.request(method, '/'.join(url_parts), params=params)
+        request_url = '/'.join(url_parts)
+        try:
+            r = self.client.request(method, request_url, params=params)
+        except TokenUpdated as e:
+            self.set_token(e.token)
+            params['access_token'] = self.token['access_token']
+            r = self.client.request(method, request_url, params=params)
         response = json.loads(r.content.decode())
         if response['status'] != 0:
             raise Exception("Error code %s" % response['status'])
