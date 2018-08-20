@@ -17,9 +17,9 @@ here: <https://account.health.nokia.com/partner/add_oauth2>
 
 ``` python
 from nokia import NokiaAuth, NokiaApi
-from settings import CONSUMER_KEY, CONSUMER_SECRET, CALLBACK_URL
+from settings import CLIENT_ID, CONSUMER_SECRET, CALLBACK_URL
 
-auth = NokiaAuth(CONSUMER_KEY, CONSUMER_SECRET, CALLBACK_URL)
+auth = NokiaAuth(CLIENT_ID, CONSUMER_SECRET, CALLBACK_URL)
 authorize_url = auth.get_authorize_url()
 print("Go to %s allow the app and copy the url you are redirected to." % authorize_url)
 authorization_response = raw_input('Please enter your full authorization response url: ')
@@ -42,9 +42,9 @@ creds = client.get_credentials()
   
 ``` python
 from nokia import NokiaAuth, NokiaApi, NokiaCredentials
-from settings import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID
+from settings import CLIENT_ID, CONSUMER_SECRET, ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID
 
-creds = NokiaCredentials(ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID, CONSUMER_KEY, CONSUMER_SECRET )
+creds = NokiaCredentials(ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID, CLIENT_ID, CONSUMER_SECRET )
 client = NokiaApi(creds)
 
 measures = client.get_measures(limit=1)

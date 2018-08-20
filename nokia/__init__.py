@@ -13,7 +13,7 @@ here: <https://account.health.nokia.com/partner/add_oauth2>
 
 Usage:
 
-auth = NokiaAuth(CONSUMER_KEY, CONSUMER_SECRET, CALLBACK_URL)
+auth = NokiaAuth(CLIENT_ID, CONSUMER_SECRET, CALLBACK_URL)
 authorize_url = auth.get_authorize_url()
 print("Go to %s allow the app and copy the url you are redirected to." % authorize_url)
 authorization_response = raw_input('Please enter your full authorization response url: ')
