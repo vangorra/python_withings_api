@@ -103,6 +103,7 @@ def is_date(key):
 def is_date_class(val):
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
+
 # Calculate seconds since 1970-01-01 (timestamp) in a way that works in
 # Python 2 and Python3
 # https://docs.python.org/3/library/datetime.html#datetime.datetime.timestamp
@@ -139,7 +140,9 @@ class NokiaApi(object):
     
     def set_token(self, token):
         self.token = token
-        self.credentials.token_expiry = str(ts()+int(self.token['expires_in']))
+        self.credentials.token_expiry = str(
+            ts() + int(self.token['expires_in'])
+        )
         self.credentials.access_token = self.token['access_token']
         self.credentials.refresh_token = self.token['refresh_token']
 

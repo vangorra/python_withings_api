@@ -83,6 +83,41 @@ class TestNokiaApi(unittest.TestCase):
         self.assertEqual(api.client.params, {})
         self.assertEqual(api.client.token, api.token)
 
+    def test_get_credentials(self):
+        """
+        Make sure NokiaApi returns the credentials as expected
+        """
+        creds = NokiaCredentials(token_expiry=0)
+        api = NokiaApi(creds)
+
+    def test_set_token(self):
+        """
+        Make sure NokiaApi.set_token makes the expected changes
+        """
+        timestamp = int((
+            datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
+        ).total_seconds())
+        creds = NokiaCredentials(token_expiry=timestamp)
+        api = NokiaApi(creds)
+        token = {
+            'access_token': 'fakeat',
+            'refresh_token': 'fakert',
+            'expires_in': 100,
+        }
+
+        api.set_token(token)
+
+        self.assertEqual(api.token, token)
+        self.assertEqual(api.get_credentials().access_token, 'fakeat')
+        self.assertEqual(api.get_credentials().refresh_token, 'fakert')
+        self.assertEqual(
+            True,
+            # Need to check 100 or 101 in case a second ticked over during
+            # testing
+            int(api.credentials.token_expiry) == (timestamp + 100) or
+            int(api.credentials.token_expiry) == (timestamp + 101)
+        )
+
     def test_request(self):
         """
         Make sure the request method builds the proper URI and returns the
