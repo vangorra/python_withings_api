@@ -42,6 +42,12 @@ import arrow
 import datetime
 import json
 
+try:
+    utc = datetime.timezone.utc
+except ImportError:
+    # Fallback for Python 2.x
+    from pytz import utc
+
 from arrow.parser import ParserError
 from requests_oauthlib import OAuth2Session
 
@@ -104,7 +110,7 @@ def is_date_class(val):
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
 def ts():
-    return int(datetime.datetime.now(tz=datetime.timezone.utc).timestamp())
+    return int(datetime.datetime.now(tz=utc).timestamp())
 
 
 class NokiaApi(object):
