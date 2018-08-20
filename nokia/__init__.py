@@ -103,6 +103,9 @@ def is_date(key):
 def is_date_class(val):
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
+# Calculate seconds since 1970-01-01 (timestamp) in a way that works in
+# Python 2 and Python3
+# https://docs.python.org/3/library/datetime.html#datetime.datetime.timestamp
 def ts():
     return int((
         datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
