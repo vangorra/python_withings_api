@@ -41,6 +41,7 @@ __all__ = [str('NokiaCredentials'), str('NokiaAuth'), str('NokiaApi'),
 import arrow
 import datetime
 import json
+import time
 
 try:
     utc = datetime.timezone.utc
@@ -110,7 +111,7 @@ def is_date_class(val):
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
 def ts():
-    return int(datetime.datetime.now(tz=utc).timestamp())
+    return int(time.mktime(datetime.datetime.now(tz=utc).timetuple()))
 
 
 class NokiaApi(object):
