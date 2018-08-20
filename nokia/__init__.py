@@ -111,7 +111,7 @@ def is_date_class(val):
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
 def ts():
-    return int(time.mktime(datetime.datetime.now(tz=utc).timetuple()))
+    return int(time.mktime(datetime.datetime.now(tz=utc).utctimetuple()))
 
 
 class NokiaApi(object):

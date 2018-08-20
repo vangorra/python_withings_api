@@ -1,5 +1,8 @@
 import datetime
 import unittest
+import time
+
+import pytz
 
 from nokia import NokiaAuth, NokiaCredentials
 from requests_oauthlib import OAuth2Session
@@ -63,7 +66,7 @@ class TestNokiaAuth(unittest.TestCase):
         # correct.
         self.assertEqual(creds.access_token, 'fake_access_token')
         self.assertEqual(creds.token_expiry, str(int(
-            datetime.datetime.now(tz=datetime.timezone.utc).timestamp()
+            time.mktime(datetime.datetime.now(tz=pytz.utc).utctimetuple())
         )))
         self.assertEqual(creds.token_type, 'Bearer')
         self.assertEqual(creds.refresh_token, 'fake_refresh_token')
