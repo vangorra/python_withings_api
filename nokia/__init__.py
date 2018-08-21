@@ -44,7 +44,7 @@ import json
 
 from arrow.parser import ParserError
 from requests_oauthlib import OAuth2Session
-
+from oauthlib.oauth2 import WebApplicationClient
 
 class NokiaCredentials(object):
     def __init__(self, access_token=None, token_expiry=None, token_type=None,
@@ -124,9 +124,12 @@ class NokiaApi(object):
             'token_type': credentials.token_type,
             'expires_in': str(int(credentials.token_expiry) - ts()),
         }
+        oauth_client = WebApplicationClient(credentials.client_id,
+            token=self.token, default_token_placement='query')
         self.client = OAuth2Session(
             credentials.client_id,
             token=self.token,
+            client=oauth_client,
             auto_refresh_url='{}/oauth2/token'.format(NokiaAuth.URL),
             auto_refresh_kwargs={
                 'client_id': credentials.client_id,
@@ -149,7 +152,6 @@ class NokiaApi(object):
     def request(self, service, action, params=None, method='GET',
                 version=None):
         params = params or {}
-        params['access_token'] = self.token['access_token']
         params['userid'] = self.credentials.user_id
         params['action'] = action
         for key, val in params.items():
