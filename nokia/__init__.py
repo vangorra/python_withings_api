@@ -158,8 +158,7 @@ class NokiaApi(object):
             if is_date(key) and is_date_class(val):
                 params[key] = arrow.get(val).timestamp
         url_parts = filter(None, [self.URL, version, service])
-        request_url = '/'.join(url_parts)
-        r = self.client.request(method, request_url, params=params)
+        r = self.client.request(method, '/'.join(url_parts), params=params)
         response = json.loads(r.content.decode())
         if response['status'] != 0:
             raise Exception("Error code %s" % response['status'])
