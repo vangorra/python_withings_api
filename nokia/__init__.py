@@ -114,10 +114,39 @@ def ts():
 
 
 class NokiaApi(object):
+    """
+    While python-nokia takes care of automatically refreshing the OAuth2 token
+    so you can seamlessly continue making API calls, it is important that you
+    persist the updated tokens somewhere associated with the user, such as a
+    database table. That way when your application restarts it will have the
+    updated tokens to start with. Pass a ``refresh_cb`` function to the API
+    constructor and we will call it with the updated token when it gets
+    refreshed. The token contains ``access_token``, ``refresh_token``,
+    ``token_type`` and ``expires_in``. We recommend making the refresh callback
+    a method on your user database model class, so you can easily save the
+    updates to the user record, like so:
+
+    class NokiaUser(dbModel):
+        def refresh_cb(self, token):
+            self.access_token = token['access_token']
+            self.refresh_token = token['refresh_token']
+            self.token_type = token['token_type']
+            self.expires_in = token['expires_in']
+            self.save()
+
+    Then when you create the api for your user, just pass the callback:
+
+    user = ...
+    creds = ...
+    api = NokiaApi(creds, refresh_cb=user.refresh_cb)
+
+    Now the updated token will be automatically saved to the DB for later use.
+    """
     URL = 'https://api.health.nokia.com'
 
-    def __init__(self, credentials):
-        self.credentials = credentials        
+    def __init__(self, credentials, refresh_cb=None):
+        self.credentials = credentials
+        self.refresh_cb = refresh_cb
         self.token = {
             'access_token': credentials.access_token,
             'refresh_token': credentials.refresh_token,
@@ -148,6 +177,8 @@ class NokiaApi(object):
         )
         self.credentials.access_token = self.token['access_token']
         self.credentials.refresh_token = self.token['refresh_token']
+        if self.refresh_cb:
+            self.refresh_cb(token)
 
     def request(self, service, action, params=None, method='GET',
                 version=None):

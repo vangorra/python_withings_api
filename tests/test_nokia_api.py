@@ -71,6 +71,7 @@ class TestNokiaApi(unittest.TestCase):
         assert hasattr(api, 'credentials')
         assert hasattr(api, 'token')
         assert hasattr(api, 'client')
+        assert hasattr(api, 'refresh_cb')
 
     def test_attribute_defaults(self):
         """
@@ -82,6 +83,7 @@ class TestNokiaApi(unittest.TestCase):
         self.assertEqual(api.credentials, creds)
         self.assertEqual(api.client.params, {})
         self.assertEqual(api.client.token, api.token)
+        self.assertEqual(api.refresh_cb, None)
 
     def test_get_credentials(self):
         """
@@ -117,6 +119,27 @@ class TestNokiaApi(unittest.TestCase):
             int(api.credentials.token_expiry) == (timestamp + 100) or
             int(api.credentials.token_expiry) == (timestamp + 101)
         )
+
+    def test_set_token_refresh_cb(self):
+        """
+        Make sure set_token calls refresh_cb when specified
+        """
+        timestamp = int((
+            datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
+        ).total_seconds())
+        creds = NokiaCredentials(token_expiry=timestamp)
+        refresh_cb = MagicMock()
+        api = NokiaApi(creds, refresh_cb=refresh_cb)
+        token = {
+            'access_token': 'fakeat',
+            'refresh_token': 'fakert',
+            'expires_in': 100,
+        }
+
+        api.set_token(token)
+
+        self.assertEqual(api.token, token)
+        refresh_cb.assert_called_once_with(token)
 
     def test_request(self):
         """
