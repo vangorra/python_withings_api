@@ -26,7 +26,7 @@ class NokiaOAuth2Server:
         self.auth = nokia.NokiaAuth(
             client_id,
             consumer_secret,
-            callback_uri,
+            callback_uri=callback_uri,
             scope='user.info,user.metrics,user.activity'
         )
 
@@ -94,18 +94,36 @@ if __name__ == '__main__':
         'refresh_token',
         'user_id'
     ] + req_auth_attrs
+    # Save the OAuth2 secret in case we are migrating from OAuth1
+    oauth2_consumer_secret = options.consumer_secret
     if not options.config is None and os.path.exists(options.config):
         config = configparser.ConfigParser(vars(options))
         config.read(options.config)
+        nokiacfg = config['nokia']
         for attr in req_creds_attrs:
-            setattr(options, attr, config.get('nokia', attr))
-        options.callback_uri = config.get('nokia', 'callback_uri')
+            setattr(options, attr, nokiacfg.get(attr, None))
+        options.callback_uri = nokiacfg.get('callback_uri', None)
+        if command == 'migrateconfig':
+            options.consumer_key = nokiacfg.get('consumer_key')
+            options.access_token_secret = nokiacfg.get('access_token_secret')
 
     req_auth_args = [getattr(options, a, 0) for a in req_auth_attrs]
     if not all(req_auth_args):
         print("You must provide a client id and consumer secret")
-        print("Create an Oauth 2 application here: https://account.health.nokia.com/partner/add_oauth2")
+        print("Create an Oauth 2 application here: "
+              "https://account.health.nokia.com/partner/add_oauth2")
         sys.exit(1)
+
+    if command == 'migrateconfig':
+        auth = nokia.NokiaAuth(options.client_id, oauth2_consumer_secret)
+        token = auth.migrate_from_oauth1(
+            options.access_token, options.access_token_secret)
+        cfg_split = options.config.split('.')
+        options.config = '.'.join([cfg_split[0], 'oauth2', cfg_split[1]])
+        options.access_token = token['access_token']
+        options.token_expiry = str(int(token['expires_at']))
+        options.token_type = token['token_type']
+        options.refresh_token = token['refresh_token']
 
     req_creds_args = {a: getattr(options, a, 0) for a in req_creds_attrs}
     if not all(req_creds_args.values()):
@@ -121,7 +139,7 @@ if __name__ == '__main__':
 
     client = nokia.NokiaApi(creds)
 
-    if command == 'saveconfig':
+    if command == 'saveconfig' or command == 'migrateconfig':
         if options.config is None:
             print("Missing config filename")
             sys.exit(1)

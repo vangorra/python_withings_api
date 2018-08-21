@@ -13,7 +13,7 @@ here: <https://account.health.nokia.com/partner/add_oauth2>
 
 Usage:
 
-auth = NokiaAuth(CLIENT_ID, CONSUMER_SECRET, CALLBACK_URL)
+auth = NokiaAuth(CLIENT_ID, CONSUMER_SECRET, callback_uri=CALLBACK_URI)
 authorize_url = auth.get_authorize_url()
 print("Go to %s allow the app and copy the url you are redirected to." % authorize_url)
 authorization_response = raw_input('Please enter your full authorization response url: ')
@@ -62,7 +62,7 @@ class NokiaCredentials(object):
 class NokiaAuth(object):
     URL = 'https://account.health.nokia.com'
 
-    def __init__(self, client_id, consumer_secret, callback_uri,
+    def __init__(self, client_id, consumer_secret, callback_uri=None,
                  scope='user.metrics'):
         self.client_id = client_id
         self.consumer_secret = consumer_secret
@@ -93,6 +93,16 @@ class NokiaAuth(object):
             user_id=tokens['userid'],
             client_id=self.client_id,
             consumer_secret=self.consumer_secret,
+        )
+
+    def migrate_from_oauth1(self, access_token, access_token_secret):
+        session = OAuth2Session(self.client_id, auto_refresh_kwargs={
+            'client_id': self.client_id,
+            'client_secret': self.consumer_secret,
+        })
+        return session.refresh_token(
+            '{}/oauth2/token'.format(self.URL),
+            refresh_token='{}:{}'.format(access_token, access_token_secret)
         )
 
 
