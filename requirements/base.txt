@@ -1,5 +1,5 @@
-arrow>=0.4,<0.6
-cherrypy>=17.3.0
-requests>=2.7,<2.8
+arrow>=0.12,<0.13
+cherrypy>=17.3,<17.4
+requests>=2.19,<2.20
 requests-oauth>=0.4.1,<0.5
-requests-oauthlib>=0.5,<0.6
+requests-oauthlib>=1.0,<1.1
