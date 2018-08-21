@@ -2,18 +2,18 @@ import time
 import unittest
 
 from datetime import timedelta
-from withings import WithingsSleepSeries
+from nokia import NokiaSleepSeries
 
 
-class TestWithingsSleepSeries(unittest.TestCase):
+class TestNokiaSleepSeries(unittest.TestCase):
     def test_attributes(self):
         data = {
             "startdate": 1387243618,
             "state": 3,
             "enddate": 1387265218
         }
-        series = WithingsSleepSeries(data)
-        self.assertEqual(type(series), WithingsSleepSeries)
+        series = NokiaSleepSeries(data)
+        self.assertEqual(type(series), NokiaSleepSeries)
         self.assertEqual(series.startdate.timestamp, data['startdate'])
         self.assertEqual(series.state, data['state'])
         self.assertEqual(series.enddate.timestamp, data['enddate'])

@@ -2,10 +2,10 @@ import arrow
 import unittest
 
 from datetime import datetime
-from withings import WithingsActivity
+from nokia import NokiaActivity
 
 
-class TestWithingsActivity(unittest.TestCase):
+class TestNokiaActivity(unittest.TestCase):
     def test_attributes(self):
         data = {
            "date": "2013-04-10",
@@ -18,7 +18,7 @@ class TestWithingsActivity(unittest.TestCase):
            "intense": 540,
            "timezone": "Europe/Berlin"
         }
-        act = WithingsActivity(data)
+        act = NokiaActivity(data)
         self.assertEqual(act.date.date().isoformat(), data['date'])
         self.assertEqual(act.steps, data['steps'])
         self.assertEqual(act.distance, data['distance'])

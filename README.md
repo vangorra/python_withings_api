@@ -1,32 +1,59 @@
-# Python library for the Withings API
+# Python library for the Nokia Health API
 
-[![Build Status](https://travis-ci.org/orcasgit/python-withings.svg?branch=master)](https://travis-ci.org/orcasgit/python-withings) [![Coverage Status](https://coveralls.io/repos/orcasgit/python-withings/badge.png?branch=master)](https://coveralls.io/r/orcasgit/python-withings?branch=master) [![Requirements Status](https://requires.io/github/orcasgit/python-withings/requirements.svg?branch=requires-io-master)](https://requires.io/github/orcasgit/python-withings/requirements/?branch=requires-io-master)
+[![Build Status](https://travis-ci.org/orcasgit/python-nokia.svg?branch=master)](https://travis-ci.org/orcasgit/python-nokia) [![Coverage Status](https://coveralls.io/repos/orcasgit/python-nokia/badge.png?branch=master)](https://coveralls.io/r/orcasgit/python-nokia?branch=master) [![Requirements Status](https://requires.io/github/orcasgit/python-nokia/requirements.svg?branch=requires-io-master)](https://requires.io/github/orcasgit/python-nokia/requirements/?branch=requires-io-master)
 
-Withings Body metrics Services API
-<http://oauth.withings.com/api/doc>
+Nokia Health API
+<https://developer.health.nokia.com/api/doc>
 
-Uses Oauth 1.0 to authentify. You need to obtain a consumer key
-and consumer secret from Withings by creating an application
-here: <https://oauth.withings.com/partner/add>
+Uses OAuth 2.0 to authenticate. You need to obtain a consumer key
+and consumer secret from Nokia by creating an application
+here: <https://account.health.nokia.com/partner/add_oauth2>
 
-Installation:
+**Installation:**
 
-    pip install https://github.com/orcasgit/python-withings/archive/master.zip#egg=withings-0.4.0
+    pip install nokia
 
-Usage:
+**Usage:**
 
 ``` python
-from withings import WithingsAuth, WithingsApi
-from settings import CONSUMER_KEY, CONSUMER_SECRET
+from nokia import NokiaAuth, NokiaApi
+from settings import CLIENT_ID, CONSUMER_SECRET, CALLBACK_URI
 
-auth = WithingsAuth(CONSUMER_KEY, CONSUMER_SECRET)
+auth = NokiaAuth(CLIENT_ID, CONSUMER_SECRET, callback_uri=CALLBACK_URI)
 authorize_url = auth.get_authorize_url()
-print "Go to %s allow the app and copy your oauth_verifier" % authorize_url
+print("Go to %s allow the app and copy the url you are redirected to." % authorize_url)
+authorization_response = raw_input('Please enter your full authorization response url: ')
+creds = auth.get_credentials(authorization_response)
 
-oauth_verifier = raw_input('Please enter your oauth_verifier: ')
-creds = auth.get_credentials(oauth_verifier)
-
-client = WithingsApi(creds)
+client = NokiaApi(creds)
 measures = client.get_measures(limit=1)
-print "Your last measured weight: %skg" % measures[0].weight 
+print("Your last measured weight: %skg" % measures[0].weight)
+
+creds = client.get_credentials()
 ```
+**Saving Credentials:**
+
+
+	nokia saveconfig --consumer-key [consumerkey] --consumer-secret [consumersecret] --callback-url [callbackurl] --config nokia.cfg`
+
+ Which will save the necessary credentials to `nokia.cfg`
+ 
+ **Using Saved Credentials**
+  
+``` python
+from nokia import NokiaAuth, NokiaApi, NokiaCredentials
+from settings import CLIENT_ID, CONSUMER_SECRET, ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID
+
+creds = NokiaCredentials(ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID, CLIENT_ID, CONSUMER_SECRET )
+client = NokiaApi(creds)
+
+measures = client.get_measures(limit=1)
+print("Your last measured weight: %skg" % measures[0].weight)
+```
+ 
+ 
+ **Running From Command line:**
+
+	nokia [command] --config nokia.cfg 
+
+

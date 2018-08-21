@@ -2,10 +2,10 @@ import time
 import unittest
 
 from datetime import datetime
-from withings import WithingsObject
+from nokia import NokiaObject
 
 
-class TestWithingsObject(unittest.TestCase):
+class TestNokiaObject(unittest.TestCase):
     def test_attributes(self):
         data = {
            "date": "2013-04-10",
@@ -13,7 +13,7 @@ class TestWithingsObject(unittest.TestCase):
            "integer": 55555,
            "float": 5.67
         }
-        obj = WithingsObject(data)
+        obj = NokiaObject(data)
         self.assertEqual(obj.date.date().isoformat(), data['date'])
         self.assertEqual(obj.string, data['string'])
         self.assertEqual(obj.integer, data['integer'])
@@ -21,10 +21,10 @@ class TestWithingsObject(unittest.TestCase):
 
         # Test time as epoch
         data = {"date": 1409596058}
-        obj = WithingsObject(data)
+        obj = NokiaObject(data)
         self.assertEqual(obj.date.timestamp, data['date'])
 
         # Test funky time
         data = {"date": "weird and wacky date format"}
-        obj = WithingsObject(data)
+        obj = NokiaObject(data)
         self.assertEqual(obj.date, data['date'])

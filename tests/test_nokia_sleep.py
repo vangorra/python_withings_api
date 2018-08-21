@@ -1,10 +1,10 @@
 import time
 import unittest
 
-from withings import WithingsSleep, WithingsSleepSeries
+from nokia import NokiaSleep, NokiaSleepSeries
 
 
-class TestWithingsSleep(unittest.TestCase):
+class TestNokiaSleep(unittest.TestCase):
     def test_attributes(self):
         data = {
             "series": [{
@@ -18,11 +18,11 @@ class TestWithingsSleep(unittest.TestCase):
             }],
             "model": 16
         }
-        sleep = WithingsSleep(data)
+        sleep = NokiaSleep(data)
         self.assertEqual(sleep.model, data['model'])
         self.assertEqual(type(sleep.series), list)
         self.assertEqual(len(sleep.series), 2)
-        self.assertEqual(type(sleep.series[0]), WithingsSleepSeries)
+        self.assertEqual(type(sleep.series[0]), NokiaSleepSeries)
         self.assertEqual(sleep.series[0].startdate.timestamp,
                          data['series'][0]['startdate'])
         self.assertEqual(sleep.series[0].enddate.timestamp,
