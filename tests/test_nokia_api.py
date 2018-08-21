@@ -51,15 +51,17 @@ class TestNokiaApi(unittest.TestCase):
             self.creds = NokiaCredentials(**creds_args)
         self.api = NokiaApi(self.creds)
 
+    def _req_url(self, url):
+        return url + '?access_token=fakeaccess_token'
+
     def _req_kwargs(self, extra_params):
         params = {
-            'access_token': 'fakeaccess_token',
             'userid': 'fakeuser_id',
         }
         params.update(extra_params)
         return {
             'data': None,
-            'headers': {'Authorization': 'Bearer fakeaccess_token'},
+            'headers': None,
             'params': params,
         }
 
@@ -112,10 +114,8 @@ class TestNokiaApi(unittest.TestCase):
         self.assertEqual(api.token, token)
         self.assertEqual(api.get_credentials().access_token, 'fakeat')
         self.assertEqual(api.get_credentials().refresh_token, 'fakert')
-        self.assertEqual(
-            True,
-            # Need to check 100 or 101 in case a second ticked over during
-            # testing
+        # Need to check 100 or 101 in case a second ticked over during testing
+        self.assertTrue(
             int(api.credentials.token_expiry) == (timestamp + 100) or
             int(api.credentials.token_expiry) == (timestamp + 101)
         )
@@ -150,7 +150,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.request('fake_service', 'fake_action')
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/fake_service',
+            self._req_url('https://api.health.nokia.com/fake_service'),
             **self._req_kwargs({'action': 'fake_action'})
         )
         self.assertEqual(resp, {})
@@ -165,7 +165,7 @@ class TestNokiaApi(unittest.TestCase):
                                 method='POST')
         Session.request.assert_called_once_with(
             'POST',
-            'https://api.health.nokia.com/user',
+            self._req_url('https://api.health.nokia.com/user'),
             **self._req_kwargs({'p2': 'p2', 'action': 'getbyuserid'})
         )
         self.assertEqual(resp, {})
@@ -187,7 +187,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.get_user()
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/user',
+            self._req_url('https://api.health.nokia.com/user'),
             **self._req_kwargs({'action': 'getbyuserid'})
         )
         self.assertEqual(type(resp), dict)
@@ -219,7 +219,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.get_sleep()
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/v2/sleep',
+            self._req_url('https://api.health.nokia.com/v2/sleep'),
             **self._req_kwargs({'action': 'get'})
         )
         self.assertEqual(type(resp), NokiaSleep)
@@ -254,7 +254,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.get_activities()
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/v2/measure',
+            self._req_url('https://api.health.nokia.com/v2/measure'),
             **self._req_kwargs({'action': 'getactivity'})
         )
         self.assertEqual(type(resp), list)
@@ -283,7 +283,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.get_activities()
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/v2/measure',
+            self._req_url('https://api.health.nokia.com/v2/measure'),
             **self._req_kwargs({'action': 'getactivity'})
         )
         self.assertEqual(type(resp), list)
@@ -313,7 +313,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.get_measures()
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/measure',
+            self._req_url('https://api.health.nokia.com/measure'),
             **self._req_kwargs({'action': 'getmeas'})
         )
         self.assertEqual(type(resp), NokiaMeasures)
@@ -328,7 +328,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.get_measures(limit=1)
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/measure',
+            self._req_url('https://api.health.nokia.com/measure'),
             **self._req_kwargs({'action': 'getmeas', 'limit': 1})
         )
         self.assertEqual(len(resp), 1)
@@ -342,7 +342,7 @@ class TestNokiaApi(unittest.TestCase):
 
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/measure',
+            self._req_url('https://api.health.nokia.com/measure'),
             **self._req_kwargs({'action': 'getmeas', 'lastupdate': 1409529600})
         )
 
@@ -354,7 +354,7 @@ class TestNokiaApi(unittest.TestCase):
 
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/measure',
+            self._req_url('https://api.health.nokia.com/measure'),
             **self._req_kwargs({'action': 'getmeas', 'lastupdate': 1409529600})
         )
 
@@ -366,7 +366,7 @@ class TestNokiaApi(unittest.TestCase):
 
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/measure',
+            self._req_url('https://api.health.nokia.com/measure'),
             **self._req_kwargs({'action': 'getmeas', 'lastupdate': 1409529600})
         )
 
@@ -380,7 +380,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.subscribe('http://www.example.com/', 'fake_comment')
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/notify',
+            self._req_url('https://api.health.nokia.com/notify'),
             **self._req_kwargs({
                 'action': 'subscribe',
                 'comment': 'fake_comment',
@@ -395,7 +395,7 @@ class TestNokiaApi(unittest.TestCase):
                                   appli=1)
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/notify',
+            self._req_url('https://api.health.nokia.com/notify'),
             **self._req_kwargs({
                 'action': 'subscribe',
                 'appli': 1,
@@ -415,7 +415,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.unsubscribe('http://www.example.com/')
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/notify',
+            self._req_url('https://api.health.nokia.com/notify'),
             **self._req_kwargs({
                 'action': 'revoke',
                 'callbackurl': 'http://www.example.com/',
@@ -428,7 +428,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.unsubscribe('http://www.example.com/', appli=1)
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/notify',
+            self._req_url('https://api.health.nokia.com/notify'),
             **self._req_kwargs({
                 'action': 'revoke', 'appli': 1,
                 'callbackurl': 'http://www.example.com/',
@@ -441,7 +441,7 @@ class TestNokiaApi(unittest.TestCase):
         Check that is_subscribed fetches the right URL and returns the
         expected results
         """
-        url = 'https://api.health.nokia.com/notify'
+        url = self._req_url('https://api.health.nokia.com/notify')
         params = {
             'callbackurl': 'http://www.example.com/',
             'action': 'get',
@@ -471,7 +471,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.list_subscriptions()
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/notify',
+            self._req_url('https://api.health.nokia.com/notify'),
             **self._req_kwargs({'action': 'list', 'appli': 1})
         )
         self.assertEqual(type(resp), list)
@@ -484,7 +484,7 @@ class TestNokiaApi(unittest.TestCase):
         resp = self.api.list_subscriptions()
         Session.request.assert_called_once_with(
             'GET',
-            'https://api.health.nokia.com/notify',
+            self._req_url('https://api.health.nokia.com/notify'),
             **self._req_kwargs({'action': 'list', 'appli': 1})
         )
         self.assertEqual(type(resp), list)
