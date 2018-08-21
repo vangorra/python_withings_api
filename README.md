@@ -1,6 +1,6 @@
 # Python library for the Nokia Health API
 
-[![Build Status](https://travis-ci.org/orcasgit/python-nokia.svg?branch=master)](https://travis-ci.org/orcasgit/python-nokia) [![Coverage Status](https://coveralls.io/repos/orcasgit/python-nokia/badge.png?branch=master)](https://coveralls.io/r/orcasgit/python-nokia?branch=master) [![Requirements Status](https://requires.io/github/orcasgit/python-nokia/requirements.svg?branch=requires-io-master)](https://requires.io/github/orcasgit/python-nokia/requirements/?branch=requires-io-master)
+[![Build Status](https://travis-ci.org/orcasgit/python-nokia.svg?branch=master)](https://travis-ci.org/orcasgit/python-nokia) [![Coverage Status](https://coveralls.io/repos/orcasgit/python-nokia/badge.png?branch=master)](https://coveralls.io/r/orcasgit/python-nokia?branch=master) [![Requirements Status](https://requires.io/github/orcasgit/python-nokia/requirements.svg?branch=master)](https://requires.io/github/orcasgit/python-nokia/requirements/?branch=master)
 
 Nokia Health API
 <https://developer.health.nokia.com/api/doc>

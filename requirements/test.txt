@@ -1,5 +1,5 @@
 -r base.txt
 
-coverage>=3.7,<3.8
-mock>=1.0,<1.1
-tox>=2.0,<2.1
+coverage>=4.5,<4.6
+mock>=2.0,<2.1
+tox>=3.2,<3.3
