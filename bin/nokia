@@ -2,6 +2,7 @@
 from optparse import OptionParser
 import sys
 import os
+import socket
 import threading
 import webbrowser
 
@@ -10,8 +11,10 @@ import nokia
 
 try:
     import configparser
+    from urllib.parse import urlparse
 except ImportError:  # Python 2.x fallback
     import ConfigParser as configparser
+    from urlparse import urlparse
 
 
 class NokiaOAuth2Server:
@@ -29,6 +32,11 @@ class NokiaOAuth2Server:
             callback_uri=callback_uri,
             scope='user.info,user.metrics,user.activity'
         )
+        parsed_url = urlparse(callback_uri)
+        self.cherrypy_config = {
+            'server.socket_host': socket.gethostbyname(parsed_url.hostname),
+            'server.socket_port': parsed_url.port or 80,
+        }
 
     def browser_authorize(self):
         """
@@ -43,6 +51,7 @@ class NokiaOAuth2Server:
         print(url)
         # Open the web browser in a new thread for command-line browser support
         threading.Timer(1, webbrowser.open, args=(url,)).start()
+        cherrypy.config.update(self.cherrypy_config)
         cherrypy.quickstart(self)
 
     @cherrypy.expose
@@ -119,7 +128,8 @@ if __name__ == '__main__':
         token = auth.migrate_from_oauth1(
             options.access_token, options.access_token_secret)
         cfg_split = options.config.split('.')
-        options.config = '.'.join([cfg_split[0], 'oauth2', cfg_split[1]])
+        options.config = '.'.join(cfg_split[0:-1] + ['oauth2', cfg_split[-1]])
+        options.consumer_secret = oauth2_consumer_secret
         options.access_token = token['access_token']
         options.token_expiry = str(int(token['expires_at']))
         options.token_type = token['token_type']
