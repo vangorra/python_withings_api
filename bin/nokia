@@ -35,6 +35,7 @@ class NokiaOAuth2Server:
         parsed_url = urlparse(callback_uri)
         self.cherrypy_config = {
             'server.socket_host': socket.gethostbyname(parsed_url.hostname),
+            'server.socket_port': parsed_url.port or 80,
         }
 
     def browser_authorize(self):
