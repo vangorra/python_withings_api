@@ -119,7 +119,7 @@ if __name__ == '__main__':
         token = auth.migrate_from_oauth1(
             options.access_token, options.access_token_secret)
         cfg_split = options.config.split('.')
-        options.config = '.'.join([cfg_split[0], 'oauth2', cfg_split[1]])
+        options.config = '.'.join(cfg_split[0:-1] + ['oauth2', cfg_split[-1]])
         options.consumer_secret = oauth2_consumer_secret
         options.access_token = token['access_token']
         options.token_expiry = str(int(token['expires_at']))
