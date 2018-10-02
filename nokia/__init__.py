@@ -9,7 +9,7 @@ Nokia Health API
 
 Uses Oauth 2.0 to authentify. You need to obtain a consumer key
 and consumer secret from Nokia by creating an application
-here: <https://account.health.nokia.com/partner/add_oauth2>
+here: <https://account.withings.com/partner/add_oauth2>
 
 Usage:
 
@@ -60,7 +60,7 @@ class NokiaCredentials(object):
 
 
 class NokiaAuth(object):
-    URL = 'https://account.health.nokia.com'
+    URL = 'https://account.withings.com'
 
     def __init__(self, client_id, consumer_secret, callback_uri=None,
                  scope='user.metrics'):
@@ -152,7 +152,7 @@ class NokiaApi(object):
 
     Now the updated token will be automatically saved to the DB for later use.
     """
-    URL = 'https://api.health.nokia.com'
+    URL = 'https://wbsapi.withings.net'
 
     def __init__(self, credentials, refresh_cb=None):
         self.credentials = credentials

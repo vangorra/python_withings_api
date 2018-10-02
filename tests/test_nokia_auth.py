@@ -35,7 +35,7 @@ class TestNokiaAuth(unittest.TestCase):
         """ Make sure the NokiaAuth objects have the right attributes """
         assert hasattr(NokiaAuth, 'URL')
         self.assertEqual(NokiaAuth.URL,
-                         'https://account.health.nokia.com')
+                         'https://account.withings.com')
         auth = NokiaAuth(*self.auth_args, callback_uri=self.callback_uri)
         assert hasattr(auth, 'client_id')
         self.assertEqual(auth.client_id, self.client_id)
