@@ -3,11 +3,11 @@
 [![Build Status](https://travis-ci.org/orcasgit/python-nokia.svg?branch=master)](https://travis-ci.org/orcasgit/python-nokia) [![Coverage Status](https://coveralls.io/repos/orcasgit/python-nokia/badge.png?branch=master)](https://coveralls.io/r/orcasgit/python-nokia?branch=master) [![Requirements Status](https://requires.io/github/orcasgit/python-nokia/requirements.svg?branch=master)](https://requires.io/github/orcasgit/python-nokia/requirements/?branch=master)
 
 Nokia Health API
-<https://developer.health.nokia.com/api/doc>
+<https://developer.withings.com/oauth2/>
 
 Uses OAuth 2.0 to authenticate. You need to obtain a client id
 and consumer secret from Nokia by creating an application
-here: <https://account.health.nokia.com/partner/add_oauth2>
+here: <https://account.withings.com/partner/add_oauth2>
 
 **Installation:**
 

@@ -120,7 +120,7 @@ if __name__ == '__main__':
     if not all(req_auth_args):
         print("You must provide a client id and consumer secret")
         print("Create an Oauth 2 application here: "
-              "https://account.health.nokia.com/partner/add_oauth2")
+              "https://account.withings.com/partner/add_oauth2")
         sys.exit(1)
 
     if command == 'migrateconfig':
