@@ -30,10 +30,10 @@ creds = client.get_credentials()
 from __future__ import unicode_literals
 
 __title__ = 'nokia'
-__version__ = '0.4.0'
+__version__ = '1.1.0'
 __author__ = 'Maxime Bouroumeau-Fuseau, and ORCAS'
 __license__ = 'MIT'
-__copyright__ = 'Copyright 2012-2017 Maxime Bouroumeau-Fuseau, and ORCAS'
+__copyright__ = 'Copyright 2012-2018 Maxime Bouroumeau-Fuseau, and ORCAS'
 
 __all__ = [str('NokiaCredentials'), str('NokiaAuth'), str('NokiaApi'),
            str('NokiaMeasures'), str('NokiaMeasureGroup')]

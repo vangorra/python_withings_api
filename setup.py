@@ -5,7 +5,7 @@ required = [line for line in open('requirements/base.txt').read().split("\n")]
 
 setup(
     name='nokia',
-    version='1.0.0',
+    version='1.1.0',
     description="Library for the Nokia Health API",
     author='ORCAS',
     author_email='developer@orcasinc.com',
