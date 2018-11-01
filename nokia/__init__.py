@@ -221,6 +221,10 @@ class NokiaApi(object):
         r = self.request('sleep', 'get', params=kwargs, version='v2')
         return NokiaSleep(r)
 
+    def get_sleep_summary(self, **kwargs):
+        r = self.request('sleep', 'getsummary', params=kwargs, version='v2')
+        return NokiaSleepSummary(r)
+
     def subscribe(self, callback_url, comment, **kwargs):
         params = {'callbackurl': callback_url, 'comment': comment}
         params.update(kwargs)
@@ -319,3 +323,17 @@ class NokiaSleep(NokiaObject):
     def __init__(self, data):
         super(NokiaSleep, self).__init__(data)
         self.series = [NokiaSleepSeries(series) for series in self.series]
+
+
+class NokiaSleepSummarySeries(NokiaObject):
+    def __init__(self, data):
+        _data = data
+        _data.update(_data.pop('data'))
+        super(NokiaSleepSummarySeries, self).__init__(_data)
+        self.timedelta = self.enddate - self.startdate
+
+
+class NokiaSleepSummary(NokiaObject):
+    def __init__(self, data):
+        super(NokiaSleepSummary, self).__init__(data)
+        self.series = [NokiaSleepSummarySeries(series) for series in self.series]
