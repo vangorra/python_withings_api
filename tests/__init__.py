@@ -9,6 +9,8 @@ from .test_nokia_measures import TestNokiaMeasures
 from .test_nokia_object import TestNokiaObject
 from .test_nokia_sleep import TestNokiaSleep
 from .test_nokia_sleep_series import TestNokiaSleepSeries
+from .test_nokia_sleep_summary import TestNokiaSleepSummary
+from .test_nokia_sleep_summary_series import TestNokiaSleepSummarySeries
 
 
 def all_tests():
@@ -22,4 +24,6 @@ def all_tests():
     suite.addTest(unittest.makeSuite(TestNokiaObject))
     suite.addTest(unittest.makeSuite(TestNokiaSleep))
     suite.addTest(unittest.makeSuite(TestNokiaSleepSeries))
+    suite.addTest(unittest.makeSuite(TestNokiaSleepSummary))
+    suite.addTest(unittest.makeSuite(TestNokiaSleepSummarySeries))
     return suite
