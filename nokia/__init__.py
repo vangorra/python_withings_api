@@ -30,7 +30,7 @@ creds = client.get_credentials()
 from __future__ import unicode_literals
 
 __title__ = 'nokia'
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 __author__ = 'Maxime Bouroumeau-Fuseau, and ORCAS'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2012-2018 Maxime Bouroumeau-Fuseau, and ORCAS'
@@ -48,7 +48,7 @@ from oauthlib.oauth2 import WebApplicationClient
 
 class NokiaCredentials(object):
     def __init__(self, access_token=None, token_expiry=None, token_type=None,
-                 refresh_token=None, user_id=None, 
+                 refresh_token=None, user_id=None,
                  client_id=None, consumer_secret=None):
         self.access_token = access_token
         self.token_expiry = token_expiry
@@ -84,7 +84,7 @@ class NokiaAuth(object):
             '%s/oauth2/token' % self.URL,
             code=code,
             client_secret=self.consumer_secret)
-        
+
         return NokiaCredentials(
             access_token=tokens['access_token'],
             token_expiry=str(ts()+int(tokens['expires_in'])),
@@ -176,10 +176,10 @@ class NokiaApi(object):
             },
             token_updater=self.set_token
         )
-        
+
     def get_credentials(self):
         return self.credentials
-    
+
     def set_token(self, token):
         self.token = token
         self.credentials.token_expiry = str(
