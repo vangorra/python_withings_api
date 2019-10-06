@@ -1,6 +1,6 @@
 # Python library for the Withings Health API
 
-[![Build Status](https://travis-ci.org/orcasgit/python-withings.svg?branch=master)](https://travis-ci.org/orcasgit/python-withings) [![Coverage Status](https://coveralls.io/repos/orcasgit/python-withings/badge.png?branch=master)](https://coveralls.io/r/orcasgit/python-withings?branch=master) [![Requirements Status](https://requires.io/github/orcasgit/python-withings/requirements.svg?branch=master)](https://requires.io/github/orcasgit/python-withings/requirements/?branch=master)
+[![Build Status](https://travis-ci.org/vangorra/python_withings_api.svg?branch=master)](https://travis-ci.org/vangorra/python_withings_api) [![Coverage Status](https://coveralls.io/repos/github/vangorra/python_withings_api/badge.svg?branch=master)](https://coveralls.io/github/vangorra/python_withings_api?branch=master)
 
 Withings Health API
 <https://developer.withings.com/oauth2/>
