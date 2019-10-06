@@ -15,6 +15,6 @@ after_success: coveralls
 deploy:
   provider: pypi
   user: $PYPI_USER
-  token: $PYPI_TOKEN
+  password: $PYPI_TOKEN
   on:
     tags: true
