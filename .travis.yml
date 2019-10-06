@@ -14,6 +14,7 @@ script: tox
 after_success: coveralls
 deploy:
   provider: pypi
-  user: $TWINE_USERNAME
+  user: 'vangorra'
+  token: $TWINE_USERNAME
   on:
     tags: true
