@@ -50,10 +50,5 @@ client = WithingsApi(creds)
 measures = client.get_measures(limit=1)
 print("Your last measured weight: %skg" % measures[0].weight)
 ```
- 
- 
- **Running From Command line:**
-
-	withings [command] --config withings.cfg 
 
 

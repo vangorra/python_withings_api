@@ -1,6 +1,7 @@
 *.pyc
 .tox
 .coverage
-nokia.conf
-nokia.egg-info
+withings_api.egg-info
 venv
+dist
+build

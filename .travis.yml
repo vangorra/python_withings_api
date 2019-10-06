@@ -12,3 +12,7 @@ install:
   - pip install coveralls tox-travis
 script: tox
 after_success: coveralls
+deploy:
+  provider: pypi
+  on:
+    tags: true

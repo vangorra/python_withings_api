@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 from setuptools import setup
 
+with open("README.md", 'r') as f:
+    long_description = f.read()
+
 required = [line for line in open('requirements/base.txt').read().split("\n")]
 
 setup(
-    name='withings',
-    version='1.1.0',
+    name='withings_api',
+    version='2.0.0-beta',
     description="Library for the Withings API",
+    long_description = long_description,
+    long_description_content_type='text/markdown',
     author='Robbie Van Gorkom',
     author_email='robbie.van.gorkom@protonmail.com',
     url="https://github.com/vangorra/python_withings_api",
