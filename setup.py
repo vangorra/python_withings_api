@@ -8,7 +8,7 @@ required = [line for line in open('requirements/base.txt').read().split("\n")]
 
 setup(
     name='withings_api',
-    version='2.0.0-beta',
+    version='2.0.0b0',
     description="Library for the Withings API",
     long_description = long_description,
     long_description_content_type='text/markdown',
