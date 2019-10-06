@@ -11,13 +11,13 @@ here: <http://developer.withings.com/oauth2/>
 
 **Installation:**
 
-    pip install withings
+    pip install withings_api
 
 **Usage:**
 
 ``` python
-from withings import WithingsAuth, WithingsApi
-from settings import CLIENT_ID, CONSUMER_SECRET, CALLBACK_URI
+from withings_api import WithingsAuth, WithingsApi
+from settings_api import CLIENT_ID, CONSUMER_SECRET, CALLBACK_URI
 
 auth = WithingsAuth(CLIENT_ID, CONSUMER_SECRET, callback_uri=CALLBACK_URI)
 authorize_url = auth.get_authorize_url()
@@ -31,24 +31,3 @@ print("Your last measured weight: %skg" % measures[0].weight)
 
 creds = client.get_credentials()
 ```
-**Saving Credentials:**
-
-
-	withings saveconfig --consumer-key [consumerkey] --consumer-secret [consumersecret] --callback-url [callbackurl] --config withings.cfg`
-
- Which will save the necessary credentials to `withings.cfg`
- 
- **Using Saved Credentials**
-  
-``` python
-from withings import WithingsAuth, WithingsApi, WithingsCredentials
-from settings import CLIENT_ID, CONSUMER_SECRET, ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID
-
-creds = WithingsCredentials(ACCESS_TOKEN, TOKEN_EXPIRY, TOKEN_TYPE, REFRESH_TOKEN, USER_ID, CLIENT_ID, CONSUMER_SECRET )
-client = WithingsApi(creds)
-
-measures = client.get_measures(limit=1)
-print("Your last measured weight: %skg" % measures[0].weight)
-```
-
-
