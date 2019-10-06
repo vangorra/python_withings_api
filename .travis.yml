@@ -13,7 +13,7 @@ script: tox
 after_success: coveralls
 deploy:
   provider: pypi
-  user: vangorra
+  user: __token__
   password:
     secure: G+Cs7lrhsCmG8jlRyNO29KCOQlIRth856wUw3SlaU3gjyNFNjIjQWy/bkRguARxDoELF7wQF+GhDqHCS+rXreF4KQAWeZg5xJnqhBzJY04q9MtO5qDGq77y5qyfM7L2DRCzO8V+OrKZXpf3dKMaoGai+BcobAaLEdwzT692XoebbMzbIrfF/9yaSMopReVWW7qt34l+PAyqsgY7Bbm9Wpnoj7j9RNtBCMhuRfZ3wYhM/jZKD6KVyWk+5sNNgFWVwqY8+zRJ2JMjCb2//GjBe15spmuylSCJRgK9o+GizARB11oPFaBE1uaLWs7S3Gz6+fHFNPcf8W2AN56Se5nw1PdAAiSjGwSjvD8oZr/KS9ohF9pNuRnvGrbpNSLx3cB/vBO6U3AqJMBS5CzsZ+cPjJqBGlEKwkOOaIIqOXMaJzgMUlhJyu5Clq7DQ6kWcoH6VJS3pV8uGGzthhheaf+EkyHZwLkpoL+77GVabbbFkoUMn4gVBDBK7zgoptIWUzB0xe+S3t2nEGo/DA63+kuJb7d+SYi5POdp29weXBDKtq6sMvxYuFlQzFr0Lh2G6DxzPyLC30VKFd7yp6XZVm28VT2VjHZYE0UFDwE2+Hjkn073c7WV/2LY66QwnOUfnkL7iBxqCADr/o9Ap0j+XLcRzbG1zPRmti2cvC2vx+KB6T4Y=
   on:
