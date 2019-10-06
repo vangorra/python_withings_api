@@ -9,7 +9,7 @@ required = [line for line in open('requirements/base.txt').read().split("\n")]
 
 setup(
     name='withings_api',
-    version=os.environ['TRAVIS_TAG'] or 'localdev',
+    version=(os.environ.get('TRAVIS_TAG') or 'localdev'),
     description="Library for the Withings API",
     long_description = long_description,
     long_description_content_type='text/markdown',
