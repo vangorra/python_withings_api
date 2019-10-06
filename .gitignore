@@ -3,3 +3,4 @@
 .coverage
 nokia.conf
 nokia.egg-info
+venv
