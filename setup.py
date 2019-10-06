@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from setuptools import setup
+import os
 
 with open("README.md", 'r') as f:
     long_description = f.read()
@@ -8,7 +9,7 @@ required = [line for line in open('requirements/base.txt').read().split("\n")]
 
 setup(
     name='withings_api',
-    version='2.0.0b1',
+    version=os.environ['TRAVIS_TAG'] or 'localdev',
     description="Library for the Withings API",
     long_description = long_description,
     long_description_content_type='text/markdown',
