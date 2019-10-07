@@ -17,9 +17,9 @@ if ! [[ `env | grep VIRTUAL_ENV` ]]; then
 fi
 
 echo "Installing dependencies."
-"$SELF_DIR/ci-install.sh"
+python setup.py install
 
-echo "Building."
-"$SELF_DIR/ci-build.sh"
+echo "Running tests."
+python setup.py test
 
 echo "Build complete."

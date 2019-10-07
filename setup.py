@@ -33,7 +33,7 @@ setup(
     ],
     test_suite='tests.all_tests',
     keywords="withings api",
-    zip_safe = True,
+    zip_safe=True,
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
