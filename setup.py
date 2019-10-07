@@ -22,10 +22,12 @@ setup(
         'requests-oauthlib>=1.2',
     ],
     tests_require=[
+        'six==1.12',
         'pytest>=2.7',
         'pylint>=1.4.5',
     ],
     setup_requires=[
+        'six==1.12',
         'pytest>=2.7',
         'pylint>=1.4.5',
         'wheel>=0.33.6',
