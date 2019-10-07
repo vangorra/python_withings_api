@@ -3,8 +3,8 @@ python:
 - 3.5
 - 3.6
 - 3.7
-install: "./scripts/ci-install.sh"
-script: "./scripts/ci-build.sh"
+#install: "./scripts/ci-install.sh"
+script: "./scripts/build.sh"
 after_success: bash < (curl -s https://codecov.io/bash)
 deploy:
   provider: pypi
