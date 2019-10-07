@@ -3,11 +3,8 @@ python:
 - 3.5
 - 3.6
 - 3.7
-install:
-- python setup.py install
-- pip install wheel
-- pip install coverage coveralls
-script: coverage run setup.py test
+install: ./scripts/ci-install.sh
+script: ./scripts/ci-build.sh
 after_success: coveralls
 deploy:
   provider: pypi
