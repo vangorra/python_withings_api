@@ -18,13 +18,12 @@ setup(
     packages=['withings_api'],
     install_requires=[
         'arrow>=0.15.2',
-        # 'requests>=2.22',
         'requests-oauth>=0.4.1',
         'requests-oauthlib>=1.2',
     ],
     tests_require=[],
     setup_requires=[
-        'coverage>=4.5.4',
+        'wheel>=0.33.6',
         'pytest-runner>=5.1',
         'pytest-cov>=2.8.1',
         'pytest-flake8>=1.0.4',
