@@ -30,7 +30,7 @@ setup(
         'pytest-flake8>=1.0.4',
         'pytest-docstyle>=1.5.0',
         'pylint>=2.4.1',
-        'pytest-pylint>=0.14.1',
+        'pytest-pylint',
     ],
     test_suite='tests.all_tests',
     keywords="withings api",
