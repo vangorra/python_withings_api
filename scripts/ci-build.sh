@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euf -o pipefail
 
-# setuptools does not support coverage, so we have to use coverage to run setuptools. Yuck.
-echo "Running tests and coverage report."
-coverage run setup.py test
+SELF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$SELF_DIR/.."
+
+echo "Running tests."
+python setup.py test

@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 set -euf -o pipefail
 
-echo "Installing package dependencies."
-python setup.py install
+SELF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$SELF_DIR/.."
 
 # Needs separate install before next line otherwise the next line will fail.
 echo "Installing wheel."
 pip install wheel
 
-# Cannot be included in setup.py as setuptools doesn't support coverage. Sigh.
-echo "Intalling coverage and coveralls."
-pip install coverage coveralls
+echo "Installing package dependencies."
+python setup.py install

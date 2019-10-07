@@ -23,8 +23,14 @@ setup(
         'requests-oauthlib>=1.0,<1.1',
     ],
     tests_require=[
-        'coverage>=4.5,<4.6',
-        'mock>=2.0,<2.1',
+        'mock',
+    ],
+    setup_requires=[
+        'coverage',
+        'pytest-runner',
+        'pytest-cov',
+        'pytest-flake8',
+        'pytest-pylint',
     ],
     test_suite='tests.all_tests',
     keywords="withings api",
