@@ -17,17 +17,18 @@ setup(
     license="MIT License",
     packages=['withings_api'],
     install_requires=[
+        'six==1.11.0',
         'arrow>=0.15.2',
         'requests-oauth>=0.4.1',
         'requests-oauthlib>=1.2',
     ],
     tests_require=[
-        'six==1.12',
+        'six==1.11.0',
         'pytest>=2.7',
         'pylint>=1.4.5',
     ],
     setup_requires=[
-        'six==1.12',
+        'six==1.11.0',
         'pytest>=2.7',
         'pylint>=1.4.5',
         'wheel>=0.33.6',
