@@ -17,10 +17,10 @@ setup(
     license="MIT License",
     packages=['withings_api'],
     install_requires=[
-        'arrow>=0.12,<0.13',
-        'requests>=2.19,<3.0',
-        'requests-oauth>=0.4.1,<0.5',
-        'requests-oauthlib>=1.0,<1.1',
+        'arrow>=0.15.2',
+        # 'requests>=2.22',
+        'requests-oauth>=0.4.1',
+        'requests-oauthlib>=1.2',
     ],
     tests_require=[],
     setup_requires=[
@@ -29,6 +29,7 @@ setup(
         'pytest-cov>=2.8.1',
         'pytest-flake8>=1.0.4',
         'pytest-pylint>=0.14.1',
+        'pytest-docstyle>=1.5.0',
     ],
     test_suite='tests.all_tests',
     keywords="withings api",
