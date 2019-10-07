@@ -5,22 +5,29 @@ import os
 with open("README.md", 'r') as f:
     long_description = f.read()
 
-required = [line for line in open('requirements/base.txt').read().split("\n")]
-
 setup(
     name='withings_api',
-    version=(os.environ.get('TRAVIS_TAG') or 'localdev'),
+    version=(os.environ.get('TRAVIS_TAG') or '0.0.0a0'),
     description="Library for the Withings API",
-    long_description = long_description,
+    long_description=long_description,
     long_description_content_type='text/markdown',
     author='Robbie Van Gorkom',
     author_email='robbie.van.gorkom@protonmail.com',
     url="https://github.com/vangorra/python_withings_api",
-    license = "MIT License",
-    packages = ['withings_api'],
-    install_requires = required,
+    license="MIT License",
+    packages=['withings_api'],
+    install_requires=[
+        'arrow>=0.12,<0.13',
+        'requests>=2.19,<3.0',
+        'requests-oauth>=0.4.1,<0.5',
+        'requests-oauthlib>=1.0,<1.1',
+    ],
+    tests_require=[
+        'coverage>=4.5,<4.6',
+        'mock>=2.0,<2.1',
+    ],
     test_suite='tests.all_tests',
-    keywords="withings withings",
+    keywords="withings api",
     zip_safe = True,
     classifiers=[
         "Development Status :: 3 - Alpha",

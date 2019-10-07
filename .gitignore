@@ -1,7 +1,10 @@
 *.pyc
+**/__pycache__
 .tox
 .coverage
-withings_api.egg-info
+*.egg-info
 venv
 dist
 build
+.eggs
+.idea
