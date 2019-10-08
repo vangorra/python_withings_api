@@ -451,14 +451,14 @@ class TestWithingsApi(unittest.TestCase):
         resp = self.api.is_subscribed('http://www.example.com/')
         Session.request.assert_called_once_with(
             'GET', url, **self._req_kwargs(params))
-        self.assertEquals(resp, True)
+        self.assertEqual(resp, True)
 
         # Not subscribed
         self.mock_request(None, status=343)
         resp = self.api.is_subscribed('http://www.example.com/')
         Session.request.assert_called_once_with(
             'GET', url, **self._req_kwargs(params))
-        self.assertEquals(resp, False)
+        self.assertEqual(resp, False)
 
     def test_list_subscriptions(self):
         """

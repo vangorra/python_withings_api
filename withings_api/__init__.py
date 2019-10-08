@@ -1,33 +1,21 @@
 # -*- coding: utf-8 -*-
 #
 """
-Python library for the Withings Health API
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Python library for the Withings Health API.
 
 Withings Health API
 <https://developer.health.withings.com/api>
-
-Uses Oauth 2.0 to authentify. You need to obtain a consumer key
-and consumer secret from Withings by creating an application
-here: <http://developer.withings.com/oauth2/>
-
-Usage:
-
-auth = WithingsAuth(CLIENT_ID, CONSUMER_SECRET, callback_uri=CALLBACK_URI)
-authorize_url = auth.get_authorize_url()
-print("Go to %s allow the app and copy the url you are redirected to." % authorize_url)
-authorization_response = raw_input('Please enter your full authorization response url: ')
-creds = auth.get_credentials(authorization_response)
-
-client = WithingsApi(creds)
-measures = client.get_measures(limit=1)
-print("Your last measured weight: %skg" % measures[0].weight)
-
-creds = client.get_credentials()
-
 """
 
 from __future__ import unicode_literals
+
+import arrow
+import datetime
+import json
+
+from arrow.parser import ParserError
+from oauthlib.oauth2 import WebApplicationClient
+from requests_oauthlib import OAuth2Session
 
 __title__ = 'withings'
 __version__ = '1.1.0'
@@ -38,18 +26,14 @@ __copyright__ = 'Copyright 2012-2018 Maxime Bouroumeau-Fuseau, and ORCAS'
 __all__ = [str('WithingsCredentials'), str('WithingsAuth'), str('WithingsApi'),
            str('WithingsMeasures'), str('WithingsMeasureGroup')]
 
-import arrow
-import datetime
-import json
-
-from arrow.parser import ParserError
-from requests_oauthlib import OAuth2Session
-from oauthlib.oauth2 import WebApplicationClient
 
 class WithingsCredentials(object):
+    """Stores information about oauth2 credentials."""
+
     def __init__(self, access_token=None, token_expiry=None, token_type=None,
                  refresh_token=None, user_id=None, 
                  client_id=None, consumer_secret=None):
+        """Initialize new object."""
         self.access_token = access_token
         self.token_expiry = token_expiry
         self.token_type = token_type
@@ -60,26 +44,32 @@ class WithingsCredentials(object):
 
 
 class WithingsAuth(object):
+    """Handles management of oauth authorization calls."""
+
     URL = 'https://account.withings.com'
 
     def __init__(self, client_id, consumer_secret, callback_uri=None,
                  scope='user.metrics'):
+        """Initialize new object."""
         self.client_id = client_id
         self.consumer_secret = consumer_secret
         self.callback_uri = callback_uri
         self.scope = scope
 
     def _oauth(self):
+        """Create a new oauth2 session."""
         return OAuth2Session(self.client_id,
                              redirect_uri=self.callback_uri,
                              scope=self.scope)
 
     def get_authorize_url(self):
+        """Generate the authorize url."""
         return self._oauth().authorization_url(
             '%s/oauth2_user/authorize2'%self.URL
         )[0]
 
     def get_credentials(self, code):
+        """Get the oauth credentials."""
         tokens = self._oauth().fetch_token(
             '%s/oauth2/token' % self.URL,
             code=code,
@@ -96,6 +86,7 @@ class WithingsAuth(object):
         )
 
     def migrate_from_oauth1(self, access_token, access_token_secret):
+        """Migrate from oauth1 to oauth2 api."""
         session = OAuth2Session(self.client_id, auto_refresh_kwargs={
             'client_id': self.client_id,
             'client_secret': self.consumer_secret,
@@ -107,17 +98,25 @@ class WithingsAuth(object):
 
 
 def is_date(key):
+    """Return true if provided object is a date."""
     return 'date' in key
 
 
 def is_date_class(val):
+    """
+    Return true if provided value is an instance of a date object.
+
+    Supports: datetime.date, datetime.datetime, arrow.Arrow.
+    """
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
 
-# Calculate seconds since 1970-01-01 (timestamp) in a way that works in
-# Python 2 and Python3
-# https://docs.python.org/3/library/datetime.html#datetime.datetime.timestamp
 def ts():
+    """
+    Calculate seconds since 1970-01-01 (timestamp) in a way that works in Python 2 and Python3.
+
+    https://docs.python.org/3/library/datetime.html#datetime.datetime.timestamp
+    """
     return int((
         datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
     ).total_seconds())
@@ -125,6 +124,8 @@ def ts():
 
 class WithingsApi(object):
     """
+    Provides entrypoint for calling the withings api.
+
     While python-withings takes care of automatically refreshing the OAuth2 token
     so you can seamlessly continue making API calls, it is important that you
     persist the updated tokens somewhere associated with the user, such as a
@@ -152,9 +153,11 @@ class WithingsApi(object):
 
     Now the updated token will be automatically saved to the DB for later use.
     """
+
     URL = 'https://wbsapi.withings.net'
 
     def __init__(self, credentials, refresh_cb=None):
+        """Initialize new object."""
         self.credentials = credentials
         self.refresh_cb = refresh_cb
         self.token = {
@@ -178,9 +181,11 @@ class WithingsApi(object):
         )
         
     def get_credentials(self):
+        """Get the current oauth credentials."""
         return self.credentials
     
     def set_token(self, token):
+        """Set the oauth token."""
         self.token = token
         self.credentials.token_expiry = str(
             ts() + int(self.token['expires_in'])
@@ -192,6 +197,7 @@ class WithingsApi(object):
 
     def request(self, service, action, params=None, method='GET',
                 version=None):
+        """Request a specific service."""
         params = params or {}
         params['userid'] = self.credentials.user_id
         params['action'] = action
@@ -206,32 +212,39 @@ class WithingsApi(object):
         return response.get('body', None)
 
     def get_user(self):
+        """Get user information."""
         return self.request('user', 'getbyuserid')
 
     def get_activities(self, **kwargs):
+        """Get user created activities."""
         r = self.request('measure', 'getactivity', params=kwargs, version='v2')
         activities = r['activities'] if 'activities' in r else [r]
         return [WithingsActivity(act) for act in activities]
 
     def get_measures(self, **kwargs):
+        """Get measures."""
         r = self.request('measure', 'getmeas', kwargs)
         return WithingsMeasures(r)
 
     def get_sleep(self, **kwargs):
+        """Get sleep data."""
         r = self.request('sleep', 'get', params=kwargs, version='v2')
         return WithingsSleep(r)
 
     def subscribe(self, callback_url, comment, **kwargs):
+        """Subscribe an application."""
         params = {'callbackurl': callback_url, 'comment': comment}
         params.update(kwargs)
         self.request('notify', 'subscribe', params)
 
     def unsubscribe(self, callback_url, **kwargs):
+        """Unsubscribe an application."""
         params = {'callbackurl': callback_url}
         params.update(kwargs)
         self.request('notify', 'revoke', params)
 
     def is_subscribed(self, callback_url, appli=1):
+        """Return true if withings profile has a subscription for an application."""
         params = {'callbackurl': callback_url, 'appli': appli}
         try:
             self.request('notify', 'get', params)
@@ -240,15 +253,20 @@ class WithingsApi(object):
             return False
 
     def list_subscriptions(self, appli=1):
+        """List current subscriptions from withings profile."""
         r = self.request('notify', 'list', {'appli': appli})
         return r['profiles']
 
 
 class WithingsObject(object):
+    """Generic object that dynamically maps withings data."""
+
     def __init__(self, data):
+        """Initialize new object."""
         self.set_attributes(data)
 
     def set_attributes(self, data):
+        """Set the attributes of this object based on arbitrary dict or array."""
         self.data = data
         for key, val in data.items():
             try:
@@ -258,17 +276,24 @@ class WithingsObject(object):
 
 
 class WithingsActivity(WithingsObject):
+    """Represents as withings activity."""
+
     pass
 
 
 class WithingsMeasures(list, WithingsObject):
+    """Represents a list of measure groups."""
+
     def __init__(self, data):
+        """Initialize new object."""
         super(WithingsMeasures, self).__init__(
             [WithingsMeasureGroup(g) for g in data['measuregrps']])
         self.set_attributes(data)
 
 
 class WithingsMeasureGroup(WithingsObject):
+    """Represents a group of measures."""
+
     MEASURE_TYPES = (
         ('weight', 1),
         ('height', 4),
@@ -289,20 +314,25 @@ class WithingsMeasureGroup(WithingsObject):
     )
 
     def __init__(self, data):
+        """Initialize new object."""
         super(WithingsMeasureGroup, self).__init__(data)
         for n, t in self.MEASURE_TYPES:
             self.__setattr__(n, self.get_measure(t))
 
     def is_ambiguous(self):
+        """Return true if this group is ambiguous data."""
         return self.attrib == 1 or self.attrib == 4
 
     def is_measure(self):
+        """Return true if this group is a measure."""
         return self.category == 1
 
     def is_target(self):
+        """Return true if this group is the target."""
         return self.category == 2
 
     def get_measure(self, measure_type):
+        """Get all the measures of a specific type."""
         for m in self.measures:
             if m['type'] == measure_type:
                 return m['value'] * pow(10, m['unit'])
@@ -310,12 +340,18 @@ class WithingsMeasureGroup(WithingsObject):
 
 
 class WithingsSleepSeries(WithingsObject):
+    """Represents withings sleep series data."""
+
     def __init__(self, data):
+        """Initialize new object."""
         super(WithingsSleepSeries, self).__init__(data)
         self.timedelta = self.enddate - self.startdate
 
 
 class WithingsSleep(WithingsObject):
+    """Represent withings sleep data."""
+
     def __init__(self, data):
+        """Initialize new object."""
         super(WithingsSleep, self).__init__(data)
         self.series = [WithingsSleepSeries(series) for series in self.series]

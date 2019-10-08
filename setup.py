@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Setup functions for the project."""
 from setuptools import setup
 import os
 
