@@ -31,7 +31,7 @@ class WithingsCredentials(object):
     """Stores information about oauth2 credentials."""
 
     def __init__(self, access_token=None, token_expiry=None, token_type=None,
-                 refresh_token=None, user_id=None, 
+                 refresh_token=None, user_id=None,
                  client_id=None, consumer_secret=None):
         """Initialize new object."""
         self.access_token = access_token
@@ -65,7 +65,7 @@ class WithingsAuth(object):
     def get_authorize_url(self):
         """Generate the authorize url."""
         return self._oauth().authorization_url(
-            '%s/oauth2_user/authorize2'%self.URL
+            '%s/oauth2_user/authorize2' % self.URL
         )[0]
 
     def get_credentials(self, code):
@@ -74,7 +74,7 @@ class WithingsAuth(object):
             '%s/oauth2/token' % self.URL,
             code=code,
             client_secret=self.consumer_secret)
-        
+
         return WithingsCredentials(
             access_token=tokens['access_token'],
             token_expiry=str(ts()+int(tokens['expires_in'])),
@@ -113,8 +113,9 @@ def is_date_class(val):
 
 def ts():
     """
-    Calculate seconds since 1970-01-01 (timestamp) in a way that works in Python 2 and Python3.
+    Calculate seconds since 1970-01-01 (timestamp).
 
+    Perform calculation in a way that works in Python 2 and Python3.
     https://docs.python.org/3/library/datetime.html#datetime.datetime.timestamp
     """
     return int((
@@ -126,12 +127,12 @@ class WithingsApi(object):
     """
     Provides entrypoint for calling the withings api.
 
-    While python-withings takes care of automatically refreshing the OAuth2 token
-    so you can seamlessly continue making API calls, it is important that you
-    persist the updated tokens somewhere associated with the user, such as a
-    database table. That way when your application restarts it will have the
-    updated tokens to start with. Pass a ``refresh_cb`` function to the API
-    constructor and we will call it with the updated token when it gets
+    While python-withings takes care of automatically refreshing the OAuth2
+    token so you can seamlessly continue making API calls, it is important
+    that you persist the updated tokens somewhere associated with the user,
+    such as a database table. That way when your application restarts it will
+    have the updated tokens to start with. Pass a ``refresh_cb`` function to
+    the API constructor and we will call it with the updated token when it gets
     refreshed. The token contains ``access_token``, ``refresh_token``,
     ``token_type`` and ``expires_in``. We recommend making the refresh callback
     a method on your user database model class, so you can easily save the
@@ -166,8 +167,12 @@ class WithingsApi(object):
             'token_type': credentials.token_type,
             'expires_in': str(int(credentials.token_expiry) - ts()),
         }
-        oauth_client = WebApplicationClient(credentials.client_id,
-            token=self.token, default_token_placement='query')
+        oauth_client = WebApplicationClient(
+            credentials.client_id,
+            token=self.token,
+            default_token_placement='query'
+        )
+
         self.client = OAuth2Session(
             credentials.client_id,
             token=self.token,
@@ -179,11 +184,11 @@ class WithingsApi(object):
             },
             token_updater=self.set_token
         )
-        
+
     def get_credentials(self):
         """Get the current oauth credentials."""
         return self.credentials
-    
+
     def set_token(self, token):
         """Set the oauth token."""
         self.token = token
@@ -244,12 +249,12 @@ class WithingsApi(object):
         self.request('notify', 'revoke', params)
 
     def is_subscribed(self, callback_url, appli=1):
-        """Return true if withings profile has a subscription for an application."""
+        """Return true if withings profile has a subscription."""
         params = {'callbackurl': callback_url, 'appli': appli}
         try:
             self.request('notify', 'get', params)
             return True
-        except:
+        except Exception:
             return False
 
     def list_subscriptions(self, appli=1):
@@ -266,7 +271,7 @@ class WithingsObject(object):
         self.set_attributes(data)
 
     def set_attributes(self, data):
-        """Set the attributes of this object based on arbitrary dict or array."""
+        """Set the attributes of  based on arbitrary dict or array."""
         self.data = data
         for key, val in data.items():
             try:
