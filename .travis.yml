@@ -1,10 +1,16 @@
 language: python
 python:
-- 3.5
-- 3.6
-- 3.7
+  - 3.5
+  - 3.6
+  - 3.7
 install: pip install codecov
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 script: "./scripts/build.sh"
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 after_success: codecov
 deploy:
   provider: pypi
@@ -17,3 +23,4 @@ deploy:
 env:
   global:
     - secure: "h3jArT5mOzBl2KkGjX2WYism6NezLhtrBRA5vntxFtyjb4yYNMyngJ7BbI0k9HeceSaModvAFyqoLKtMwd54pTfdIAITmPEDAlmUzQluT7nrrdfD5sQw9pqC2QysV6j8fRa4QTUhJT3mn0JGDrheANMh+fnudE3MLQlQVHLV3abICoHdTIYUu/AxbbjPTk225m1taj8VXJaALVI2NuTxRx5VmMrM1lXYQ0vEvXvV5KsVOtMifexoA9D+Yc3WvMlPPet4WxjV19hHD4m8wJsKQKNQ+9uWSu6WHyxMjw/NidJdf1gy2yf/w0qApykw9VVU75dZG2f3Iave/ijdxJoTHn3Xg3siXjdZPbIddEUYO0JgrPdTReQeLNu6AeWPha1FfxCno5gSrMddOnceh9kyW6ncX0qkzHUunh8qG5had/tKSj3E9e3kpUMYmDZIM3IJen2dUgBt4PhvR93QZdU7wgzFm8KZJIYQW5Kx+HYnTS/wT1IKd1XIma+fcvr1iDQ5z4rbzjnMJJlFCdbthCHYZnBjHfpdrLakXzSxmT+TyaAWcI43ow5Y/ZzU5VypqlwO3GhdoVVeVBhff+0aPCA4LMCLI593P06MYUvfAXwq7hWP786iN3lp+4JvPM0yBCAGurIKnv0d5qDmZwJ/kTfuiJC/8i3hHzEvc7eXBrXQ6KQ="
+    - secure: "FgdFxMHCr0veZ8mZEOdaxvvZSVSVXaknS+sfx4gzK74hraLlAk9X8Ihe/00BhTi4Vnch/rQSbLs2568KIpjbvcvfQC9Ce4/NLmhLPBhzASb2CfO4z6ehAa5mO/U2K1qwB4Kpl0vYsj1G2rUpET0CeEL9I8YWRiOiLWA9FmThAc26EwAuAF448JZPXxCK8wkp6UzLMGeOp/PZKPKmMHY/1GD+1Nn51gWEkTB07dPjFO6h7opSyPXpx9NVhq3qFbQYWtKWa8fEkmG+zPkcPc3lB7a9SYRFZU5v/OzR1v6Ps2aYf3dtSlsXkqgyjSh77ctNpTVhEDJWv2DN2/e5JqbNrdVOSXr8VZOIWir2CqmM23IO9mtVcuDbHy4cxmReDFqDjJavwX+iELIwFop5D8C+MvUr+FrCBGsZ2c2EVQJZqeP6TzOaPr2oDEUJYTQB4r4t+3+T7++g5xarcBBL9ay2otTFzUjQb7uomL2Q4rB54eBu+ycgbM64rRdNQUnrhUtsYBOoCpDZgWO7ifzmFXSro2sspYppJemEA4PC4JCBgRgm/Cmfqaw+paey1SLCONLarM8zlxO5BXw5UM1By7YjZH1OB+DUyPcwRvcuCmRXgVsCWMFf2Y1c+pTwcwbcRGpre5ewQLuHlZxUVfc6D57kM5srSJmShdVUbIfblUp2zo0="
