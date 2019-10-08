@@ -11,7 +11,10 @@ from withings_api import (
     WithingsMeasureGroup,
     WithingsMeasures,
     WithingsSleep,
-    WithingsSleepSeries
+    WithingsSleepSeries,
+    WithingsSleepSeries,
+    WithingsSleepSummary,
+    WithingsSleepSummarySeries,
 )
 
 try:
@@ -232,6 +235,70 @@ class TestWithingsApi(unittest.TestCase):
         self.assertEqual(resp.series[0].enddate.timestamp,
                          body['series'][0]['enddate'])
         self.assertEqual(resp.series[1].state, 1)
+
+    def test_get_sleep_summary(self):
+        """
+        Check that get_sleep_summary fetches the appropriate URL, the response looks
+        correct, and the return value is a WithingsSleepSummary object with the
+        correct attributes
+        """
+        body = {
+            'more': False,
+            'series': [
+                {
+                    'data': {
+                        'deepsleepduration': 18660,
+                        'durationtosleep': 0,
+                        'durationtowakeup': 240,
+                        'lightsleepduration': 20220,
+                        'wakeupcount': 1,
+                        'wakeupduration': 720
+                    },
+                    'date': '2018-10-30',
+                    'enddate': 1540897020,
+                    'id': 900363515,
+                    'model': 16,
+                    'modified': 1540897246,
+                    'startdate': 1540857420,
+                    'timezone': 'Europe/London'
+                },
+                {
+                    'data': {
+                        'deepsleepduration': 17040,
+                        'durationtosleep': 360,
+                        'durationtowakeup': 0,
+                        'lightsleepduration': 10860,
+                        'wakeupcount': 1,
+                        'wakeupduration': 540
+                    },
+                    'date': '2018-10-31',
+                    'enddate': 1540973400,
+                    'id': 901269807,
+                    'model': 16,
+                    'modified': 1541020749,
+                    'startdate': 1540944960,
+                    'timezone': 'Europe/London'
+                }
+            ]
+        }
+        self.mock_request(body)
+        resp = self.api.get_sleep_summary()
+        Session.request.assert_called_once_with(
+            'GET',
+            self._req_url('https://wbsapi.withings.net/v2/sleep'),
+            **self._req_kwargs({'action': 'getsummary'})
+        )
+        self.assertEqual(type(resp), WithingsSleepSummary)
+        self.assertEqual(type(resp.series), list)
+        self.assertEqual(len(resp.series), 2)
+        self.assertEqual(type(resp.series[0]), WithingsSleepSummarySeries)
+        self.assertEqual(resp.series[0].model, body['series'][0]['model'])
+        self.assertEqual(resp.series[0].startdate.timestamp,
+                         body['series'][0]['startdate'])
+        self.assertEqual(resp.series[0].enddate.timestamp,
+                         body['series'][0]['enddate'])
+        self.assertEqual(resp.series[0].deepsleepduration,
+                         body['series'][0]['data']['deepsleepduration'])
 
     def test_get_activities(self):
         """

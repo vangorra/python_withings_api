@@ -254,6 +254,17 @@ class WithingsApi:
         response = self.request('sleep', 'get', params=kwargs, version='v2')
         return WithingsSleep(response)
 
+    def get_sleep_summary(self, **kwargs):
+        """Get sleep summary."""
+        response = self.request(
+            'sleep',
+            'getsummary',
+            params=kwargs,
+            version='v2'
+        )
+
+        return WithingsSleepSummary(response)
+
     def subscribe(self, callback_url, comment, **kwargs):
         """Subscribe an application."""
         params = {'callbackurl': callback_url, 'comment': comment}
@@ -385,3 +396,28 @@ class WithingsSleep(WithingsObject):
         """Initialize new object."""
         super(WithingsSleep, self).__init__(data)
         self.series = [WithingsSleepSeries(series) for series in self.series]
+
+
+class WithingsSleepSummarySeries(WithingsObject):
+    """Represents sleep summary series."""
+
+    startdate = None
+    enddate = None
+
+    def __init__(self, data):
+        """Initialize new object."""
+        _data = data
+        _data.update(_data.pop('data'))
+        super(WithingsSleepSummarySeries, self).__init__(_data)
+        self.timedelta = self.enddate - self.startdate
+
+
+class WithingsSleepSummary(WithingsObject):
+    """Represents sleep summary."""
+
+    def __init__(self, data):
+        """Initialize new object."""
+        super(WithingsSleepSummary, self).__init__(data)
+        self.series = [
+            WithingsSleepSummarySeries(series) for series in self.series
+        ]
