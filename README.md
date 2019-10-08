@@ -1,6 +1,8 @@
 # Python library for the Withings Health API
 
-[![Build Status](https://travis-ci.org/vangorra/python_withings_api.svg?branch=master)](https://travis-ci.org/vangorra/python_withings_api) [![codecov](https://codecov.io/gh/vangorra/python_withings_api/branch/master/graph/badge.svg)](https://codecov.io/gh/vangorra/python_withings_api)
+[![Build Status](https://travis-ci.org/vangorra/python_withings_api.svg?branch=master)](https://travis-ci.org/vangorra/python_withings_api) 
+[![Maintainability](https://api.codeclimate.com/v1/badges/36983f024cf45aab80ba/maintainability)](https://codeclimate.com/github/vangorra/python_withings_api/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/36983f024cf45aab80ba/test_coverage)](https://codeclimate.com/github/vangorra/python_withings_api/test_coverage)
 
 Withings Health API
 <https://developer.withings.com/oauth2/>
