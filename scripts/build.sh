@@ -22,8 +22,8 @@ python setup.py install
 echo "Linting with flake8."
 python setup.py flake8
 
-#echo "Linting with pylint."
-#python setup.py lint
+echo "Linting with pylint."
+python setup.py lint
 
 echo "Running tests."
 python setup.py test

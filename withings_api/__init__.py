@@ -9,12 +9,13 @@ Withings Health API
 
 from __future__ import unicode_literals
 
-import arrow
 import datetime
 import json
 
+import arrow
 from arrow.parser import ParserError
 from oauthlib.oauth2 import WebApplicationClient
+import requests
 from requests_oauthlib import OAuth2Session
 
 __title__ = 'withings'
@@ -27,7 +28,7 @@ __all__ = [str('WithingsCredentials'), str('WithingsAuth'), str('WithingsApi'),
            str('WithingsMeasures'), str('WithingsMeasureGroup')]
 
 
-class WithingsCredentials(object):
+class WithingsCredentials:
     """Stores information about oauth2 credentials."""
 
     def __init__(self, access_token=None, token_expiry=None, token_type=None,
@@ -43,7 +44,7 @@ class WithingsCredentials(object):
         self.consumer_secret = consumer_secret
 
 
-class WithingsAuth(object):
+class WithingsAuth:
     """Handles management of oauth authorization calls."""
 
     URL = 'https://account.withings.com'
@@ -77,7 +78,9 @@ class WithingsAuth(object):
 
         return WithingsCredentials(
             access_token=tokens['access_token'],
-            token_expiry=str(ts()+int(tokens['expires_in'])),
+            token_expiry=str(
+                current_timstamp() + int(tokens['expires_in'])
+            ),
             token_type=tokens['token_type'],
             refresh_token=tokens['refresh_token'],
             user_id=tokens['userid'],
@@ -111,7 +114,7 @@ def is_date_class(val):
     return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
 
-def ts():
+def current_timstamp():
     """
     Calculate seconds since 1970-01-01 (timestamp).
 
@@ -123,7 +126,7 @@ def ts():
     ).total_seconds())
 
 
-class WithingsApi(object):
+class WithingsApi:
     """
     Provides entrypoint for calling the withings api.
 
@@ -165,7 +168,9 @@ class WithingsApi(object):
             'access_token': credentials.access_token,
             'refresh_token': credentials.refresh_token,
             'token_type': credentials.token_type,
-            'expires_in': str(int(credentials.token_expiry) - ts()),
+            'expires_in': str(
+                int(credentials.token_expiry) - current_timstamp()
+            ),
         }
         oauth_client = WebApplicationClient(
             credentials.client_id,
@@ -193,7 +198,7 @@ class WithingsApi(object):
         """Set the oauth token."""
         self.token = token
         self.credentials.token_expiry = str(
-            ts() + int(self.token['expires_in'])
+            current_timstamp() + int(self.token['expires_in'])
         )
         self.credentials.access_token = self.token['access_token']
         self.credentials.refresh_token = self.token['refresh_token']
@@ -210,10 +215,16 @@ class WithingsApi(object):
             if is_date(key) and is_date_class(val):
                 params[key] = arrow.get(val).timestamp
         url_parts = filter(None, [self.URL, version, service])
-        r = self.client.request(method, '/'.join(url_parts), params=params)
-        response = json.loads(r.content.decode())
+        response = self.client.request(
+            method,
+            '/'.join(url_parts),
+            params=params
+        )
+        response = json.loads(response.content.decode())
         if response['status'] != 0:
-            raise Exception("Error code %s" % response['status'])
+            raise requests.exceptions.RequestException(
+                "Error code %s" % response['status']
+            )
         return response.get('body', None)
 
     def get_user(self):
@@ -222,19 +233,24 @@ class WithingsApi(object):
 
     def get_activities(self, **kwargs):
         """Get user created activities."""
-        r = self.request('measure', 'getactivity', params=kwargs, version='v2')
-        activities = r['activities'] if 'activities' in r else [r]
+        response = self.request(
+            'measure',
+            'getactivity',
+            params=kwargs,
+            version='v2'
+        )
+        activities = response.get('activities', [response])
         return [WithingsActivity(act) for act in activities]
 
     def get_measures(self, **kwargs):
         """Get measures."""
-        r = self.request('measure', 'getmeas', kwargs)
-        return WithingsMeasures(r)
+        response = self.request('measure', 'getmeas', kwargs)
+        return WithingsMeasures(response)
 
     def get_sleep(self, **kwargs):
         """Get sleep data."""
-        r = self.request('sleep', 'get', params=kwargs, version='v2')
-        return WithingsSleep(r)
+        response = self.request('sleep', 'get', params=kwargs, version='v2')
+        return WithingsSleep(response)
 
     def subscribe(self, callback_url, comment, **kwargs):
         """Subscribe an application."""
@@ -254,16 +270,16 @@ class WithingsApi(object):
         try:
             self.request('notify', 'get', params)
             return True
-        except Exception:
+        except requests.exceptions.RequestException:
             return False
 
     def list_subscriptions(self, appli=1):
         """List current subscriptions from withings profile."""
-        r = self.request('notify', 'list', {'appli': appli})
-        return r['profiles']
+        response = self.request('notify', 'list', {'appli': appli})
+        return response['profiles']
 
 
-class WithingsObject(object):
+class WithingsObject:
     """Generic object that dynamically maps withings data."""
 
     def __init__(self, data):
@@ -318,11 +334,15 @@ class WithingsMeasureGroup(WithingsObject):
         ('pulse_wave_velocity', 91)
     )
 
+    measures = None
+    category = None
+    attrib = None
+
     def __init__(self, data):
         """Initialize new object."""
         super(WithingsMeasureGroup, self).__init__(data)
-        for n, t in self.MEASURE_TYPES:
-            self.__setattr__(n, self.get_measure(t))
+        for measure_name, measure_type in self.MEASURE_TYPES:
+            self.__setattr__(measure_name, self.get_measure(measure_type))
 
     def is_ambiguous(self):
         """Return true if this group is ambiguous data."""
@@ -338,14 +358,17 @@ class WithingsMeasureGroup(WithingsObject):
 
     def get_measure(self, measure_type):
         """Get all the measures of a specific type."""
-        for m in self.measures:
-            if m['type'] == measure_type:
-                return m['value'] * pow(10, m['unit'])
+        for measure in self.measures:
+            if measure['type'] == measure_type:
+                return measure['value'] * pow(10, measure['unit'])
         return None
 
 
 class WithingsSleepSeries(WithingsObject):
     """Represents withings sleep series data."""
+
+    startdate = None
+    enddate = None
 
     def __init__(self, data):
         """Initialize new object."""
