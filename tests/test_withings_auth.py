@@ -1,14 +1,11 @@
-import datetime
 import unittest
 
-from withings_api import WithingsAuth, WithingsCredentials
-from requests import Session
+import arrow
+from withings_api import WithingsAuth
 from requests_oauthlib import OAuth2Session
 
-try:
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
+from withings_api.common import Credentials
 
 
 class TestWithingsAuth(unittest.TestCase):
@@ -22,7 +19,7 @@ class TestWithingsAuth(unittest.TestCase):
         )
         self.token = {
             'access_token': 'fake_access_token',
-            'expires_in': 0,
+            'expires_in': 11,
             'token_type': 'Bearer',
             'refresh_token': 'fake_refresh_token',
             'userid': 'fake_user_id'
@@ -30,6 +27,7 @@ class TestWithingsAuth(unittest.TestCase):
         OAuth2Session.authorization_url = MagicMock(return_value=('URL', ''))
         OAuth2Session.fetch_token = MagicMock(return_value=self.token)
         OAuth2Session.refresh_token = MagicMock(return_value=self.token)
+        arrow.utcnow = MagicMock(return_value=arrow.get(100000000))
 
     def test_attributes(self):
         """ Make sure the WithingsAuth objects have the right attributes """
@@ -58,30 +56,18 @@ class TestWithingsAuth(unittest.TestCase):
     def test_get_credentials(self):
         """ Make sure the get_credentials function works as expected """
         auth = WithingsAuth(*self.auth_args, callback_uri=self.callback_uri)
-        # Returns an authorized WithingsCredentials object
+        # Returns an authorized Credentials object
         creds = auth.get_credentials('FAKE_CODE')
-        assert isinstance(creds, WithingsCredentials)
-        # Check that the attributes of the WithingsCredentials object are
-        # correct.
-        self.assertEqual(creds.access_token, 'fake_access_token')
-        self.assertEqual(creds.token_expiry, str(int((
-            datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
-        ).total_seconds())))
-        self.assertEqual(creds.token_type, 'Bearer')
-        self.assertEqual(creds.refresh_token, 'fake_refresh_token')
-        self.assertEqual(creds.client_id, self.client_id)
-        self.assertEqual(creds.consumer_secret, self.consumer_secret)
-        self.assertEqual(creds.user_id, 'fake_user_id')
 
-    def test_migrate_from_oauth1(self):
-        """ Make sure the migrate_from_oauth1 fucntion works as expected """
-        Session.request = MagicMock()
-        auth = WithingsAuth(*self.auth_args)
-
-        token = auth.migrate_from_oauth1('at', 'ats')
-
-        self.assertEqual(token, self.token)
-        OAuth2Session.refresh_token.assert_called_once_with(
-            '{}/oauth2/token'.format(WithingsAuth.URL),
-            refresh_token='at:ats'
+        self.assertEqual(
+            creds,
+            Credentials(
+                access_token='fake_access_token',
+                token_expiry=100000011,
+                token_type='Bearer',
+                refresh_token='fake_refresh_token',
+                user_id='fake_user_id',
+                client_id=self.client_id,
+                consumer_secret=self.consumer_secret,
+            )
         )

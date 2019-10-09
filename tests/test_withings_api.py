@@ -1,32 +1,103 @@
+import configparser
+from unittest.mock import MagicMock
 import arrow
 import datetime
+from dateutil import tz
 import json
 import unittest
 
+import arrow
 from requests import Session
 from withings_api import (
-    WithingsActivity,
     WithingsApi,
-    WithingsCredentials,
-    WithingsMeasureGroup,
-    WithingsMeasures,
-    WithingsSleep,
-    WithingsSleepSeries,
-    WithingsSleepSeries,
-    WithingsSleepSummary,
-    WithingsSleepSummarySeries,
 )
 
-try:
-    import configparser
-except ImportError:  # Python 2.x fallback
-    import ConfigParser as configparser
+from withings_api.common import (
+    SleepDataState,
+    SleepModel,
+    GetActivityResponse,
+    GetActivityActivity,
+    GetSleepResponse,
+    GetSleepSerie,
+    GetSleepSummaryResponse,
+    GetSleepSummarySerie,
+    GetSleepSummaryData,
+    GetMeasResponse,
+    GetMeasGroup,
+    SleepTimestamp,
+    GetMeasMeasure,
+    MeasureType,
+    MeasureGroupAttribution,
+    MeasureCategory,
+    ListSubscriptionsResponse,
+    ListSubscriptionProfile,
+    SubscriptionParameter,
+    Credentials,
+    get_measure_value,
+    is_measure_ambiguous,
+)
 
-try:
-    from unittest.mock import MagicMock
-except ImportError:  # Python 2.x fallback
-    from mock import MagicMock
+class TestMeasureValues(unittest.TestCase):
+    def test_is_ambiguous(self):
+        ambig_attribs = (
+            MeasureGroupAttribution.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
+            MeasureGroupAttribution.MANUAL_USER_DURING_ACCOUNT_CREATION,
+        )
 
+        groups = tuple(
+            GetMeasGroup(
+                attrib=attrib,
+                category=MeasureCategory.USER_OBJECTIVES,
+                created=arrow.utcnow(),
+                date=arrow.utcnow(),
+                deviceid='dev1',
+                grpid='1',
+                measures=()
+            )
+            for attrib in MeasureGroupAttribution
+        )
+
+        for group in groups:
+            self.assertEqual(
+                group.attrib in ambig_attribs,
+                is_measure_ambiguous(group)
+            )
+
+    def test_get_measure_value(self):
+        group = GetMeasGroup(
+            attrib=MeasureGroupAttribution.MANUAL_USER_DURING_ACCOUNT_CREATION,
+            category=MeasureCategory.USER_OBJECTIVES,
+            created=arrow.utcnow(),
+            date=arrow.utcnow(),
+            deviceid='dev1',
+            grpid='1',
+            measures=(
+                GetMeasMeasure(
+                    type=MeasureType.WEIGHT,
+                    unit=1,
+                    value=10,
+                ),
+                GetMeasMeasure(
+                    type=MeasureType.BONE_MASS,
+                    unit=-2,
+                    value=20,
+                ),
+            )
+        )
+
+        self.assertIsNone(
+            get_measure_value(group, MeasureType.BODY_TEMPERATURE)
+        )
+        self.assertEqual(
+            100,
+            get_measure_value(group, MeasureType.WEIGHT)
+        )
+        self.assertEqual(
+            0.2,
+            get_measure_value(group, MeasureType.BONE_MASS)
+        )
+
+        pass
 
 class TestWithingsApi(unittest.TestCase):
     def setUp(self):
@@ -40,18 +111,20 @@ class TestWithingsApi(unittest.TestCase):
             'client_id',
             'consumer_secret',
         ]
-        if self.mock_api:
-            creds_args = {a: 'fake' + a for a in creds_attrs}
-            creds_args.update({
-                'token_expiry': '123412341234',
-                'token_type': 'Bearer',
-            })
-            self.creds = WithingsCredentials(**creds_args)
-        else:
-            config = configparser.ConfigParser()
-            config.read('withings.conf')
-            creds_args = {a: config.get('withings', a) for a in creds_attrs}
-            self.creds = WithingsCredentials(**creds_args)
+        creds_args = {a: 'fake' + a for a in creds_attrs}
+        creds_args.update({
+            'token_expiry': '123412341234',
+            'token_type': 'Bearer',
+        })
+        self.creds = Credentials(
+            access_token='fakeaccess_token',
+            token_expiry=123412341234,
+            token_type='Bearer',
+            refresh_token='fakerefresh_token',
+            user_id='fakeuser_id',
+            client_id='fakeclient_id',
+            consumer_secret='fakeconsumer_secret',
+        )
         self.api = WithingsApi(self.creds)
 
     def _req_url(self, url):
@@ -68,43 +141,23 @@ class TestWithingsApi(unittest.TestCase):
             'params': params,
         }
 
-    def test_attributes(self):
-        """ Make sure the WithingsApi objects have the right attributes """
-        assert hasattr(WithingsApi, 'URL')
-        creds = WithingsCredentials(user_id='FAKEID', token_expiry='123412341234')
-        api = WithingsApi(creds)
-        assert hasattr(api, 'credentials')
-        assert hasattr(api, 'token')
-        assert hasattr(api, 'client')
-        assert hasattr(api, 'refresh_cb')
-
-    def test_attribute_defaults(self):
-        """
-        Make sure WithingsApi object attributes have the correct defaults
-        """
-        self.assertEqual(WithingsApi.URL, 'https://wbsapi.withings.net')
-        creds = WithingsCredentials(user_id='FAKEID', token_expiry='123412341234')
-        api = WithingsApi(creds)
-        self.assertEqual(api.credentials, creds)
-        self.assertEqual(api.client.params, {})
-        self.assertEqual(api.client.token, api.token)
-        self.assertEqual(api.refresh_cb, None)
-
-    def test_get_credentials(self):
-        """
-        Make sure WithingsApi returns the credentials as expected
-        """
-        creds = WithingsCredentials(token_expiry=0)
-        api = WithingsApi(creds)
-
     def test_set_token(self):
         """
         Make sure WithingsApi.set_token makes the expected changes
         """
         timestamp = int((
-            datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
-        ).total_seconds())
-        creds = WithingsCredentials(token_expiry=timestamp)
+                                datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
+                        ).total_seconds())
+        creds = Credentials(
+            access_token='AA',
+            token_expiry=timestamp,
+            token_type='AA',
+            refresh_token='AA',
+            user_id='AA',
+            client_id='AA',
+            consumer_secret='AA',
+        )
+        refresh_cb = MagicMock()
         api = WithingsApi(creds)
         token = {
             'access_token': 'fakeat',
@@ -115,13 +168,7 @@ class TestWithingsApi(unittest.TestCase):
         api.set_token(token)
 
         self.assertEqual(api.token, token)
-        self.assertEqual(api.get_credentials().access_token, 'fakeat')
-        self.assertEqual(api.get_credentials().refresh_token, 'fakert')
-        # Need to check 100 or 101 in case a second ticked over during testing
-        self.assertTrue(
-            int(api.credentials.token_expiry) == (timestamp + 100) or
-            int(api.credentials.token_expiry) == (timestamp + 101)
-        )
+        refresh_cb.assert_not_called()
 
     def test_set_token_refresh_cb(self):
         """
@@ -130,7 +177,15 @@ class TestWithingsApi(unittest.TestCase):
         timestamp = int((
             datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
         ).total_seconds())
-        creds = WithingsCredentials(token_expiry=timestamp)
+        creds = Credentials(
+            access_token='AA',
+            token_expiry=timestamp,
+            token_type='AA',
+            refresh_token='AA',
+            user_id='AA',
+            client_id='AA',
+            consumer_secret='AA',
+        )
         refresh_cb = MagicMock()
         api = WithingsApi(creds, refresh_cb=refresh_cb)
         token = {
@@ -142,7 +197,7 @@ class TestWithingsApi(unittest.TestCase):
         api.set_token(token)
 
         self.assertEqual(api.token, token)
-        refresh_cb.assert_called_once_with(token)
+        refresh_cb.assert_called_once_with(api.credentials)
 
     def test_request(self):
         """
@@ -178,28 +233,6 @@ class TestWithingsApi(unittest.TestCase):
         self.mock_request('', status=1)
         self.assertRaises(Exception, self.api.request, ('user', 'getbyuserid'))
 
-    def test_get_user(self):
-        """ Check that the get_user method fetches the right URL """
-        self.mock_request({
-            'users': [
-                {'id': 1111111, 'birthdate': 364305600, 'lastname': 'Baggins',
-                 'ispublic': 255, 'firstname': 'Frodo', 'fatmethod': 131,
-                 'gender': 0, 'shortname': 'FRO'}
-            ]
-        })
-        resp = self.api.get_user()
-        Session.request.assert_called_once_with(
-            'GET',
-            self._req_url('https://wbsapi.withings.net/user'),
-            **self._req_kwargs({'action': 'getbyuserid'})
-        )
-        self.assertEqual(type(resp), dict)
-        assert 'users' in resp
-        self.assertEqual(type(resp['users']), list)
-        self.assertEqual(len(resp['users']), 1)
-        self.assertEqual(resp['users'][0]['firstname'], 'Frodo')
-        self.assertEqual(resp['users'][0]['lastname'], 'Baggins')
-
     def test_get_sleep(self):
         """
         Check that get_sleep fetches the appropriate URL, the response looks
@@ -207,16 +240,25 @@ class TestWithingsApi(unittest.TestCase):
         correct attributes
         """
         body = {
-            "series": [{
-                "startdate": 1387235398,
-                "state": 0,
-                "enddate": 1387235758
-            }, {
-                "startdate": 1387243618,
-                "state": 1,
-                "enddate": 1387244518
-            }],
-            "model": 16
+            "series": [
+                {
+                    "startdate": 1387235398,
+                    "state": SleepDataState.AWAKE.value.real,
+                    "enddate": 1387235758
+                },
+                {
+                    "startdate": 1387243618,
+                    "state": SleepDataState.LIGHT.value.real,
+                    "enddate": 1387244518,
+                    "hr": {
+                        "$timestamp": 123,
+                    },
+                    "rr": {
+                        "$timestamp": 456,
+                    },
+                }
+            ],
+            "model": SleepModel.TRACKER.value.real,
         }
         self.mock_request(body)
         resp = self.api.get_sleep()
@@ -225,16 +267,29 @@ class TestWithingsApi(unittest.TestCase):
             self._req_url('https://wbsapi.withings.net/v2/sleep'),
             **self._req_kwargs({'action': 'get'})
         )
-        self.assertEqual(type(resp), WithingsSleep)
-        self.assertEqual(resp.model, body['model'])
-        self.assertEqual(type(resp.series), list)
-        self.assertEqual(len(resp.series), 2)
-        self.assertEqual(type(resp.series[0]), WithingsSleepSeries)
-        self.assertEqual(resp.series[0].startdate.timestamp,
-                         body['series'][0]['startdate'])
-        self.assertEqual(resp.series[0].enddate.timestamp,
-                         body['series'][0]['enddate'])
-        self.assertEqual(resp.series[1].state, 1)
+
+        self.assertEqual(
+            resp,
+            GetSleepResponse(
+                model=SleepModel.TRACKER,
+                series=(
+                    GetSleepSerie(
+                        startdate=arrow.get(1387235398),
+                        state=SleepDataState.AWAKE,
+                        enddate=arrow.get(1387235758),
+                        hr=None,
+                        rr=None,
+                    ),
+                    GetSleepSerie(
+                        startdate=arrow.get(1387243618),
+                        state=SleepDataState.LIGHT,
+                        enddate=arrow.get(1387244518),
+                        hr=SleepTimestamp(arrow.get(123)),
+                        rr=SleepTimestamp(arrow.get(456)),
+                    )
+                )
+            )
+        )
 
     def test_get_sleep_summary(self):
         """
@@ -244,40 +299,55 @@ class TestWithingsApi(unittest.TestCase):
         """
         body = {
             'more': False,
+            'offset': 1,
             'series': [
                 {
                     'data': {
-                        'deepsleepduration': 18660,
-                        'durationtosleep': 0,
-                        'durationtowakeup': 240,
-                        'lightsleepduration': 20220,
-                        'wakeupcount': 1,
-                        'wakeupduration': 720
+                        'deepsleepduration': 110,
+                        'durationtosleep': 111,
+                        'durationtowakeup': 112,
+                        'lightsleepduration': 113,
+                        'wakeupcount': 114,
+                        'wakeupduration': 116,
+                        'remsleepduration': 116,
+                        'hr_average': 117,
+                        'hr_min': 118,
+                        'hr_max': 119,
+                        'rr_average': 120,
+                        'rr_min': 121,
+                        'rr_max': 122,
                     },
                     'date': '2018-10-30',
                     'enddate': 1540897020,
                     'id': 900363515,
-                    'model': 16,
+                    'model': SleepModel.TRACKER.value.real,
                     'modified': 1540897246,
                     'startdate': 1540857420,
-                    'timezone': 'Europe/London'
+                    'timezone': 'Europe/London',
                 },
                 {
                     'data': {
-                        'deepsleepduration': 17040,
-                        'durationtosleep': 360,
-                        'durationtowakeup': 0,
-                        'lightsleepduration': 10860,
-                        'wakeupcount': 1,
-                        'wakeupduration': 540
+                        'deepsleepduration': 210,
+                        'durationtosleep': 211,
+                        'durationtowakeup': 212,
+                        'lightsleepduration': 213,
+                        'wakeupcount': 214,
+                        'wakeupduration': 216,
+                        'remsleepduration': 216,
+                        'hr_average': 217,
+                        'hr_min': 218,
+                        'hr_max': 219,
+                        'rr_average': 220,
+                        'rr_min': 221,
+                        'rr_max': 222,
                     },
                     'date': '2018-10-31',
                     'enddate': 1540973400,
                     'id': 901269807,
-                    'model': 16,
+                    'model': SleepModel.TRACKER.value.real,
                     'modified': 1541020749,
                     'startdate': 1540944960,
-                    'timezone': 'Europe/London'
+                    'timezone': 'America/Los_Angeles',
                 }
             ]
         }
@@ -288,17 +358,64 @@ class TestWithingsApi(unittest.TestCase):
             self._req_url('https://wbsapi.withings.net/v2/sleep'),
             **self._req_kwargs({'action': 'getsummary'})
         )
-        self.assertEqual(type(resp), WithingsSleepSummary)
-        self.assertEqual(type(resp.series), list)
-        self.assertEqual(len(resp.series), 2)
-        self.assertEqual(type(resp.series[0]), WithingsSleepSummarySeries)
-        self.assertEqual(resp.series[0].model, body['series'][0]['model'])
-        self.assertEqual(resp.series[0].startdate.timestamp,
-                         body['series'][0]['startdate'])
-        self.assertEqual(resp.series[0].enddate.timestamp,
-                         body['series'][0]['enddate'])
-        self.assertEqual(resp.series[0].deepsleepduration,
-                         body['series'][0]['data']['deepsleepduration'])
+        timezone0 = tz.gettz(body.get('series')[0].get('timezone'))
+        timezone1 = tz.gettz(body.get('series')[1].get('timezone'))
+
+        self.assertEqual(
+            resp,
+            GetSleepSummaryResponse(
+                more=False,
+                offset=1,
+                series=(
+                    GetSleepSummarySerie(
+                        date=arrow.get('2018-10-30').replace(tzinfo=timezone0),
+                        enddate=arrow.get(1540897020).replace(tzinfo=timezone0),
+                        model=SleepModel.TRACKER,
+                        modified=arrow.get(1540897246).replace(tzinfo=timezone0),
+                        startdate=arrow.get(1540857420).replace(tzinfo=timezone0),
+                        timezone=timezone0,
+                        data=GetSleepSummaryData(
+                            deepsleepduration=110,
+                            durationtosleep=111,
+                            durationtowakeup=112,
+                            lightsleepduration=113,
+                            wakeupcount=114,
+                            wakeupduration=116,
+                            remsleepduration=116,
+                            hr_average=117,
+                            hr_min=118,
+                            hr_max=119,
+                            rr_average=120,
+                            rr_min=121,
+                            rr_max=122,
+                        ),
+                    ),
+                    GetSleepSummarySerie(
+                        date=arrow.get('2018-10-31').replace(tzinfo=timezone1),
+                        enddate=arrow.get(1540973400).replace(tzinfo=timezone1),
+                        model=SleepModel.TRACKER,
+                        modified=arrow.get(1541020749).replace(tzinfo=timezone1),
+                        startdate=arrow.get(1540944960).replace(tzinfo=timezone1),
+                        timezone=timezone1,
+                        data=GetSleepSummaryData(
+                            deepsleepduration=210,
+                            durationtosleep=211,
+                            durationtowakeup=212,
+                            lightsleepduration=213,
+                            wakeupcount=214,
+                            wakeupduration=216,
+                            remsleepduration=216,
+                            hr_average=217,
+                            hr_min=218,
+                            hr_max=219,
+                            rr_average=220,
+                            rr_min=221,
+                            rr_max=222,
+                        ),
+                    ),
+                )
+            )
+        )
 
     def test_get_activities(self):
         """
@@ -307,15 +424,56 @@ class TestWithingsApi(unittest.TestCase):
         objects
         """
         body = {
-           "date": "2013-04-10",
-           "steps": 6523,
-           "distance": 4600,
-           "calories": 408.52,
-           "elevation": 18.2,
-           "soft": 5880,
-           "moderate": 1080,
-           "intense": 540,
-           "timezone": "Europe/Berlin"
+            'more': False,
+            'offset': 0,
+            'activities': [
+                {
+                    'date': '2019-01-01',
+                    'timezone': 'Europe/London',
+                    'is_tracker': True,
+                    'deviceid': 'dev1',
+                    'brand': 100,
+                    'steps': 101,
+                    'distance': 102,
+                    'elevation': 103,
+                    'soft': 104,
+                    'moderate': 105,
+                    'intense': 106,
+                    'active': 107,
+                    'calories': 108,
+                    'totalcalories': 109,
+                    'hr_average': 110,
+                    'hr_min': 111,
+                    'hr_max': 112,
+                    'hr_zone_0': 113,
+                    'hr_zone_1': 114,
+                    'hr_zone_2': 115,
+                    'hr_zone_3': 116,
+                },
+                {
+                    'date': '2019-01-02',
+                    'timezone': 'America/Los_Angeles',
+                    'is_tracker': False,
+                    'deviceid': 'dev2',
+                    'brand': 200,
+                    'steps': 201,
+                    'distance': 202,
+                    'elevation': 203,
+                    'soft': 204,
+                    'moderate': 205,
+                    'intense': 206,
+                    'active': 207,
+                    'calories': 208,
+                    'totalcalories': 209,
+                    'hr_average': 210,
+                    'hr_min': 211,
+                    'hr_max': 212,
+                    'hr_zone_0': 213,
+                    'hr_zone_1': 214,
+                    'hr_zone_2': 215,
+                    'hr_zone_3': 216,
+                },
+            ],
         }
         self.mock_request(body)
         resp = self.api.get_activities()
@@ -324,41 +482,65 @@ class TestWithingsApi(unittest.TestCase):
             self._req_url('https://wbsapi.withings.net/v2/measure'),
             **self._req_kwargs({'action': 'getactivity'})
         )
-        self.assertEqual(type(resp), list)
-        self.assertEqual(len(resp), 1)
-        self.assertEqual(type(resp[0]), WithingsActivity)
-        # No need to assert all attributes, that happens elsewhere
-        self.assertEqual(resp[0].data, body)
 
-        # Test multiple activities
-        new_body = {
-            'activities': [
-                body, {
-                   "date": "2013-04-11",
-                   "steps": 223,
-                   "distance": 400,
-                   "calories": 108.52,
-                   "elevation": 1.2,
-                   "soft": 160,
-                   "moderate": 42,
-                   "intense": 21,
-                   "timezone": "Europe/Berlin"
-                }
-            ]
-        }
-        self.mock_request(new_body)
-        resp = self.api.get_activities()
-        Session.request.assert_called_once_with(
-            'GET',
-            self._req_url('https://wbsapi.withings.net/v2/measure'),
-            **self._req_kwargs({'action': 'getactivity'})
+        timezone0 = tz.gettz(body.get('activities')[0].get('timezone'))
+        timezone1 = tz.gettz(body.get('activities')[1].get('timezone'))
+
+        self.assertEqual(
+            resp,
+            GetActivityResponse(
+                more=False,
+                offset=0,
+                activities=(
+                    GetActivityActivity(
+                        date=arrow.get('2019-01-01').replace(tzinfo=timezone0),
+                        timezone=timezone0,
+                        is_tracker=True,
+                        deviceid='dev1',
+                        brand=100,
+                        steps=101,
+                        distance=102,
+                        elevation=103,
+                        soft=104,
+                        moderate=105,
+                        intense=106,
+                        active=107,
+                        calories=108,
+                        totalcalories=109,
+                        hr_average=110,
+                        hr_min=111,
+                        hr_max=112,
+                        hr_zone_0=113,
+                        hr_zone_1=114,
+                        hr_zone_2=115,
+                        hr_zone_3=116,
+                    ),
+                    GetActivityActivity(
+                        date=arrow.get('2019-01-02').replace(tzinfo=timezone1),
+                        timezone=timezone1,
+                        is_tracker=False,
+                        deviceid='dev2',
+                        brand=200,
+                        steps=201,
+                        distance=202,
+                        elevation=203,
+                        soft=204,
+                        moderate=205,
+                        intense=206,
+                        active=207,
+                        calories=208,
+                        totalcalories=209,
+                        hr_average=210,
+                        hr_min=211,
+                        hr_max=212,
+                        hr_zone_0=213,
+                        hr_zone_1=214,
+                        hr_zone_2=215,
+                        hr_zone_3=216,
+                    )
+                )
+            )
         )
-        self.assertEqual(type(resp), list)
-        self.assertEqual(len(resp), 2)
-        self.assertEqual(type(resp[0]), WithingsActivity)
-        self.assertEqual(type(resp[1]), WithingsActivity)
-        self.assertEqual(resp[0].data, new_body['activities'][0])
-        self.assertEqual(resp[1].data, new_body['activities'][1])
 
     def test_get_measures(self):
         """
@@ -366,15 +548,52 @@ class TestWithingsApi(unittest.TestCase):
         correct, and the return value is a WithingsMeasures object
         """
         body = {
+            'more': False,
+            'offset': 0,
             'updatetime': 1409596058,
+            'timezone': 'Europe/London',
             'measuregrps': [
-                {'attrib': 2, 'measures': [
-                    {'unit': -1, 'type': 1, 'value': 860}
-                ], 'date': 1409361740, 'category': 1, 'grpid': 111111111},
-                {'attrib': 2, 'measures': [
-                    {'unit': -2, 'type': 4, 'value': 185}
-                ], 'date': 1409361740, 'category': 1, 'grpid': 111111112}
-            ]
+                {
+                    'attrib': MeasureGroupAttribution.MANUAL_USER_DURING_ACCOUNT_CREATION.value.real,
+                    'category': MeasureCategory.REAL.value.real,
+                    'created': 1111111111,
+                    'date': '2019-01-01',
+                    'deviceid': 'dev1',
+                    'grpid': 'grp1',
+                    'measures': [
+                        {
+                            'type': MeasureType.HEIGHT.value.real,
+                            'unit': 110,
+                            'value': 110,
+                        },
+                        {
+                            'type': MeasureType.WEIGHT.value.real,
+                            'unit': 120,
+                            'value': 120,
+                        },
+                    ]
+                },
+                {
+                    'attrib': MeasureGroupAttribution.DEVICE_ENTRY_FOR_USER_AMBIGUOUS.value.real,
+                    'category': MeasureCategory.USER_OBJECTIVES.value.real,
+                    'created': 2222222222,
+                    'date': '2019-01-02',
+                    'deviceid': 'dev2',
+                    'grpid': 'grp2',
+                    'measures': [
+                        {
+                            'type': MeasureType.BODY_TEMPERATURE.value.real,
+                            'unit': 210,
+                            'value': 210,
+                        },
+                        {
+                            'type': MeasureType.BONE_MASS.value.real,
+                            'unit': 220,
+                            'value': 220,
+                        },
+                    ],
+                },
+            ],
         }
         self.mock_request(body)
         resp = self.api.get_measures()
@@ -383,23 +602,60 @@ class TestWithingsApi(unittest.TestCase):
             self._req_url('https://wbsapi.withings.net/measure'),
             **self._req_kwargs({'action': 'getmeas'})
         )
-        self.assertEqual(type(resp), WithingsMeasures)
-        self.assertEqual(len(resp), 2)
-        self.assertEqual(type(resp[0]), WithingsMeasureGroup)
-        self.assertEqual(resp[0].weight, 86.0)
-        self.assertEqual(resp[1].height, 1.85)
 
-        # Test limit=1
-        body['measuregrps'].pop()
-        self.mock_request(body)
-        resp = self.api.get_measures(limit=1)
-        Session.request.assert_called_once_with(
-            'GET',
-            self._req_url('https://wbsapi.withings.net/measure'),
-            **self._req_kwargs({'action': 'getmeas', 'limit': 1})
+        timezone = tz.gettz(body.get('timezone'))
+
+        self.assertEqual(
+            resp,
+            GetMeasResponse(
+                more=False,
+                offset=0,
+                timezone=timezone,
+                updatetime=arrow.get(1409596058).replace(tzinfo=timezone),
+                measuregrps=(
+                    GetMeasGroup(
+                        attrib=MeasureGroupAttribution.MANUAL_USER_DURING_ACCOUNT_CREATION,
+                        category=MeasureCategory.REAL,
+                        created=arrow.get(1111111111).replace(tzinfo=timezone),
+                        date=arrow.get('2019-01-01').replace(tzinfo=timezone),
+                        deviceid='dev1',
+                        grpid='grp1',
+                        measures=(
+                            GetMeasMeasure(
+                                type=MeasureType.HEIGHT,
+                                unit=110,
+                                value=110,
+                            ),
+                            GetMeasMeasure(
+                                type=MeasureType.WEIGHT,
+                                unit=120,
+                                value=120,
+                            )
+                        ),
+                    ),
+                    GetMeasGroup(
+                        attrib=MeasureGroupAttribution.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
+                        category=MeasureCategory.USER_OBJECTIVES,
+                        created=arrow.get(2222222222).replace(tzinfo=timezone),
+                        date=arrow.get('2019-01-02').replace(tzinfo=timezone),
+                        deviceid='dev2',
+                        grpid='grp2',
+                        measures=(
+                            GetMeasMeasure(
+                                type=MeasureType.BODY_TEMPERATURE,
+                                unit=210,
+                                value=210,
+                            ),
+                            GetMeasMeasure(
+                                type=MeasureType.BONE_MASS,
+                                unit=220,
+                                value=220,
+                            )
+                        ),
+                    )
+                )
+            )
         )
-        self.assertEqual(len(resp), 1)
-        self.assertEqual(resp[0].weight, 86.0)
 
     def test_get_measures_lastupdate_date(self):
         """Check that dates get converted to timestampse for API calls"""
@@ -532,19 +788,48 @@ class TestWithingsApi(unittest.TestCase):
         Check that list_subscriptions fetches the right URL and returns the
         expected results
         """
-        self.mock_request({'profiles': [
-            {'comment': 'fake_comment', 'expires': 2147483647}
-        ]})
+        self.mock_request({
+            'profiles': [
+                {
+                    'appli': SubscriptionParameter.WEIGHT.value.real,
+                    'callbackurl': 'my_callback_url1',
+                    'comment': 'fake_comment1',
+                    'expires': '10000000',
+                },
+                {
+                    'appli': SubscriptionParameter.CIRCULATORY.value.real,
+                    'callbackurl': 'my_callback_url2',
+                    'comment': 'fake_comment2',
+                    'expires': '20000000',
+                },
+            ]
+        })
         resp = self.api.list_subscriptions()
         Session.request.assert_called_once_with(
             'GET',
             self._req_url('https://wbsapi.withings.net/notify'),
             **self._req_kwargs({'action': 'list', 'appli': 1})
         )
-        self.assertEqual(type(resp), list)
-        self.assertEqual(len(resp), 1)
-        self.assertEqual(resp[0]['comment'], 'fake_comment')
-        self.assertEqual(resp[0]['expires'], 2147483647)
+
+        self.assertEqual(
+            resp,
+            ListSubscriptionsResponse(
+                profiles=(
+                    ListSubscriptionProfile(
+                        appli=SubscriptionParameter.WEIGHT,
+                        callbackurl='my_callback_url1',
+                        comment='fake_comment1',
+                        expires=arrow.get(10000000)
+                    ),
+                    ListSubscriptionProfile(
+                        appli=SubscriptionParameter.CIRCULATORY,
+                        callbackurl='my_callback_url2',
+                        comment='fake_comment2',
+                        expires=arrow.get(20000000)
+                    ),
+                ),
+            ),
+        )
 
         # No subscriptions
         self.mock_request({'profiles': []})
@@ -554,8 +839,13 @@ class TestWithingsApi(unittest.TestCase):
             self._req_url('https://wbsapi.withings.net/notify'),
             **self._req_kwargs({'action': 'list', 'appli': 1})
         )
-        self.assertEqual(type(resp), list)
-        self.assertEqual(len(resp), 0)
+
+        self.assertEqual(
+            resp,
+            ListSubscriptionsResponse(
+                profiles=()
+            )
+        )
 
     def mock_request(self, body, status=0):
         if self.mock_api:
