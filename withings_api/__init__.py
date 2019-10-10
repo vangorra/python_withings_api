@@ -57,7 +57,7 @@ def update_params(
 
 
 class WithingsAuth:
-    """Handles management of oauth authorization calls."""
+    """Handles management of oauth2 authorization calls."""
 
     URL = 'https://account.withings.com'
 
@@ -105,32 +105,21 @@ class WithingsApi:
     """
     Provides entrypoint for calling the withings api.
 
-    While python-withings takes care of automatically refreshing the OAuth2
+    While withings-api takes care of automatically refreshing the OAuth2
     token so you can seamlessly continue making API calls, it is important
     that you persist the updated tokens somewhere associated with the user,
     such as a database table. That way when your application restarts it will
     have the updated tokens to start with. Pass a ``refresh_cb`` function to
     the API constructor and we will call it with the updated token when it gets
-    refreshed. The token contains ``access_token``, ``refresh_token``,
-    ``token_type`` and ``expires_in``. We recommend making the refresh callback
-    a method on your user database model class, so you can easily save the
-    updates to the user record, like so:
+    refreshed.
 
-    class WithingsUser(dbModel):
-        def refresh_cb(self, token):
-            self.access_token = token['access_token']
-            self.refresh_token = token['refresh_token']
-            self.token_type = token['token_type']
-            self.expires_in = token['expires_in']
-            self.save()
-
-    Then when you create the api for your user, just pass the callback:
+    class WithingsUser:
+        def refresh_cb(self, creds):
+            my_savefn(creds)
 
     user = ...
     creds = ...
     api = WithingsApi(creds, refresh_cb=user.refresh_cb)
-
-    Now the updated token will be automatically saved to the DB for later use.
     """
 
     URL = 'https://wbsapi.withings.net'
@@ -272,14 +261,12 @@ class WithingsApi:
         update_params(
             params,
             'meastype',
-            meastype,
-            lambda val: val.value.real
+            meastype
         )
         update_params(
             params,
             'category',
-            category,
-            lambda val: val.value.real
+            category
         )
         update_params(
             params,

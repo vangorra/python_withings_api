@@ -13,13 +13,13 @@ here: <http://developer.withings.com/oauth2/>
 
 **Installation:**
 
-    pip install withings_api
+    pip install withings-api
 
 **Usage:**
 
 ``` python
 from withings_api import WithingsAuth, WithingsApi
-from settings_api import CLIENT_ID, CONSUMER_SECRET, CALLBACK_URI
+from withings_api.common import get_measure_value, MeasureType
 
 auth = WithingsAuth(CLIENT_ID, CONSUMER_SECRET, callback_uri=CALLBACK_URI)
 authorize_url = auth.get_authorize_url()
@@ -28,8 +28,11 @@ authorization_response = raw_input('Please enter your full authorization respons
 creds = auth.get_credentials(authorization_response)
 
 client = WithingsApi(creds)
-measures = client.get_meas(limit=1)
-print("Your last measured weight: %skg" % measures[0].weight)
+get_meas_response = client.get_meas(limit=1)
+print("Your last measured weight: %skg" % get_measure_value(
+    get_meas_response,
+    MeasureType.WEIGHT 
+)
 
 creds = client.get_credentials()
 ```

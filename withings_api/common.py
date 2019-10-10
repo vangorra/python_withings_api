@@ -1,22 +1,22 @@
 """Common classes and functions."""
 
 from datetime import tzinfo
-from enum import Enum
-from typing import NamedTuple, Optional, Tuple
+from enum import Enum, IntEnum
+from typing import cast, NamedTuple, Optional, Tuple, Union, Iterable
 from dateutil import tz
 
 import arrow
 from arrow import Arrow
 
 
-class SleepModel(Enum):
+class SleepModel(IntEnum):
     """Sleep model."""
 
     TRACKER = 16
     SLEEP_MONITOR = 32
 
 
-class SleepDataState(Enum):
+class SleepDataState(IntEnum):
     """Sleep states."""
 
     AWAKE = 0
@@ -25,7 +25,7 @@ class SleepDataState(Enum):
     REM = 3
 
 
-class MeasureGroupAttribution(Enum):
+class MeasureGroupAttrib(IntEnum):
     """Measure group attributions."""
 
     DEVICE_ENTRY_FOR_USER = 0
@@ -37,14 +37,14 @@ class MeasureGroupAttribution(Enum):
     SAME_AS_DEVICE_ENTRY_FOR_USER = 8
 
 
-class MeasureCategory(Enum):
+class MeasureCategory(IntEnum):
     """Measure categories."""
 
     REAL = 1
     USER_OBJECTIVES = 2
 
 
-class MeasureType(Enum):
+class MeasureType(IntEnum):
     """Measure types."""
 
     WEIGHT = 1
@@ -65,7 +65,7 @@ class MeasureType(Enum):
     PULSE_WAVE_VELOCITY = 91
 
 
-class SubscriptionParameter(Enum):
+class SubscriptionParameter(IntEnum):
     """Data to subscribe to."""
 
     WEIGHT = 1
@@ -178,8 +178,9 @@ GetMeasMeasure = NamedTuple('GetMeasMeasure', [
     ('value', int),
 ])
 
+
 GetMeasGroup = NamedTuple('GetMeasGroup', [
-    ('attrib', MeasureGroupAttribution),
+    ('attrib', MeasureGroupAttrib),
     ('category', MeasureCategory),
     ('created', Arrow),
     ('date', Arrow),
@@ -188,6 +189,7 @@ GetMeasGroup = NamedTuple('GetMeasGroup', [
     ('measures', Tuple[GetMeasMeasure]),
 ])
 
+
 GetMeasResponse = NamedTuple('GetMeasResponse', [
     ('measuregrps', Tuple[GetMeasGroup]),
     ('more', bool),
@@ -195,6 +197,7 @@ GetMeasResponse = NamedTuple('GetMeasResponse', [
     ('timezone', tzinfo),
     ('updatetime', Arrow),
 ])
+
 
 GetActivityActivity = NamedTuple('GetActivityActivities', [
     ('date', Arrow),
@@ -375,7 +378,7 @@ def new_get_meas_measure(data: dict) -> GetMeasMeasure:
 
 def new_get_meas_group(data: dict, timezone: tzinfo) -> GetMeasGroup:
     """Create GetMeasGroup from json."""
-    attrib = MeasureGroupAttribution(data.get('attrib'))
+    attrib = MeasureGroupAttrib(data.get('attrib'))
 
     return GetMeasGroup(
         grpid=data.get('grpid'),
@@ -448,21 +451,115 @@ def new_get_activity_response(data: dict) -> GetActivityResponse:
     )
 
 
-def is_measure_ambiguous(
-        group: GetMeasGroup
-) -> bool:
-    """Determine if a group is made from ambiguous data."""
-    return group.attrib in (
-        MeasureGroupAttribution.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
-        MeasureGroupAttribution.MANUAL_USER_DURING_ACCOUNT_CREATION,
+AMBIGUOUS_GROUP_ATTRIBS = (
+    MeasureGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
+    MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
+)
+
+
+class MeasureGroupAttribs:
+    """Groups of MeasureGroupAttrib."""
+
+    ANY = tuple(enum_val for enum_val in MeasureGroupAttrib)
+    AMBIGUOUS = AMBIGUOUS_GROUP_ATTRIBS
+    UNAMBIGUOUS = tuple(
+        enum_val
+        for enum_val in MeasureGroupAttrib
+        if enum_val not in AMBIGUOUS_GROUP_ATTRIBS
     )
 
 
+class MeasureTypes:
+    """Groups of MeasureType."""
+
+    ANY = tuple(enum_val for enum_val in MeasureType)
+
+
+def query_measure_groups(
+        from_source: Union[
+            GetMeasGroup, GetMeasResponse, Iterable[GetMeasGroup]
+        ],
+        with_measure_type: Union[
+            MeasureType,
+            Iterable[MeasureType]
+        ] = MeasureTypes.ANY,
+        with_group_attrib: Union[
+            MeasureGroupAttrib,
+            Iterable[MeasureGroupAttrib]
+        ] = MeasureGroupAttribs.ANY
+) -> Tuple[GetMeasGroup]:
+    """Return a groups and measurements based on filters."""
+    if isinstance(from_source, GetMeasResponse):
+        iter_groups = cast(GetMeasResponse, from_source).measuregrps
+    elif isinstance(from_source, GetMeasGroup):
+        iter_groups = (cast(GetMeasGroup, from_source),)
+    else:
+        iter_groups = cast(Iterable[GetMeasGroup], from_source)
+
+    if isinstance(with_measure_type, MeasureType):
+        iter_measure_type = (
+            cast(MeasureType, with_measure_type),
+        )
+    else:
+        iter_measure_type = cast(
+            Iterable[MeasureType], with_measure_type
+        )
+
+    if isinstance(with_group_attrib, MeasureGroupAttrib):
+        iter_group_attrib = (
+            cast(MeasureGroupAttrib, with_group_attrib),
+        )
+    else:
+        iter_group_attrib = cast(
+            Iterable[MeasureGroupAttrib],
+            with_group_attrib
+        )
+
+    groups = []
+    for group in iter_groups:
+        if group.attrib not in iter_group_attrib:
+            continue
+
+        measures = []
+        for measure in group.measures:
+            if measure.type not in iter_measure_type:
+                continue
+
+            measures.append(measure)
+
+        groups.append(GetMeasGroup(
+            attrib=group.attrib,
+            category=group.category,
+            created=group.created,
+            date=group.date,
+            deviceid=group.deviceid,
+            grpid=group.grpid,
+            measures=tuple(measures)
+        ))
+
+    return tuple(groups)
+
+
 def get_measure_value(
-        group: GetMeasGroup,
-        measure_type: MeasureType
-) -> Optional[int]:
-    """Return a measurement value from a group."""
-    for measure in group.measures:
-        if measure.type == measure_type:
+        from_source: Union[
+            GetMeasGroup, GetMeasResponse, Iterable[GetMeasGroup]
+        ],
+        with_measure_type: Union[
+            MeasureType,
+            Iterable[MeasureType]
+        ],
+        with_group_attrib: Union[
+            MeasureGroupAttrib,
+            Iterable[MeasureGroupAttrib]
+        ] = MeasureGroupAttribs.ANY
+) -> Optional[float]:
+    """Get the first value of a measure that meet the query requirements."""
+    groups = query_measure_groups(
+        from_source,
+        with_measure_type,
+        with_group_attrib
+    )
+
+    for group in groups:
+        for measure in group.measures:
             return measure.value * pow(10, measure.unit)
