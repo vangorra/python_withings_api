@@ -77,6 +77,52 @@ class SubscriptionParameter(Enum):
     BED_OUT = 51
 
 
+class GetActivityField(Enum):
+    """Fields for the getactivity api call."""
+
+    STEPS = 'steps'
+    DISTANCE = 'distance'
+    ELEVATION = 'elevation'
+    SOFT = 'soft'
+    MODERATE = 'moderate'
+    INTENSE = 'intense'
+    ACTIVE = 'active'
+    CALORIES = 'calories'
+    TOTAL_CALORIES = 'totalcalories'
+    HR_AVERAGE = 'hr_average'
+    HR_MIN = 'hr_min'
+    HR_MAX = 'hr_max'
+    HR_ZONE_0 = 'hr_zone_0'
+    HR_ZONE_1 = 'hr_zone_1'
+    HR_ZONE_2 = 'hr_zone_2'
+    HR_ZONE_3 = 'hr_zone_3'
+
+
+class GetSleepField(Enum):
+    """Fields for getsleep api call."""
+
+    HR = 'hr'
+    RR = 'rr'
+
+
+class GetSleepSummaryField(Enum):
+    """Fields for get sleep summary api call."""
+
+    REMSLEEPDURATION = 'remsleepduration'
+    WAKEUPDURATION = 'wakeupduration'
+    LIGHTSLEEPDURATION = 'lightsleepduration'
+    DEEPSLEEPDURATION = 'deepsleepduration'
+    WAKEUPCOUNT = 'wakeupcount'
+    DURATIONTOSLEEP = 'durationtosleep'
+    DURATIONTOWAKEUP = 'durationtowakeup'
+    HR_AVERAGE = 'hr_average'
+    HR_MIN = 'hr_min'
+    HR_MAX = 'hr_max'
+    RR_AVERAGE = 'rr_average'
+    RR_MIN = 'rr_min'
+    RR_MAX = 'rr_max'
+
+
 SleepTimestamp = NamedTuple('SleepTimestamp', [
     ('timestamp', Arrow),
 ])
@@ -235,7 +281,7 @@ def new_list_subscription_response(data: dict) -> ListSubscriptionsResponse:
     return ListSubscriptionsResponse(
         profiles=tuple(
             new_list_subscription_profile(profile)
-            for profile in data.get('profiles')
+            for profile in data.get('profiles', ())
         )
     )
 
@@ -265,7 +311,7 @@ def new_get_sleep_response(data: dict) -> GetSleepResponse:
         model=SleepModel(data.get('model')),
         series=tuple(
             new_get_sleep_serie(serie)
-            for serie in data.get('series')
+            for serie in data.get('series', ())
         )
     )
 
@@ -310,7 +356,8 @@ def new_get_sleep_summary_response(data: dict) -> GetSleepSummaryResponse:
         more=data.get('more'),
         offset=data.get('offset'),
         series=tuple(
-            new_get_sleep_summary_serie(serie) for serie in data.get('series')
+            new_get_sleep_summary_serie(serie)
+            for serie in data.get('series', ())
         )
     )
 
@@ -338,7 +385,8 @@ def new_get_meas_group(data: dict, timezone: tzinfo) -> GetMeasGroup:
         category=MeasureCategory(data.get('category')),
         deviceid=data.get('deviceid'),
         measures=tuple(
-            new_get_meas_measure(measure) for measure in data.get('measures')
+            new_get_meas_measure(measure)
+            for measure in data.get('measures', ())
         )
     )
 
@@ -350,7 +398,7 @@ def new_get_meas_response(data: dict) -> GetMeasResponse:
     return GetMeasResponse(
         measuregrps=tuple(
             new_get_meas_group(group, timezone)
-            for group in data.get('measuregrps')
+            for group in data.get('measuregrps', ())
         ),
         more=data.get('more'),
         offset=data.get('offset'),
@@ -393,7 +441,7 @@ def new_get_activity_response(data: dict) -> GetActivityResponse:
     return GetActivityResponse(
         activities=tuple(
             new_get_activity_activity(activity)
-            for activity in data.get('activities')
+            for activity in data.get('activities', ())
         ),
         more=data.get('more'),
         offset=data.get('offset')

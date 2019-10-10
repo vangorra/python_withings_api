@@ -28,7 +28,7 @@ authorization_response = raw_input('Please enter your full authorization respons
 creds = auth.get_credentials(authorization_response)
 
 client = WithingsApi(creds)
-measures = client.get_measures(limit=1)
+measures = client.get_meas(limit=1)
 print("Your last measured weight: %skg" % measures[0].weight)
 
 creds = client.get_credentials()

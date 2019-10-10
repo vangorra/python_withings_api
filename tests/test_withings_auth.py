@@ -12,52 +12,39 @@ class TestWithingsAuth(unittest.TestCase):
     def setUp(self):
         self.client_id = 'fake_client_id'
         self.consumer_secret = 'fake_consumer_secret'
-        self.callback_uri = 'http://127.0.0.1:8080'
-        self.auth_args = (
-            self.client_id,
-            self.consumer_secret,
-        )
-        self.token = {
+        callback_uri = 'http://127.0.0.1:8080'
+        token = {
             'access_token': 'fake_access_token',
             'expires_in': 11,
             'token_type': 'Bearer',
             'refresh_token': 'fake_refresh_token',
             'userid': 'fake_user_id'
         }
-        OAuth2Session.authorization_url = MagicMock(return_value=('URL', ''))
-        OAuth2Session.fetch_token = MagicMock(return_value=self.token)
-        OAuth2Session.refresh_token = MagicMock(return_value=self.token)
+        OAuth2Session.fetch_token = MagicMock(return_value=token)
+        OAuth2Session.refresh_token = MagicMock(return_value=token)
         arrow.utcnow = MagicMock(return_value=arrow.get(100000000))
 
-    def test_attributes(self):
-        """ Make sure the WithingsAuth objects have the right attributes """
-        assert hasattr(WithingsAuth, 'URL')
-        self.assertEqual(WithingsAuth.URL,
-                         'https://account.withings.com')
-        auth = WithingsAuth(*self.auth_args, callback_uri=self.callback_uri)
-        assert hasattr(auth, 'client_id')
-        self.assertEqual(auth.client_id, self.client_id)
-        assert hasattr(auth, 'consumer_secret')
-        self.assertEqual(auth.consumer_secret, self.consumer_secret)
-        assert hasattr(auth, 'callback_uri')
-        self.assertEqual(auth.callback_uri, self.callback_uri)
-        assert hasattr(auth, 'scope')
-        self.assertEqual(auth.scope, 'user.metrics')
+        self.auth = WithingsAuth(
+            self.client_id,
+            self.consumer_secret,
+            callback_uri=callback_uri
+        )
 
     def test_get_authorize_url(self):
         """ Make sure the get_authorize_url function works as expected """
-        auth = WithingsAuth(*self.auth_args, callback_uri=self.callback_uri)
-        # Returns the OAuth2Session.authorization_url results
-        self.assertEqual(auth.get_authorize_url(), 'URL')
-        OAuth2Session.authorization_url.assert_called_once_with(
-            '{}/oauth2_user/authorize2'.format(WithingsAuth.URL)
-        )
+
+        url = self.auth.get_authorize_url()
+
+        self.assertTrue(url.startswith(
+            'https://account.withings.com/oauth2_user/authorize2'
+            '?response_type=code&client_id=fake_client_id'
+            '&redirect_uri=http%3A%2F%2F127.0.0.1%3A8080'
+            '&scope=user.metrics&state='
+        ))
 
     def test_get_credentials(self):
         """ Make sure the get_credentials function works as expected """
-        auth = WithingsAuth(*self.auth_args, callback_uri=self.callback_uri)
-        # Returns an authorized Credentials object
-        creds = auth.get_credentials('FAKE_CODE')
+        creds = self.auth.get_credentials('FAKE_CODE')
 
         self.assertEqual(
             creds,

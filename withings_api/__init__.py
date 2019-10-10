@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 """
 Python library for the Withings Health API.
 
@@ -9,9 +7,10 @@ Withings Health API
 
 from __future__ import unicode_literals
 
-import datetime
 import json
-from typing import Callable
+from typing import Callable, Union, Any, Iterable
+import datetime
+from types import LambdaType
 
 import arrow
 from oauthlib.oauth2 import WebApplicationClient
@@ -29,9 +28,32 @@ from .common import (
     GetSleepResponse,
     GetSleepSummaryResponse,
     GetMeasResponse,
+    MeasureType,
+    MeasureCategory,
     ListSubscriptionsResponse,
     Credentials,
+    GetActivityField,
+    GetSleepField,
+    GetSleepSummaryField,
 )
+
+DateType = Union[arrow.Arrow, datetime.date, datetime.datetime, int, str]
+
+
+def update_params(
+        params: dict,
+        name: str,
+        current_value: Any,
+        new_value: Any = None
+):
+    """Add a conditional param to a params dict."""
+    if current_value is None:
+        return
+
+    if isinstance(new_value, LambdaType):
+        params[name] = new_value(current_value)
+    else:
+        params[name] = new_value or current_value
 
 
 class WithingsAuth:
@@ -39,54 +61,44 @@ class WithingsAuth:
 
     URL = 'https://account.withings.com'
 
-    def __init__(self, client_id, consumer_secret, callback_uri=None,
-                 scope='user.metrics'):
+    def __init__(
+            self,
+            client_id: str,
+            consumer_secret: str,
+            callback_uri: str = None,
+            scope='user.metrics'
+    ):
         """Initialize new object."""
-        self.client_id = client_id
-        self.consumer_secret = consumer_secret
-        self.callback_uri = callback_uri
-        self.scope = scope
+        self._client_id = client_id
+        self._consumer_secret = consumer_secret
+        self._callback_uri = callback_uri
+        self._scope = scope
+        self._session = OAuth2Session(
+            self._client_id,
+            redirect_uri=self._callback_uri,
+            scope=self._scope
+        )
 
-    def _oauth(self):
-        """Create a new oauth2 session."""
-        return OAuth2Session(self.client_id,
-                             redirect_uri=self.callback_uri,
-                             scope=self.scope)
-
-    def get_authorize_url(self):
+    def get_authorize_url(self) -> str:
         """Generate the authorize url."""
-        return self._oauth().authorization_url(
+        return self._session.authorization_url(
             '%s/oauth2_user/authorize2' % self.URL
         )[0]
 
-    def get_credentials(self, code):
+    def get_credentials(self, code) -> Credentials:
         """Get the oauth credentials."""
-        response = self._oauth().fetch_token(
+        response = self._session.fetch_token(
             '%s/oauth2/token' % self.URL,
             code=code,
-            client_secret=self.consumer_secret,
+            client_secret=self._consumer_secret,
             include_client_id=True
         )
 
         return new_credentials(
-            self.client_id,
-            self.consumer_secret,
+            self._client_id,
+            self._consumer_secret,
             response
         )
-
-
-def is_date(key):
-    """Return true if provided object is a date."""
-    return 'date' in key
-
-
-def is_date_class(val):
-    """
-    Return true if provided value is an instance of a date object.
-
-    Supports: datetime.date, datetime.datetime, arrow.Arrow.
-    """
-    return isinstance(val, (datetime.date, datetime.datetime, arrow.Arrow, ))
 
 
 class WithingsApi:
@@ -124,13 +136,14 @@ class WithingsApi:
     URL = 'https://wbsapi.withings.net'
 
     def __init__(
-            self, credentials: Credentials,
+            self,
+            credentials: Credentials,
             refresh_cb: Callable[[Credentials], None] = None
     ):
         """Initialize new object."""
-        self.credentials = credentials
-        self.refresh_cb = refresh_cb
-        self.token = {
+        self._credentials = credentials
+        self._refresh_cb = refresh_cb
+        token = {
             'access_token': credentials.access_token,
             'refresh_token': credentials.refresh_token,
             'token_type': credentials.token_type,
@@ -138,97 +151,235 @@ class WithingsApi:
                 int(credentials.token_expiry) - arrow.utcnow().timestamp
             ),
         }
-        oauth_client = WebApplicationClient(
-            credentials.client_id,
-            token=self.token,
-            default_token_placement='query'
-        )
 
-        self.client = OAuth2Session(
+        self._client = OAuth2Session(
             credentials.client_id,
-            token=self.token,
-            client=oauth_client,
+            token=token,
+            client=WebApplicationClient(
+                credentials.client_id,
+                token=token,
+                default_token_placement='query'
+            ),
             auto_refresh_url='{}/oauth2/token'.format(WithingsAuth.URL),
             auto_refresh_kwargs={
                 'client_id': credentials.client_id,
                 'client_secret': credentials.consumer_secret,
             },
-            token_updater=self.set_token
+            token_updater=self._update_token
         )
 
     def get_credentials(self) -> Credentials:
         """Get the current oauth credentials."""
-        return self.credentials
+        return self._credentials
 
-    def set_token(self, token):
+    def _update_token(self, token):
         """Set the oauth token."""
-        self.token = token
-        self.credentials = Credentials(
+        self._credentials = Credentials(
             access_token=token.get('access_token'),
             token_expiry=arrow.utcnow().timestamp + token.get('expires_in'),
-            token_type=self.credentials.token_type,
+            token_type=self._credentials.token_type,
             refresh_token=token.get('refresh_token'),
-            user_id=self.credentials.user_id,
-            client_id=self.credentials.client_id,
-            consumer_secret=self.credentials.consumer_secret,
+            user_id=self._credentials.user_id,
+            client_id=self._credentials.client_id,
+            consumer_secret=self._credentials.consumer_secret,
         )
 
-        if self.refresh_cb:
-            self.refresh_cb(self.credentials)
+        if self._refresh_cb:
+            self._refresh_cb(self._credentials)
 
     def request(self, service, action, params=None, method='GET',
                 version=None):
         """Request a specific service."""
-        params = params or {}
-        params['userid'] = self.credentials.user_id
+        params = (params or {}).copy()
+        params['userid'] = self._credentials.user_id
         params['action'] = action
-        for key, val in params.items():
-            if is_date(key) and is_date_class(val):
-                params[key] = arrow.get(val).timestamp
         url_parts = filter(None, [self.URL, version, service])
-        response = self.client.request(
+        response = self._client.request(
             method,
             '/'.join(url_parts),
             params=params
         )
         response = json.loads(response.content.decode())
-        if response['status'] != 0:
+        status = response.get('status')
+        if status != 0:
             raise requests.exceptions.RequestException(
                 "Error code %s" % response['status']
             )
         return response.get('body', None)
 
-    def get_activities(self, **kwargs) -> GetActivityResponse:
+    def get_activity(
+            self,
+            startdateymd: DateType = None,
+            enddateymd: DateType = None,
+            offset: int = None,
+            data_fields: Iterable[GetActivityField] = None,
+            lastupdate: DateType = None
+    ) -> GetActivityResponse:
         """Get user created activities."""
-        response = self.request(
-            'measure',
-            'getactivity',
-            params=kwargs,
-            version='v2'
+        params = {}
+
+        update_params(
+            params,
+            'startdateymd',
+            startdateymd,
+            lambda val: arrow.get(val).format('YYYY-MM-DD')
+        )
+        update_params(
+            params,
+            'enddateymd',
+            enddateymd,
+            lambda val: arrow.get(val).format('YYYY-MM-DD')
+        )
+        update_params(
+            params,
+            'offset',
+            offset
+        )
+        update_params(
+            params,
+            'data_fields',
+            data_fields,
+            lambda fields: ','.join([field.value for field in fields])
+        )
+        update_params(
+            params,
+            'lastupdate',
+            lastupdate,
+            lambda val: arrow.get(val).timestamp
         )
 
-        return new_get_activity_response(response)
+        return new_get_activity_response(
+            self.request(
+                'measure',
+                'getactivity',
+                params=params,
+                version='v2'
+            )
+        )
 
-    def get_measures(self, **kwargs) -> GetMeasResponse:
+    def get_meas(
+            self,
+            meastype: MeasureType = None,
+            category: MeasureCategory = None,
+            startdate: DateType = None,
+            enddate: DateType = None,
+            offset: int = None,
+            lastupdate: DateType = None
+    ) -> GetMeasResponse:
         """Get measures."""
-        response = self.request('measure', 'getmeas', kwargs)
-        return new_get_meas_response(response)
+        params = {}
 
-    def get_sleep(self, **kwargs) -> GetSleepResponse:
-        """Get sleep data."""
-        response = self.request('sleep', 'get', params=kwargs, version='v2')
-        return new_get_sleep_response(response)
-
-    def get_sleep_summary(self, **kwargs) -> GetSleepSummaryResponse:
-        """Get sleep summary."""
-        response = self.request(
-            'sleep',
-            'getsummary',
-            params=kwargs,
-            version='v2'
+        update_params(
+            params,
+            'meastype',
+            meastype,
+            lambda val: val.value.real
+        )
+        update_params(
+            params,
+            'category',
+            category,
+            lambda val: val.value.real
+        )
+        update_params(
+            params,
+            'startdate',
+            startdate,
+            lambda val: arrow.get(val).timestamp
+        )
+        update_params(
+            params,
+            'enddate',
+            enddate,
+            lambda val: arrow.get(val).timestamp
+        )
+        update_params(params, 'offset', offset)
+        update_params(
+            params,
+            'lastupdate',
+            lastupdate,
+            lambda val: arrow.get(val).timestamp
         )
 
-        return new_get_sleep_summary_response(response)
+        return new_get_meas_response(
+            self.request('measure', 'getmeas', params)
+        )
+
+    def get_sleep(
+            self,
+            startdate: DateType = None,
+            enddate: DateType = None,
+            data_fields: Iterable[GetSleepField] = None
+    ) -> GetSleepResponse:
+        """Get sleep data."""
+        params = {}
+
+        update_params(
+            params,
+            'startdate',
+            startdate,
+            lambda val: arrow.get(val).timestamp
+        )
+        update_params(
+            params,
+            'enddate',
+            enddate,
+            lambda val: arrow.get(val).timestamp
+        )
+        update_params(
+            params,
+            'data_fields',
+            data_fields,
+            lambda fields: ','.join([field.value for field in fields])
+        )
+
+        return new_get_sleep_response(
+            self.request('sleep', 'get', params=params, version='v2')
+        )
+
+    def get_sleep_summary(
+            self,
+            startdateymd: DateType = None,
+            enddateymd: DateType = None,
+            data_fields: Iterable[GetSleepSummaryField] = None,
+            lastupdate: DateType = None
+    ) -> GetSleepSummaryResponse:
+        """Get sleep summary."""
+        params = {}
+
+        update_params(
+            params,
+            'startdateymd',
+            startdateymd,
+            lambda val: arrow.get(val).format('YYYY-MM-DD')
+        )
+        update_params(
+            params,
+            'enddateymd',
+            enddateymd,
+            lambda val: arrow.get(val).format('YYYY-MM-DD')
+        )
+        update_params(
+            params,
+            'data_fields',
+            data_fields,
+            lambda fields: ','.join([field.value for field in fields])
+        )
+        update_params(
+            params,
+            'lastupdate',
+            lastupdate,
+            lambda val: arrow.get(val).timestamp
+        )
+
+        return new_get_sleep_summary_response(
+            self.request(
+                'sleep',
+                'getsummary',
+                params=params,
+                version='v2'
+            )
+        )
 
     def subscribe(self, callback_url, comment, **kwargs):
         """Subscribe an application."""

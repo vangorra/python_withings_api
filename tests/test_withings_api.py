@@ -1,6 +1,4 @@
-import configparser
 from unittest.mock import MagicMock
-import arrow
 import datetime
 from dateutil import tz
 import json
@@ -33,6 +31,8 @@ from withings_api.common import (
     ListSubscriptionProfile,
     SubscriptionParameter,
     Credentials,
+    GetActivityField,
+    GetSleepField,
     get_measure_value,
     is_measure_ambiguous,
 )
@@ -141,9 +141,9 @@ class TestWithingsApi(unittest.TestCase):
             'params': params,
         }
 
-    def test_set_token(self):
+    def test__update_token(self):
         """
-        Make sure WithingsApi.set_token makes the expected changes
+        Make sure WithingsApi._update_token makes the expected changes
         """
         timestamp = int((
                                 datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
@@ -165,18 +165,19 @@ class TestWithingsApi(unittest.TestCase):
             'expires_in': 100,
         }
 
-        api.set_token(token)
+        api._update_token(token)
 
-        self.assertEqual(api.token, token)
         refresh_cb.assert_not_called()
 
-    def test_set_token_refresh_cb(self):
+    def test__update_token_refresh_cb(self):
         """
-        Make sure set_token calls refresh_cb when specified
+        Make sure _update_token calls refresh_cb when specified
         """
         timestamp = int((
             datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
         ).total_seconds())
+        arrow.utcnow = MagicMock(return_value=arrow.get(10000000))
+
         creds = Credentials(
             access_token='AA',
             token_expiry=timestamp,
@@ -194,10 +195,22 @@ class TestWithingsApi(unittest.TestCase):
             'expires_in': 100,
         }
 
-        api.set_token(token)
+        api._update_token(token)
 
-        self.assertEqual(api.token, token)
-        refresh_cb.assert_called_once_with(api.credentials)
+        self.assertEqual(
+            api.get_credentials(),
+            Credentials(
+                access_token='fakeat',
+                token_expiry=10000100,
+                token_type='AA',
+                refresh_token='fakert',
+                user_id='AA',
+                client_id='AA',
+                consumer_secret='AA',
+            )
+        )
+
+        refresh_cb.assert_called_once_with(api.get_credentials())
 
     def test_request(self):
         """
@@ -289,6 +302,33 @@ class TestWithingsApi(unittest.TestCase):
                     )
                 )
             )
+        )
+
+    def test_get_sleep_params(self):
+        """Test get sleep params."""
+        request_mock = MagicMock(return_value={
+            'model': SleepModel.TRACKER.value.real,
+        })
+        self.api.request = request_mock
+
+        self.api.get_sleep(
+            startdate='2019-01-01',
+            enddate=arrow.get('2019-01-02'),
+            data_fields=(
+                GetSleepField.HR,
+                GetSleepField.HR,
+            )
+        )
+
+        request_mock.assert_called_with(
+            'sleep',
+            'get',
+            params={
+                'startdate': 1546300800,
+                'enddate': 1546387200,
+                'data_fields': 'hr,hr',
+            },
+            version='v2',
         )
 
     def test_get_sleep_summary(self):
@@ -417,9 +457,9 @@ class TestWithingsApi(unittest.TestCase):
             )
         )
 
-    def test_get_activities(self):
+    def test_get_activity(self):
         """
-        Check that get_activities fetches the appropriate URL, the response
+        Check that get_activity fetches the appropriate URL, the response
         looks correct, and the return value is a list of WithingsActivity
         objects
         """
@@ -476,7 +516,7 @@ class TestWithingsApi(unittest.TestCase):
             ],
         }
         self.mock_request(body)
-        resp = self.api.get_activities()
+        resp = self.api.get_activity()
         Session.request.assert_called_once_with(
             'GET',
             self._req_url('https://wbsapi.withings.net/v2/measure'),
@@ -542,9 +582,39 @@ class TestWithingsApi(unittest.TestCase):
             )
         )
 
-    def test_get_measures(self):
+    def test_get_activity_params(self):
+        """Test activity params."""
+        request_mock = MagicMock(return_value={})
+        self.api.request = request_mock
+
+        self.api.get_activity(
+            startdateymd='2019-01-01',
+            enddateymd=arrow.get('2019-01-02'),
+            offset=2,
+            data_fields=(
+                GetActivityField.ACTIVE,
+                GetActivityField.CALORIES,
+                GetActivityField.ELEVATION,
+            ),
+            lastupdate=10000000
+        )
+
+        request_mock.assert_called_with(
+            'measure',
+            'getactivity',
+            params={
+                'startdateymd': '2019-01-01',
+                'enddateymd': '2019-01-02',
+                'offset': 2,
+                'data_fields': 'active,calories,elevation',
+                'lastupdate': 10000000,
+            },
+            version='v2',
+        )
+
+    def test_get_meas(self):
         """
-        Check that get_measures fetches the appriate URL, the response looks
+        Check that get_meas fetches the appriate URL, the response looks
         correct, and the return value is a WithingsMeasures object
         """
         body = {
@@ -596,7 +666,7 @@ class TestWithingsApi(unittest.TestCase):
             ],
         }
         self.mock_request(body)
-        resp = self.api.get_measures()
+        resp = self.api.get_meas()
         Session.request.assert_called_once_with(
             'GET',
             self._req_url('https://wbsapi.withings.net/measure'),
@@ -657,41 +727,32 @@ class TestWithingsApi(unittest.TestCase):
             )
         )
 
-    def test_get_measures_lastupdate_date(self):
-        """Check that dates get converted to timestampse for API calls"""
-        self.mock_request({'updatetime': 1409596058, 'measuregrps': []})
+    def test_get_meas_params(self):
+        request_mock = MagicMock(return_value={})
+        self.api.request = request_mock
 
-        self.api.get_measures(lastupdate=datetime.date(2014, 9, 1))
-
-        Session.request.assert_called_once_with(
-            'GET',
-            self._req_url('https://wbsapi.withings.net/measure'),
-            **self._req_kwargs({'action': 'getmeas', 'lastupdate': 1409529600})
+        self.api.get_meas(
+            meastype=MeasureType.BONE_MASS,
+            category=MeasureCategory.USER_OBJECTIVES,
+            startdate=arrow.get('2019-01-01'),
+            enddate=100000000,
+            offset=12,
+            lastupdate=datetime.date(2019, 1, 2)
         )
 
-    def test_get_measures_lastupdate_datetime(self):
-        """Check that datetimes get converted to timestampse for API calls"""
-        self.mock_request({'updatetime': 1409596058, 'measuregrps': []})
-
-        self.api.get_measures(lastupdate=datetime.datetime(2014, 9, 1))
-
-        Session.request.assert_called_once_with(
-            'GET',
-            self._req_url('https://wbsapi.withings.net/measure'),
-            **self._req_kwargs({'action': 'getmeas', 'lastupdate': 1409529600})
+        request_mock.assert_called_with(
+            'measure',
+            'getmeas',
+            {
+                'meastype': 88,
+                'category': 2,
+                'startdate': 1546300800,
+                'enddate': 100000000,
+                'offset': 12,
+                'lastupdate': 1546387200,
+            }
         )
 
-    def test_get_measures_lastupdate_arrow(self):
-        """Check that arrow dates get converted to timestampse for API calls"""
-        self.mock_request({'updatetime': 1409596058, 'measuregrps': []})
-
-        self.api.get_measures(lastupdate=arrow.get('2014-09-01'))
-
-        Session.request.assert_called_once_with(
-            'GET',
-            self._req_url('https://wbsapi.withings.net/measure'),
-            **self._req_kwargs({'action': 'getmeas', 'lastupdate': 1409529600})
-        )
 
     def test_subscribe(self):
         """
