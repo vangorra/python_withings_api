@@ -8,7 +8,7 @@ with open("README.md", 'r') as f:
 
 setup(
     name='withings_api',
-    version=(os.environ.get('TRAVIS_TAG') or '0.0.0a0'),
+    version='2.0.0b7.1',
     description="Library for the Withings API",
     long_description=long_description,
     long_description_content_type='text/markdown',
