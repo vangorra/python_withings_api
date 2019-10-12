@@ -2,7 +2,15 @@
 
 from datetime import tzinfo
 from enum import Enum, IntEnum
-from typing import cast, NamedTuple, Optional, Tuple, Union, Iterable
+from typing import (
+    cast,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Union,
+    Iterable,
+    Any
+)
 from dateutil import tz
 
 import arrow
@@ -122,6 +130,18 @@ class GetSleepSummaryField(Enum):
     RR_MIN = 'rr_min'
     RR_MAX = 'rr_max'
 
+
+AllWithingsEnums = Union[
+    SleepModel,
+    SleepDataState,
+    MeasureGroupAttrib,
+    MeasureCategory,
+    MeasureType,
+    SubscriptionParameter,
+    GetActivityField,
+    GetSleepField,
+    GetSleepSummaryField,
+]
 
 SleepTimestamp = NamedTuple('SleepTimestamp', [
     ('timestamp', Arrow),
@@ -252,6 +272,11 @@ ListSubscriptionsResponse = NamedTuple('ListSubscriptionsResponse', [
 ])
 
 
+def enum_value(value: Any, enum: AllWithingsEnums) -> AllWithingsEnums:
+    """Create instance of enum if value is set."""
+    return value and enum(value)
+
+
 def new_credentials(
         client_id: str,
         consumer_secret: str,
@@ -272,7 +297,7 @@ def new_credentials(
 def new_list_subscription_profile(data: dict) -> ListSubscriptionProfile:
     """Create ListSubscriptionProfile from json."""
     return ListSubscriptionProfile(
-        appli=SubscriptionParameter(data.get('appli')),
+        appli=enum_value(data.get('appli'), SubscriptionParameter),
         callbackurl=data.get('callbackurl'),
         expires=arrow.get(int(data.get('expires'))),
         comment=data.get('comment'),
@@ -302,7 +327,7 @@ def new_get_sleep_serie(data: dict) -> GetSleepSerie:
     return GetSleepSerie(
         enddate=arrow.get(data.get("enddate")),
         startdate=arrow.get(data.get("startdate")),
-        state=SleepDataState(data.get("state")),
+        state=enum_value(data.get("state"), SleepDataState),
         hr=new_sleep_timestamp(data.get('hr')),
         rr=new_sleep_timestamp(data.get('rr')),
     )
@@ -311,7 +336,7 @@ def new_get_sleep_serie(data: dict) -> GetSleepSerie:
 def new_get_sleep_response(data: dict) -> GetSleepResponse:
     """Create GetSleepResponse from json."""
     return GetSleepResponse(
-        model=SleepModel(data.get('model')),
+        model=enum_value(data.get('model'), SleepModel),
         series=tuple(
             new_get_sleep_serie(serie)
             for serie in data.get('series', ())
@@ -345,7 +370,7 @@ def new_get_sleep_summary_serie(data: dict) -> GetSleepSummarySerie:
     return GetSleepSummarySerie(
         date=arrow.get(data.get('date')).replace(tzinfo=timezone),
         enddate=arrow.get(data.get('enddate')).replace(tzinfo=timezone),
-        model=SleepModel(data.get('model')),
+        model=enum_value(data.get('model'), SleepModel),
         modified=arrow.get(data.get('modified')).replace(tzinfo=timezone),
         startdate=arrow.get(data.get('startdate')).replace(tzinfo=timezone),
         timezone=timezone,
@@ -371,7 +396,7 @@ def new_get_meas_measure(data: dict) -> GetMeasMeasure:
     unit = data.get('unit')
     return GetMeasMeasure(
         value=value,
-        type=MeasureType(data.get('type')),
+        type=enum_value(data.get('type'), MeasureType),
         unit=unit
     )
 
@@ -385,7 +410,7 @@ def new_get_meas_group(data: dict, timezone: tzinfo) -> GetMeasGroup:
         attrib=attrib,
         date=arrow.get(data.get('date')).replace(tzinfo=timezone),
         created=arrow.get(data.get('created')).replace(tzinfo=timezone),
-        category=MeasureCategory(data.get('category')),
+        category=enum_value(data.get('category'), MeasureCategory),
         deviceid=data.get('deviceid'),
         measures=tuple(
             new_get_meas_measure(measure)

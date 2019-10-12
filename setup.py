@@ -21,7 +21,9 @@ setup(
         'requests-oauth>=0.4.1',
         'requests-oauthlib>=1.2',
     ],
-    tests_require=[],
+    tests_require=[
+        'responses>=0.10.6',
+    ],
     setup_requires=[
         'wheel>=0.33.6',  # Needed for successful compile of other modules.
         'pytest-runner>=5.1',

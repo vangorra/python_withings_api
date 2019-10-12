@@ -382,12 +382,11 @@ class WithingsApi:
 
     def is_subscribed(self, callback_url, appli=1):
         """Return true if withings profile has a subscription."""
-        params = {'callbackurl': callback_url, 'appli': appli}
-        try:
-            self.request('notify', 'get', params)
-            return True
-        except requests.exceptions.RequestException:
-            return False
+        for profile in self.list_subscriptions(appli=appli).profiles:
+            if profile.callbackurl == callback_url:
+                return True
+
+        return False
 
     def list_subscriptions(self, appli=1) -> ListSubscriptionsResponse:
         """List current subscriptions from withings profile."""
