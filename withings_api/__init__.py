@@ -184,16 +184,18 @@ class WithingsApi:
         if self._refresh_cb:
             self._refresh_cb(self._credentials)
 
-    def request(self, service, action, params=None, method='GET',
-                version=None):
+    def request(
+            self,
+            path: str,
+            params: Dict[str, Any],
+            method='GET'
+    ):
         """Request a specific service."""
         params = (params or {}).copy()
         params['userid'] = self._credentials.user_id
-        params['action'] = action
-        url_parts = filter(None, [self.URL, version, service])
         response = self._client.request(
-            method,
-            '/'.join(url_parts),
+            method=method,
+            url='%s/%s' % (self.URL.strip('/'), path.strip('/')),
             params=params
         )
         parsed_response = json.loads(response.content.decode())
@@ -244,13 +246,16 @@ class WithingsApi:
             lastupdate,
             lambda val: arrow.get(val).timestamp
         )
+        update_params(
+            params,
+            'action',
+            'getactivity'
+        )
 
         return new_get_activity_response(
             self.request(
-                'measure',
-                'getactivity',
-                params=params,
-                version='v2'
+                path='v2/measure',
+                params=params
             )
         )
 
@@ -297,9 +302,17 @@ class WithingsApi:
             lastupdate,
             lambda val: arrow.get(val).timestamp
         )
+        update_params(
+            params,
+            'action',
+            'getmeas'
+        )
 
         return new_get_meas_response(
-            self.request('measure', 'getmeas', params)
+            self.request(
+                path='measure',
+                params=params
+            )
         )
 
     def get_sleep(
@@ -329,9 +342,17 @@ class WithingsApi:
             data_fields,
             lambda fields: ','.join([field.value for field in fields])
         )
+        update_params(
+            params,
+            'action',
+            'get'
+        )
 
         return new_get_sleep_response(
-            self.request('sleep', 'get', params=params, version='v2')
+            self.request(
+                path='v2/sleep',
+                params=params
+            )
         )
 
     def get_sleep_summary(
@@ -368,27 +389,34 @@ class WithingsApi:
             lastupdate,
             lambda val: arrow.get(val).timestamp
         )
+        update_params(
+            params,
+            'action',
+            'getsummary'
+        )
 
         return new_get_sleep_summary_response(
             self.request(
-                'sleep',
-                'getsummary',
-                params=params,
-                version='v2'
+                path='v2/sleep',
+                params=params
             )
         )
 
     def subscribe(self, callback_url, comment, **kwargs):
         """Subscribe an application."""
-        params = {'callbackurl': callback_url, 'comment': comment}
+        params = {
+            'action': 'subscribe',
+            'callbackurl': callback_url,
+            'comment': comment,
+        }
         params.update(kwargs)
-        self.request('notify', 'subscribe', params)
+        self.request(path='notify', params=params)
 
     def unsubscribe(self, callback_url, **kwargs):
         """Unsubscribe an application."""
-        params = {'callbackurl': callback_url}
+        params = {'action': 'revoke', 'callbackurl': callback_url}
         params.update(kwargs)
-        self.request('notify', 'revoke', params)
+        self.request(path='notify', params=params)
 
     def is_subscribed(self, callback_url, appli=1):
         """Return true if withings profile has a subscription."""
@@ -400,5 +428,8 @@ class WithingsApi:
 
     def list_subscriptions(self, appli=1) -> ListSubscriptionsResponse:
         """List current subscriptions from withings profile."""
-        response = self.request('notify', 'list', {'appli': appli})
+        response = self.request(
+            path='notify',
+            params={'action': 'list', 'appli': appli}
+        )
         return new_list_subscription_response(response)
