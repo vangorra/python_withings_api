@@ -1,10 +1,9 @@
 from unittest.mock import MagicMock
 import datetime
-from datetime import tzinfo
-from dateutil import tz
 import re
-from typing import cast
 from urllib import parse
+
+from .common import TIMEZONE0, TIMEZONE_STR0, TIMEZONE1, TIMEZONE_STR1
 
 import arrow
 import pytest
@@ -44,14 +43,8 @@ from withings_api.common import (
 )
 
 
-TIMEZONE_STR0 = 'Europe/London'
-TIMEZONE_STR1 = 'America/Los_Angeles'
-TIMEZONE0 = cast(tzinfo, tz.gettz(TIMEZONE_STR0))
-TIMEZONE1 = cast(tzinfo, tz.gettz(TIMEZONE_STR1))
-
-
 @pytest.fixture()
-def withings_api():
+def withings_api() -> WithingsApi:
     client_id = 'my_client_id'
     consumer_secret = 'my_consumer_secret'
     credentials = Credentials(
@@ -68,7 +61,7 @@ def withings_api():
 
 
 @responses.activate
-def test_authorize():
+def test_authorize() -> None:
     client_id = 'fake_client_id'
     consumer_secret = 'fake_consumer_secret'
     callback_uri = 'http://127.0.0.1:8080'
@@ -128,7 +121,7 @@ def test_authorize():
 
 
 @responses.activate
-def test_request_exception(withings_api: WithingsApi):
+def test_request_exception(withings_api: WithingsApi) -> None:
     responses.add(
         method=responses.GET,
         url=re.compile('https://wbsapi.withings.net/.*'),
@@ -144,7 +137,7 @@ def test_request_exception(withings_api: WithingsApi):
 
 
 @responses.activate
-def test_refresh_token():
+def test_refresh_token() -> None:
     client_id = 'my_client_id'
     consumer_secret = 'my_consumer_secret'
 
@@ -184,7 +177,7 @@ def test_refresh_token():
     assert new_credentials.token_expiry > credentials.token_expiry
 
 
-def responses_add_measure_get_activity():
+def responses_add_measure_get_activity() -> None:
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -250,7 +243,7 @@ def responses_add_measure_get_activity():
 
 
 @responses.activate
-def test_measure_get_activity(withings_api: WithingsApi):
+def test_measure_get_activity(withings_api: WithingsApi) -> None:
     responses_add_measure_get_activity()
     assert withings_api.measure_get_activity() == GetActivityResponse(
         more=False,
@@ -306,7 +299,7 @@ def test_measure_get_activity(withings_api: WithingsApi):
     )
 
 
-def responses_add_measure_get_meas():
+def responses_add_measure_get_meas() -> None:
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -370,7 +363,7 @@ def responses_add_measure_get_meas():
 
 
 @responses.activate
-def test_measure_get_meas(withings_api: WithingsApi):
+def test_measure_get_meas(withings_api: WithingsApi) -> None:
     responses_add_measure_get_meas()
     assert withings_api.measure_get_meas() == GetMeasResponse(
         more=False,
@@ -422,7 +415,7 @@ def test_measure_get_meas(withings_api: WithingsApi):
     )
 
 
-def responses_add_sleep_get():
+def responses_add_sleep_get() -> None:
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -457,7 +450,7 @@ def responses_add_sleep_get():
 
 
 @responses.activate
-def test_sleep_get(withings_api: WithingsApi):
+def test_sleep_get(withings_api: WithingsApi) -> None:
     responses_add_sleep_get()
     assert withings_api.sleep_get() == GetSleepResponse(
         model=SleepModel.TRACKER,
@@ -480,7 +473,7 @@ def test_sleep_get(withings_api: WithingsApi):
     )
 
 
-def responses_add_sleep_get_summary():
+def responses_add_sleep_get_summary() -> None:
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -548,7 +541,7 @@ def responses_add_sleep_get_summary():
 
 
 @responses.activate
-def test_sleep_get_summary(withings_api: WithingsApi):
+def test_sleep_get_summary(withings_api: WithingsApi) -> None:
     responses_add_sleep_get_summary()
     assert withings_api.sleep_get_summary() == GetSleepSummaryResponse(
         more=False,
@@ -604,7 +597,7 @@ def test_sleep_get_summary(withings_api: WithingsApi):
     )
 
 
-def responses_add_notify_get():
+def responses_add_notify_get() -> None:
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -623,7 +616,7 @@ def responses_add_notify_get():
 
 
 @responses.activate
-def test_notify_get(withings_api: WithingsApi):
+def test_notify_get(withings_api: WithingsApi) -> None:
     responses_add_notify_get()
 
     response = withings_api.notify_get(
@@ -636,7 +629,7 @@ def test_notify_get(withings_api: WithingsApi):
     )
 
 
-def responses_add_notify_list():
+def responses_add_notify_list() -> None:
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -666,7 +659,7 @@ def responses_add_notify_list():
 
 
 @responses.activate
-def test_notify_list(withings_api: WithingsApi):
+def test_notify_list(withings_api: WithingsApi) -> None:
     responses_add_notify_list()
 
     assert withings_api.notify_list() == NotifyListResponse(
@@ -699,7 +692,7 @@ def test_notify_list(withings_api: WithingsApi):
 
 
 @responses.activate
-def test_notify_get_params(withings_api: WithingsApi):
+def test_notify_get_params(withings_api: WithingsApi) -> None:
     responses_add_notify_get()
     withings_api.notify_get(
         callbackurl='http://localhost/callback2',
@@ -727,7 +720,7 @@ def test_notify_get_params(withings_api: WithingsApi):
 
 
 @responses.activate
-def test_notify_list_params(withings_api: WithingsApi):
+def test_notify_list_params(withings_api: WithingsApi) -> None:
     responses_add_notify_list()
     withings_api.notify_list(
         appli=NotifyAppli.CIRCULATORY
@@ -740,8 +733,59 @@ def test_notify_list_params(withings_api: WithingsApi):
         }
     )
 
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/notify'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'list',
+        }
+    )
 
-def responses_add_notify_subscribe():
+
+def responses_add_notify_revoke() -> None:
+    responses.add(
+        method=responses.GET,
+        url=re.compile(
+            'https://wbsapi.withings.net/notify?.*action=revoke(&.*)?'
+        ),
+        status=200,
+        json={
+            'status': 0,
+            'body': {}
+        }
+    )
+
+
+@responses.activate
+def test_notify_revoke_params(withings_api: WithingsApi) -> None:
+    responses_add_notify_revoke()
+    withings_api.notify_revoke(
+        appli=NotifyAppli.CIRCULATORY
+    )
+
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'appli': str(NotifyAppli.CIRCULATORY.real),
+        }
+    )
+
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/notify'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'revoke',
+        }
+    )
+
+
+def responses_add_notify_subscribe() -> None:
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -756,7 +800,7 @@ def responses_add_notify_subscribe():
 
 
 @responses.activate
-def test_notify_subscribe_params(withings_api: WithingsApi):
+def test_notify_subscribe_params(withings_api: WithingsApi) -> None:
     responses_add_notify_subscribe()
     withings_api.notify_subscribe(
         callbackurl='http://localhost/callback2',
@@ -785,7 +829,7 @@ def test_notify_subscribe_params(withings_api: WithingsApi):
     )
 
 
-def responses_add_notify_update():
+def responses_add_notify_update() -> None:
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -800,7 +844,7 @@ def responses_add_notify_update():
 
 
 @responses.activate
-def test_notify_update_params(withings_api: WithingsApi):
+def test_notify_update_params(withings_api: WithingsApi) -> None:
     responses_add_notify_update()
     withings_api.notify_update(
         callbackurl='http://localhost/callback2',
@@ -834,7 +878,7 @@ def test_notify_update_params(withings_api: WithingsApi):
 
 
 @responses.activate
-def test_measure_get_meas_params(withings_api: WithingsApi):
+def test_measure_get_meas_params(withings_api: WithingsApi) -> None:
     responses_add_measure_get_meas()
     withings_api.measure_get_meas(
         meastype=MeasureType.BONE_MASS,
@@ -870,7 +914,7 @@ def test_measure_get_meas_params(withings_api: WithingsApi):
 
 
 @responses.activate
-def test_measure_get_activity_params(withings_api: WithingsApi):
+def test_measure_get_activity_params(withings_api: WithingsApi) -> None:
     responses_add_measure_get_activity()
     withings_api.measure_get_activity(
         startdateymd='2019-01-01',
@@ -908,7 +952,7 @@ def test_measure_get_activity_params(withings_api: WithingsApi):
 
 
 @responses.activate
-def test_get_sleep_params(withings_api: WithingsApi):
+def test_get_sleep_params(withings_api: WithingsApi) -> None:
     responses_add_sleep_get()
     withings_api.sleep_get(
         startdate='2019-01-01',
@@ -941,7 +985,7 @@ def test_get_sleep_params(withings_api: WithingsApi):
 
 
 @responses.activate
-def test_get_sleep_summary_params(withings_api: WithingsApi):
+def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
     responses_add_sleep_get_summary()
     withings_api.sleep_get_summary(
         startdateymd='2019-01-01',
@@ -975,7 +1019,7 @@ def test_get_sleep_summary_params(withings_api: WithingsApi):
     )
 
 
-def assert_url_query_contains(url: str, expected: dict):
+def assert_url_query_contains(url: str, expected: dict) -> None:
     params = dict(parse.parse_qsl(parse.urlsplit(url).query))
 
     for key, value in expected.items():
@@ -983,5 +1027,5 @@ def assert_url_query_contains(url: str, expected: dict):
         assert params[key] == expected[key]
 
 
-def assert_url_path(url: str, path: str):
+def assert_url_path(url: str, path: str) -> None:
     assert parse.urlsplit(url).path == path

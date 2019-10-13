@@ -9,3 +9,4 @@ build
 .eggs
 .idea
 .credentials
+.mypy_cache

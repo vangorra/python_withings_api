@@ -1,5 +1,6 @@
-from dateutil import tz
+"""Tests for common code."""
 
+from .common import TIMEZONE0
 import arrow
 import pytest
 
@@ -20,21 +21,21 @@ from withings_api.common import (
 )
 
 
-def test_enforce_type_exception():
+def test_enforce_type_exception() -> None:
     with pytest.raises(Exception):
         enforce_type('blah', int)
 
 
-def test_enum_or_raise():
+def test_enum_or_raise() -> None:
     with pytest.raises(Exception):
         enum_or_raise(None, SleepModel)
 
 
-def test_query_measure_groups():
+def test_query_measure_groups() -> None:
     response = GetMeasResponse(
         offset=0,
         more=False,
-        timezone=tz.gettz('Europe/London'),
+        timezone=TIMEZONE0,
         updatetime=arrow.get(100000),
         measuregrps=(
             GetMeasGroup(
@@ -200,11 +201,11 @@ def test_query_measure_groups():
     ) == (response.measuregrps[0],)
 
 
-def test_get_measure_value():
+def test_get_measure_value() -> None:
     response = GetMeasResponse(
         offset=0,
         more=False,
-        timezone=tz.gettz('Europe/London'),
+        timezone=TIMEZONE0,
         updatetime=arrow.get(100000),
         measuregrps=(
             GetMeasGroup(

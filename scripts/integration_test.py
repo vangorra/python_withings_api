@@ -14,7 +14,7 @@ CREDENTIALS_FILE = path.abspath(
 )
 
 
-def main():
+def main() -> None:
     """Run main function."""
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument(

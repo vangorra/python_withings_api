@@ -11,6 +11,7 @@ from typing import (
     Any,
     Type,
     Dict,
+    TypeVar,
 )
 from dateutil import tz
 
@@ -309,7 +310,10 @@ NotifyGetResponse = NamedTuple('NotifyGetResponse', [
 ])
 
 
-def enforce_type(value: Any, expected: Type[Any]) -> Any:
+GenericType = TypeVar('GenericType')
+
+
+def enforce_type(value: Any, expected: Type[GenericType]) -> GenericType:
     """Enforce a data type."""
     if not isinstance(value, expected):
         raise Exception(
@@ -713,6 +717,6 @@ def get_measure_value(
 
     for group in groups:
         for measure in group.measures:
-            return measure.value * pow(10, measure.unit)
+            return float(measure.value * pow(10, measure.unit))
 
     return None
