@@ -205,7 +205,7 @@ class WithingsApi:
             lastupdate: DateType = None
     ) -> GetActivityResponse:
         """Get user created activities."""
-        params: Dict[str, Any] = {}
+        params = {}  # type: Dict[str, Any]
 
         update_params(
             params,
@@ -256,7 +256,7 @@ class WithingsApi:
             lastupdate: DateType = None
     ) -> GetMeasResponse:
         """Get measures."""
-        params: Dict[str, Any] = {}
+        params = {}  # type: Dict[str, Any]
 
         update_params(
             params,
@@ -301,7 +301,7 @@ class WithingsApi:
             data_fields: Iterable[GetSleepField] = None
     ) -> GetSleepResponse:
         """Get sleep data."""
-        params: Dict[str, Any] = {}
+        params = {}  # type: Dict[str, Any]
 
         update_params(
             params,
@@ -334,7 +334,7 @@ class WithingsApi:
             lastupdate: DateType = None
     ) -> GetSleepSummaryResponse:
         """Get sleep summary."""
-        params: Dict[str, Any] = {}
+        params = {}  # type: Dict[str, Any]
 
         update_params(
             params,
