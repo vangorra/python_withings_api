@@ -21,14 +21,17 @@ setup(
         'requests-oauth>=0.4.1',
         'requests-oauthlib>=1.2',
     ],
-    tests_require=[],
+    tests_require=[
+        'responses>=0.10.6',
+    ],
     setup_requires=[
         'wheel>=0.33.6',  # Needed for successful compile of other modules.
         'pytest-runner>=5.1',
         'pytest-cov>=2.8.1',
         'pytest-docstyle>=1.5.0',
+        'pytest-mypy>=0.4.1',
+        'pytest-flake8>=1.0.4',
         'setuptools-lint>=0.6.0',
-        'flake8>=3.7.8',
     ],
     test_suite='tests.all_tests',
     keywords="withings api",

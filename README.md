@@ -1,4 +1,5 @@
-# Python library for the Withings Health API
+# Python withings-api
+Python library for the Withings Health API
 
 [![Build Status](https://travis-ci.org/vangorra/python_withings_api.svg?branch=master)](https://travis-ci.org/vangorra/python_withings_api) 
 [![Maintainability](https://api.codeclimate.com/v1/badges/36983f024cf45aab80ba/maintainability)](https://codeclimate.com/github/vangorra/python_withings_api/maintainability)
@@ -11,25 +12,63 @@ Uses OAuth 2.0 to authenticate. You need to obtain a client id
 and consumer secret from Withings by creating an application
 here: <http://developer.withings.com/oauth2/>
 
-**Installation:**
+## Installation
 
-    pip install withings_api
+    pip install withings-api
 
-**Usage:**
+## Usage
+For a complete example, checkout the integration test in `scripts/integration_test.py`. It has a working example on how to use the API.
+```python
+from withings_api import WithingsAuth, WithingsApi, AuthScope
+from withings_api.common import get_measure_value, MeasureType
 
-``` python
-from withings_api import WithingsAuth, WithingsApi
-from settings_api import CLIENT_ID, CONSUMER_SECRET, CALLBACK_URI
+auth = WithingsAuth(
+    client_id='your client id',
+    consumer_secret='your consumer secret',
+    callback_uri='your callback uri',
+    mode='demo',  # Used for testing. Remove this when getting real user data.
+    scope=(
+        AuthScope.USER_ACTIVITY,
+        AuthScope.USER_METRICS,
+        AuthScope.USER_INFO,
+        AuthScope.USER_SLEEP_EVENTS,
+    )
+)
 
-auth = WithingsAuth(CLIENT_ID, CONSUMER_SECRET, callback_uri=CALLBACK_URI)
 authorize_url = auth.get_authorize_url()
-print("Go to %s allow the app and copy the url you are redirected to." % authorize_url)
-authorization_response = raw_input('Please enter your full authorization response url: ')
-creds = auth.get_credentials(authorization_response)
+# Have the user goto authorize_url and authorize the app. They will be redirected back to your redirect_uri.
 
-client = WithingsApi(creds)
-measures = client.get_measures(limit=1)
-print("Your last measured weight: %skg" % measures[0].weight)
+credentials = auth.get_credentials('code from the url args of redirect_uri')
 
-creds = client.get_credentials()
+# Now you are ready to make calls for data.
+api = WithingsApi(credentials)
+
+meas_result = api.get_meas()
+weight_or_none = get_measure_value(meas_result, with_measure_type=MeasureType.WEIGHT)
 ```
+
+## Building
+Building, testing and lintings of the project is all done with one script. You only need a few dependencies.
+
+Dependencies:
+- python3 in your path.
+- The python3 `venv` module.
+
+The build script will setup the venv, dependencies, test and lint and bundle the project.
+```bash
+./script/build.sh
+```
+
+## Integration Testing
+There exists a simple integration test that runs against Withings' demo data. It's best to run this after you have
+successful builds. 
+
+Note: after changing the source, you need to run build for the integration test to pickup the changes.
+
+```bash
+./script/build.sh
+source ./venv/bin/activate
+./script/integration_test.py --client-id <your client id> --consumer-secret <your consumer secret> --callback-uri <your clalback uri>
+```
+The integration test will cache the credentials in a `<project root>/.credentials` file between runs. If you get an error saying
+the access token expired, then remove that credentials file and try again.
