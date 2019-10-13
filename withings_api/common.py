@@ -165,6 +165,15 @@ class GetSleepSummaryField(Enum):
     RR_MAX = 'rr_max'
 
 
+class AuthScope(Enum):
+    """Authorization scopes."""
+
+    USER_INFO = 'user.info'
+    USER_METRICS = 'user.metrics'
+    USER_ACTIVITY = 'user.activity'
+    USER_SLEEP_EVENTS = 'user.sleepevents'
+
+
 SleepTimestamp = NamedTuple('SleepTimestamp', [
     ('timestamp', Arrow),
 ])
@@ -183,19 +192,19 @@ GetSleepResponse = NamedTuple('GetSleepResponse', [
 ])
 
 GetSleepSummaryData = NamedTuple('GetSleepSummaryData', [
-    ('remsleepduration', int),
-    ('wakeupduration', int),
-    ('lightsleepduration', int),
-    ('deepsleepduration', int),
-    ('wakeupcount', int),
-    ('durationtosleep', int),
-    ('durationtowakeup', int),
-    ('hr_average', int),
-    ('hr_min', int),
-    ('hr_max', int),
-    ('rr_average', int),
-    ('rr_min', int),
-    ('rr_max', int),
+    ('remsleepduration', Optional[int]),
+    ('wakeupduration', Optional[int]),
+    ('lightsleepduration', Optional[int]),
+    ('deepsleepduration', Optional[int]),
+    ('wakeupcount', Optional[int]),
+    ('durationtosleep', Optional[int]),
+    ('durationtowakeup', Optional[int]),
+    ('hr_average', Optional[int]),
+    ('hr_min', Optional[int]),
+    ('hr_max', Optional[int]),
+    ('rr_average', Optional[int]),
+    ('rr_min', Optional[int]),
+    ('rr_max', Optional[int]),
 ])
 
 GetSleepSummarySerie = NamedTuple('GetSleepSummarySerie', [
@@ -226,7 +235,7 @@ GetMeasGroup = NamedTuple('GetMeasGroup', [
     ('category', MeasureCategory),
     ('created', Arrow),
     ('date', Arrow),
-    ('deviceid', str),
+    ('deviceid', Optional[str]),
     ('grpid', str),
     ('measures', Tuple[GetMeasMeasure, ...]),
 ])
@@ -234,8 +243,8 @@ GetMeasGroup = NamedTuple('GetMeasGroup', [
 
 GetMeasResponse = NamedTuple('GetMeasResponse', [
     ('measuregrps', Tuple[GetMeasGroup, ...]),
-    ('more', bool),
-    ('offset', int),
+    ('more', Optional[bool]),
+    ('offset', Optional[int]),
     ('timezone', tzinfo),
     ('updatetime', Arrow),
 ])
@@ -244,25 +253,25 @@ GetMeasResponse = NamedTuple('GetMeasResponse', [
 GetActivityActivity = NamedTuple('GetActivityActivities', [
     ('date', Arrow),
     ('timezone', tzinfo),
-    ('deviceid', str),
+    ('deviceid', Optional[str]),
     ('brand', int),
     ('is_tracker', bool),
-    ('steps', int),
-    ('distance', float),
-    ('elevation', float),
-    ('soft', int),
-    ('moderate', int),
-    ('intense', int),
-    ('active', int),
-    ('calories', float),
+    ('steps', Optional[int]),
+    ('distance', Optional[float]),
+    ('elevation', Optional[float]),
+    ('soft', Optional[int]),
+    ('moderate', Optional[int]),
+    ('intense', Optional[int]),
+    ('active', Optional[int]),
+    ('calories', Optional[float]),
     ('totalcalories', float),
-    ('hr_average', int),
-    ('hr_min', int),
-    ('hr_max', int),
-    ('hr_zone_0', int),
-    ('hr_zone_1', int),
-    ('hr_zone_2', int),
-    ('hr_zone_3', int),
+    ('hr_average', Optional[int]),
+    ('hr_min', Optional[int]),
+    ('hr_max', Optional[int]),
+    ('hr_zone_0', Optional[int]),
+    ('hr_zone_1', Optional[int]),
+    ('hr_zone_2', Optional[int]),
+    ('hr_zone_3', Optional[int]),
 ])
 
 GetActivityResponse = NamedTuple('GetActivityResponse', [
@@ -319,42 +328,62 @@ def enum_or_raise(
 
 def str_or_raise(value: Any) -> str:
     """Return string or raise exception."""
-    return enforce_type(value and str(value), str)
+    return enforce_type(str_or_none(value), str)
+
+
+def str_or_none(value: Any) -> Optional[str]:
+    """Return str or None."""
+    return None if value is None else str(value)
 
 
 def bool_or_raise(value: Any) -> bool:
     """Return bool or raise exception."""
-    return enforce_type(value, bool)
+    return enforce_type(bool_or_none(value), bool)
+
+
+def bool_or_none(value: Any) -> Optional[bool]:
+    """Return bool or None."""
+    return None if value is None else bool(value)
 
 
 def int_or_raise(value: Any) -> int:
     """Return int or raise exception."""
-    return enforce_type(value and int(value), int)
+    return enforce_type(int_or_none(value), int)
+
+
+def int_or_none(value: Any) -> Optional[int]:
+    """Return int or None."""
+    return None if value is None else int(value)
 
 
 def float_or_raise(value: Any) -> float:
     """Return float or raise exception."""
-    return enforce_type(value and float(value), float)
+    return enforce_type(float_or_none(value), float)
+
+
+def float_or_none(value: Any) -> Optional[float]:
+    """Return float or None."""
+    return None if value is None else float(value)
 
 
 def arrow_or_raise(value: Any) -> Arrow:
     """Return Arrow or raise exception."""
-    return enforce_type(value and arrow.get(value), Arrow)
+    return enforce_type(value is not None and arrow.get(value), Arrow)
 
 
 def timezone_or_raise(value: Any) -> tzinfo:
     """Return tzinfo or raise exception."""
-    return enforce_type(value and tz.gettz(value), tzinfo)
+    return enforce_type(value is not None and tz.gettz(value), tzinfo)
 
 
 def dict_or_raise(value: Any) -> Dict[Any, Any]:
     """Return dict or raise exception."""
-    return enforce_type(value and dict(value), dict)
+    return enforce_type(dict_or_none(value), dict)
 
 
 def dict_or_none(value: Any) -> Optional[Dict[Any, Any]]:
     """Return dict or None."""
-    return value and dict(value)
+    return None if value is None else dict(value)
 
 
 def new_credentials(
@@ -429,19 +458,19 @@ def new_get_sleep_response(data: dict) -> GetSleepResponse:
 def new_get_sleep_summary_data(data: dict) -> GetSleepSummaryData:
     """Create GetSleepSummarySerie from json."""
     return GetSleepSummaryData(
-        remsleepduration=int_or_raise(data.get('remsleepduration')),
-        wakeupduration=int_or_raise(data.get('wakeupduration')),
-        lightsleepduration=int_or_raise(data.get('lightsleepduration')),
-        deepsleepduration=int_or_raise(data.get('deepsleepduration')),
-        wakeupcount=int_or_raise(data.get('wakeupcount')),
-        durationtosleep=int_or_raise(data.get('durationtosleep')),
-        durationtowakeup=int_or_raise(data.get('durationtowakeup')),
-        hr_average=int_or_raise(data.get('hr_average')),
-        hr_min=int_or_raise(data.get('hr_min')),
-        hr_max=int_or_raise(data.get('hr_max')),
-        rr_average=int_or_raise(data.get('rr_average')),
-        rr_min=int_or_raise(data.get('rr_min')),
-        rr_max=int_or_raise(data.get('rr_max')),
+        remsleepduration=int_or_none(data.get('remsleepduration')),
+        wakeupduration=int_or_none(data.get('wakeupduration')),
+        lightsleepduration=int_or_none(data.get('lightsleepduration')),
+        deepsleepduration=int_or_none(data.get('deepsleepduration')),
+        wakeupcount=int_or_none(data.get('wakeupcount')),
+        durationtosleep=int_or_none(data.get('durationtosleep')),
+        durationtowakeup=int_or_none(data.get('durationtowakeup')),
+        hr_average=int_or_none(data.get('hr_average')),
+        hr_min=int_or_none(data.get('hr_min')),
+        hr_max=int_or_none(data.get('hr_max')),
+        rr_average=int_or_none(data.get('rr_average')),
+        rr_min=int_or_none(data.get('rr_min')),
+        rr_max=int_or_none(data.get('rr_max')),
     )
 
 
@@ -491,7 +520,7 @@ def new_get_meas_group(data: dict, timezone: tzinfo) -> GetMeasGroup:
         date=arrow_or_raise(data.get('date')).replace(tzinfo=timezone),
         created=arrow_or_raise(data.get('created')).replace(tzinfo=timezone),
         category=new_measure_category(data.get('category')),
-        deviceid=str_or_raise(data.get('deviceid')),
+        deviceid=data.get('deviceid'),
         measures=tuple(
             new_get_meas_measure(measure)
             for measure in data.get('measures', ())
@@ -508,8 +537,8 @@ def new_get_meas_response(data: dict) -> GetMeasResponse:
             new_get_meas_group(group, timezone)
             for group in data.get('measuregrps', ())
         ),
-        more=bool_or_raise(data.get('more')),
-        offset=int_or_raise(data.get('offset')),
+        more=data.get('more'),
+        offset=data.get('offset'),
         timezone=timezone,
         updatetime=arrow_or_raise(
             data.get('updatetime')
@@ -524,25 +553,25 @@ def new_get_activity_activity(data: dict) -> GetActivityActivity:
     return GetActivityActivity(
         date=arrow_or_raise(data.get('date')).replace(tzinfo=timezone),
         timezone=timezone,
-        deviceid=str_or_raise(data.get('deviceid')),
+        deviceid=str_or_none(data.get('deviceid')),
         brand=int_or_raise(data.get('brand')),
         is_tracker=bool_or_raise(data.get('is_tracker')),
-        steps=int_or_raise(data.get('steps')),
-        distance=float_or_raise(data.get('distance')),
-        elevation=float_or_raise(data.get('elevation')),
-        soft=int_or_raise(data.get('soft')),
-        moderate=int_or_raise(data.get('moderate')),
-        intense=int_or_raise(data.get('intense')),
-        active=int_or_raise(data.get('active')),
-        calories=int_or_raise(data.get('calories')),
+        steps=int_or_none(data.get('steps')),
+        distance=int_or_none(data.get('distance')),
+        elevation=int_or_none(data.get('elevation')),
+        soft=int_or_none(data.get('soft')),
+        moderate=int_or_none(data.get('moderate')),
+        intense=int_or_none(data.get('intense')),
+        active=int_or_none(data.get('active')),
+        calories=int_or_none(data.get('calories')),
         totalcalories=int_or_raise(data.get('totalcalories')),
-        hr_average=int_or_raise(data.get('hr_average')),
-        hr_min=int_or_raise(data.get('hr_min')),
-        hr_max=int_or_raise(data.get('hr_max')),
-        hr_zone_0=int_or_raise(data.get('hr_zone_0')),
-        hr_zone_1=int_or_raise(data.get('hr_zone_1')),
-        hr_zone_2=int_or_raise(data.get('hr_zone_2')),
-        hr_zone_3=int_or_raise(data.get('hr_zone_3')),
+        hr_average=int_or_none(data.get('hr_average')),
+        hr_min=int_or_none(data.get('hr_min')),
+        hr_max=int_or_none(data.get('hr_max')),
+        hr_zone_0=int_or_none(data.get('hr_zone_0')),
+        hr_zone_1=int_or_none(data.get('hr_zone_1')),
+        hr_zone_2=int_or_none(data.get('hr_zone_2')),
+        hr_zone_3=int_or_none(data.get('hr_zone_3')),
     )
 
 

@@ -39,6 +39,7 @@ from withings_api.common import (
     Credentials,
     GetActivityField,
     GetSleepField,
+    AuthScope,
 )
 
 
@@ -88,7 +89,11 @@ def test_authorize():
     auth = WithingsAuth(
         client_id,
         consumer_secret,
-        callback_uri=callback_uri
+        callback_uri=callback_uri,
+        scope=(
+            AuthScope.USER_METRICS,
+            AuthScope.USER_ACTIVITY,
+        )
     )
 
     url = auth.get_authorize_url()
@@ -101,7 +106,7 @@ def test_authorize():
         'response_type': 'code',
         'client_id': 'fake_client_id',
         'redirect_uri': 'http://127.0.0.1:8080',
-        'scope': 'user.metrics',
+        'scope': 'user.metrics,user.activity',
     })
 
     params = dict(parse.parse_qsl(parse.urlsplit(url).query))

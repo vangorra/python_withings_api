@@ -35,6 +35,7 @@ from .common import (
     GetActivityField,
     GetSleepField,
     GetSleepSummaryField,
+    AuthScope,
 )
 
 DateType = Union[arrow.Arrow, datetime.date, datetime.datetime, int, str]
@@ -66,24 +67,31 @@ class WithingsAuth:
             client_id: str,
             consumer_secret: str,
             callback_uri: str = None,
-            scope='user.metrics'
+            scope: Iterable[AuthScope] = tuple(),
+            mode: str = 'demo'
     ):
         """Initialize new object."""
         self._client_id = client_id
         self._consumer_secret = consumer_secret
         self._callback_uri = callback_uri
         self._scope = scope
+        self._mode = mode
         self._session = OAuth2Session(
             self._client_id,
             redirect_uri=self._callback_uri,
-            scope=self._scope
+            scope=','.join((scope.value for scope in self._scope))
         )
 
     def get_authorize_url(self) -> str:
         """Generate the authorize url."""
-        return self._session.authorization_url(
+        url = self._session.authorization_url(
             '%s/oauth2_user/authorize2' % self.URL
         )[0]
+
+        if self._mode:
+            url = url + '&mode=' + self._mode
+
+        return url
 
     def get_credentials(self, code) -> Credentials:
         """Get the oauth credentials."""
