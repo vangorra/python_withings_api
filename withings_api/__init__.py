@@ -8,7 +8,7 @@ Withings Health API
 from __future__ import unicode_literals
 
 import json
-from typing import Callable, Union, Any, Iterable, Dict
+from typing import Callable, Union, Any, Iterable, Dict, Optional
 import datetime
 from types import LambdaType
 
@@ -51,7 +51,7 @@ def update_params(
         name: str,
         current_value: Any,
         new_value: Any = None
-):
+) -> None:
     """Add a conditional param to a params dict."""
     if current_value is None:
         return
@@ -71,7 +71,7 @@ class WithingsAuth:
             self,
             client_id: str,
             consumer_secret: str,
-            callback_uri: str = None,
+            callback_uri: str,
             scope: Iterable[AuthScope] = tuple(),
             mode: str = 'demo'
     ):
@@ -89,9 +89,9 @@ class WithingsAuth:
 
     def get_authorize_url(self) -> str:
         """Generate the authorize url."""
-        url = self._session.authorization_url(
+        url = str(self._session.authorization_url(
             '%s/oauth2_user/authorize2' % self.URL
-        )[0]
+        )[0])
 
         if self._mode:
             url = url + '&mode=' + self._mode
@@ -140,7 +140,7 @@ class WithingsApi:
     def __init__(
             self,
             credentials: Credentials,
-            refresh_cb: Callable[[Credentials], None] = None
+            refresh_cb: Optional[Callable[[Credentials], None]] = None
     ):
         """Initialize new object."""
         self._credentials = credentials
@@ -174,7 +174,7 @@ class WithingsApi:
         """Get the current oauth credentials."""
         return self._credentials
 
-    def _update_token(self, token: Dict[str, Union[str, int]]):
+    def _update_token(self, token: Dict[str, Union[str, int]]) -> None:
         """Set the oauth token."""
         self._credentials = Credentials(
             access_token=str_or_raise(token.get('access_token')),
@@ -195,7 +195,7 @@ class WithingsApi:
             self,
             path: str,
             params: Dict[str, Any],
-            method='GET'
+            method: str = 'GET'
     ) -> Dict[str, Any]:
         """Request a specific service."""
         params = (params or {}).copy()
@@ -205,7 +205,7 @@ class WithingsApi:
             url='%s/%s' % (self.URL.strip('/'), path.strip('/')),
             params=params
         )
-        parsed_response = json.loads(response.content.decode())
+        parsed_response = dict(json.loads(response.content.decode()))
         if parsed_response['status'] != 0:
             raise requests.exceptions.RequestException(
                 "Error code %s" % parsed_response['status'],
@@ -215,11 +215,11 @@ class WithingsApi:
 
     def measure_get_activity(
             self,
-            startdateymd: DateType = None,
-            enddateymd: DateType = None,
-            offset: int = None,
-            data_fields: Iterable[GetActivityField] = None,
-            lastupdate: DateType = None
+            startdateymd: Optional[DateType] = None,
+            enddateymd: Optional[DateType] = None,
+            offset: Optional[int] = None,
+            data_fields: Optional[Iterable[GetActivityField]] = None,
+            lastupdate: Optional[DateType] = None
     ) -> GetActivityResponse:
         """Get user created activities."""
         params = {}  # type: Dict[str, Any]
@@ -268,12 +268,12 @@ class WithingsApi:
 
     def measure_get_meas(
             self,
-            meastype: MeasureType = None,
-            category: MeasureCategory = None,
-            startdate: DateType = None,
-            enddate: DateType = None,
-            offset: int = None,
-            lastupdate: DateType = None
+            meastype: Optional[MeasureType] = None,
+            category: Optional[MeasureCategory] = None,
+            startdate: Optional[DateType] = None,
+            enddate: Optional[DateType] = None,
+            offset: Optional[int] = None,
+            lastupdate: Optional[DateType] = None
     ) -> GetMeasResponse:
         """Get measures."""
         params = {}  # type: Dict[str, Any]
@@ -324,9 +324,9 @@ class WithingsApi:
 
     def sleep_get(
             self,
-            startdate: DateType = None,
-            enddate: DateType = None,
-            data_fields: Iterable[GetSleepField] = None
+            startdate: Optional[DateType] = None,
+            enddate: Optional[DateType] = None,
+            data_fields: Optional[Iterable[GetSleepField]] = None
     ) -> GetSleepResponse:
         """Get sleep data."""
         params = {}  # type: Dict[str, Any]
@@ -364,10 +364,10 @@ class WithingsApi:
 
     def sleep_get_summary(
             self,
-            startdateymd: DateType = None,
-            enddateymd: DateType = None,
-            data_fields: Iterable[GetSleepSummaryField] = None,
-            lastupdate: DateType = None
+            startdateymd: Optional[DateType] = None,
+            enddateymd: Optional[DateType] = None,
+            data_fields: Optional[Iterable[GetSleepSummaryField]] = None,
+            lastupdate: Optional[DateType] = None
     ) -> GetSleepSummaryResponse:
         """Get sleep summary."""
         params = {}  # type: Dict[str, Any]
@@ -412,7 +412,7 @@ class WithingsApi:
     def notify_get(
             self,
             callbackurl: str,
-            appli: NotifyAppli = None
+            appli: Optional[NotifyAppli] = None
     ) -> NotifyGetResponse:
         """
         Get subscription.
@@ -445,7 +445,7 @@ class WithingsApi:
 
     def notify_list(
             self,
-            appli: NotifyAppli = None
+            appli: Optional[NotifyAppli] = None
     ) -> NotifyListResponse:
         """List notification configuration for this user."""
         params = {}  # type: Dict[str, Any]
@@ -468,9 +468,9 @@ class WithingsApi:
 
     def notify_revoke(
             self,
-            callbackurl: str = None,
-            appli: NotifyAppli = None
-    ):
+            callbackurl: Optional[str] = None,
+            appli: Optional[NotifyAppli] = None
+    ) -> None:
         """
         Revoke a subscription.
 
@@ -501,8 +501,8 @@ class WithingsApi:
     def notify_subscribe(
             self,
             callbackurl: str,
-            appli: NotifyAppli = None,
-            comment: str = None
+            appli: Optional[NotifyAppli] = None,
+            comment: Optional[str] = None
     ) -> None:
         """Subscribe to receive notifications when new data is available."""
         params = {}  # type: Dict[str, Any]
@@ -536,8 +536,8 @@ class WithingsApi:
             callbackurl: str,
             appli: NotifyAppli,
             new_callbackurl: str,
-            new_appli: NotifyAppli = None,
-            comment: str = None
+            new_appli: Optional[NotifyAppli] = None,
+            comment: Optional[str] = None
     ) -> None:
         """Update the callbackurl and or appli of a created notification."""
         params = {}  # type: Dict[str, Any]
