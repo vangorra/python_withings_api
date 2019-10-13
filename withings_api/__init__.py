@@ -8,7 +8,7 @@ Withings Health API
 from __future__ import unicode_literals
 
 import json
-from typing import Callable, Union, Any, Iterable
+from typing import Callable, Union, Any, Iterable, Dict
 import datetime
 from types import LambdaType
 
@@ -205,7 +205,7 @@ class WithingsApi:
             lastupdate: DateType = None
     ) -> GetActivityResponse:
         """Get user created activities."""
-        params = {}
+        params: Dict[str, Any] = {}
 
         update_params(
             params,
@@ -256,17 +256,19 @@ class WithingsApi:
             lastupdate: DateType = None
     ) -> GetMeasResponse:
         """Get measures."""
-        params = {}
+        params: Dict[str, Any] = {}
 
         update_params(
             params,
             'meastype',
-            meastype
+            meastype,
+            lambda val: val.value
         )
         update_params(
             params,
             'category',
-            category
+            category,
+            lambda val: val.value
         )
         update_params(
             params,
@@ -299,7 +301,7 @@ class WithingsApi:
             data_fields: Iterable[GetSleepField] = None
     ) -> GetSleepResponse:
         """Get sleep data."""
-        params = {}
+        params: Dict[str, Any] = {}
 
         update_params(
             params,
@@ -332,7 +334,7 @@ class WithingsApi:
             lastupdate: DateType = None
     ) -> GetSleepSummaryResponse:
         """Get sleep summary."""
-        params = {}
+        params: Dict[str, Any] = {}
 
         update_params(
             params,

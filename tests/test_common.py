@@ -1,6 +1,7 @@
 from dateutil import tz
 
 import arrow
+import pytest
 
 from withings_api.common import (
     GetMeasResponse,
@@ -13,7 +14,20 @@ from withings_api.common import (
     MeasureCategory,
     get_measure_value,
     query_measure_groups,
+    enforce_type,
+    enum_or_raise,
+    SleepModel,
 )
+
+
+def test_enforce_type_exception():
+    with pytest.raises(Exception):
+        enforce_type('blah', int)
+
+
+def test_enum_or_raise():
+    with pytest.raises(Exception):
+        enum_or_raise(None, SleepModel)
 
 
 def test_query_measure_groups():

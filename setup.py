@@ -29,6 +29,7 @@ setup(
         'pytest-runner>=5.1',
         'pytest-cov>=2.8.1',
         'pytest-docstyle>=1.5.0',
+        'pytest-mypy>=0.4.1',
         'setuptools-lint>=0.6.0',
         'flake8>=3.7.8',
     ],

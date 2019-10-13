@@ -1,7 +1,10 @@
 from unittest.mock import MagicMock
 import datetime
+from datetime import tzinfo
 from dateutil import tz
 import re
+from typing import cast
+from urllib import parse
 
 import arrow
 import pytest
@@ -39,7 +42,12 @@ from withings_api.common import (
 )
 
 
-@responses.activate
+TIMEZONE_STR0 = 'Europe/London'
+TIMEZONE_STR1 = 'America/Los_Angeles'
+TIMEZONE0 = cast(tzinfo, tz.gettz(TIMEZONE_STR0))
+TIMEZONE1 = cast(tzinfo, tz.gettz(TIMEZONE_STR1))
+
+
 @pytest.fixture()
 def withings_api():
     client_id = 'my_client_id'
@@ -55,22 +63,6 @@ def withings_api():
     )
 
     return WithingsApi(credentials)
-
-
-@responses.activate
-@pytest.fixture()
-def catch_all_withings_api(withings_api: WithingsApi):
-    responses.add(
-        method=responses.GET,
-        url=re.compile('https://wbsapi.withings.net/.*'),
-        status=200,
-        json={
-            'status': 0,
-            'body': {}
-        }
-    )
-
-    return withings_api
 
 
 @responses.activate
@@ -103,10 +95,18 @@ def test_authorize():
 
     assert url.startswith(
         'https://account.withings.com/oauth2_user/authorize2'
-        '?response_type=code&client_id=fake_client_id'
-        '&redirect_uri=http%3A%2F%2F127.0.0.1%3A8080'
-        '&scope=user.metrics&state='
     )
+
+    assert_url_query_contains(url, {
+        'response_type': 'code',
+        'client_id': 'fake_client_id',
+        'redirect_uri': 'http://127.0.0.1:8080',
+        'scope': 'user.metrics',
+    })
+
+    params = dict(parse.parse_qsl(parse.urlsplit(url).query))
+    assert 'scope' in params
+    assert len(params['scope']) > 0
 
     creds = auth.get_credentials('FAKE_CODE')
 
@@ -143,10 +143,10 @@ def test_refresh_token():
     consumer_secret = 'my_consumer_secret'
 
     credentials = Credentials(
-        access_token='my_access_token',
+        access_token='my_access_token,_old',
         token_expiry=arrow.utcnow().timestamp - 1,
         token_type='Bearer',
-        refresh_token='my_refresh_token',
+        refresh_token='my_refresh_token_old',
         user_id='my_user_id',
         client_id=client_id,
         consumer_secret=consumer_secret,
@@ -157,23 +157,15 @@ def test_refresh_token():
         url=re.compile('https://account.withings.com/oauth2/token.*'),
         status=200,
         json={
-            'access_token': 'my_access_token_new',
+            'access_token': 'my_access_token',
             'expires_in': 11,
             'token_type': 'Bearer',
-            'refresh_token': 'my_refresh_token_new',
+            'refresh_token': 'my_refresh_token',
             'userid': 'my_user_id',
         }
     )
 
-    responses.add(
-        method=responses.GET,
-        url=re.compile('https://wbsapi.withings.net/v2/measure.*'),
-        status=200,
-        json={
-            'status': 0,
-            'body': {},
-        }
-    )
+    responses_add_activity()
 
     refresh_callback = MagicMock()
     api = WithingsApi(credentials, refresh_callback)
@@ -181,21 +173,15 @@ def test_refresh_token():
 
     refresh_callback.assert_called_with(api.get_credentials())
     new_credentials = api.get_credentials()
-    assert new_credentials.access_token == 'my_access_token_new'
-    assert new_credentials.refresh_token == 'my_refresh_token_new'
+    assert new_credentials.access_token == 'my_access_token'
+    assert new_credentials.refresh_token == 'my_refresh_token'
     assert new_credentials.token_expiry > credentials.token_expiry
 
 
-@responses.activate
-def test_get_activities(withings_api: WithingsApi):
-    timezone_str0 = 'Europe/London'
-    timezone_str1 = 'America/Los_Angeles'
-    timezone0 = tz.gettz(timezone_str0)
-    timezone1 = tz.gettz(timezone_str1)
-
+def responses_add_activity():
     responses.add(
         method=responses.GET,
-        url='https://wbsapi.withings.net/v2/measure?access_token=my_access_token&userid=my_user_id&action=getactivity',
+        url=re.compile('https://wbsapi.withings.net/v2/measure?.*action=getactivity(&.*)?'),
         status=200,
         json={
             'status': 0,
@@ -205,7 +191,7 @@ def test_get_activities(withings_api: WithingsApi):
                 'activities': [
                     {
                         'date': '2019-01-01',
-                        'timezone': timezone_str0,
+                        'timezone': TIMEZONE_STR0,
                         'is_tracker': True,
                         'deviceid': 'dev1',
                         'brand': 100,
@@ -228,7 +214,7 @@ def test_get_activities(withings_api: WithingsApi):
                     },
                     {
                         'date': '2019-01-02',
-                        'timezone': timezone_str1,
+                        'timezone': TIMEZONE_STR1,
                         'is_tracker': False,
                         'deviceid': 'dev2',
                         'brand': 200,
@@ -253,13 +239,17 @@ def test_get_activities(withings_api: WithingsApi):
             },
         }
     )
+
+@responses.activate
+def test_get_activities(withings_api: WithingsApi):
+    responses_add_activity()
     assert withings_api.get_activity() == GetActivityResponse(
         more=False,
         offset=0,
         activities=(
             GetActivityActivity(
-                date=arrow.get('2019-01-01').replace(tzinfo=timezone0),
-                timezone=timezone0,
+                date=arrow.get('2019-01-01').replace(tzinfo=TIMEZONE0),
+                timezone=TIMEZONE0,
                 is_tracker=True,
                 deviceid='dev1',
                 brand=100,
@@ -281,8 +271,8 @@ def test_get_activities(withings_api: WithingsApi):
                 hr_zone_3=116,
             ),
             GetActivityActivity(
-                date=arrow.get('2019-01-02').replace(tzinfo=timezone1),
-                timezone=timezone1,
+                date=arrow.get('2019-01-02').replace(tzinfo=TIMEZONE1),
+                timezone=TIMEZONE1,
                 is_tracker=False,
                 deviceid='dev2',
                 brand=200,
@@ -307,16 +297,10 @@ def test_get_activities(withings_api: WithingsApi):
     )
 
 
-@responses.activate
-def test_get_meas(withings_api: WithingsApi):
-    timezone_str0 = 'Europe/London'
-    timezone_str1 = 'America/Los_Angeles'
-    timezone0 = tz.gettz(timezone_str0)
-    timezone1 = tz.gettz(timezone_str1)
-
+def responses_add_meas():
     responses.add(
         method=responses.GET,
-        url='https://wbsapi.withings.net/measure?access_token=my_access_token&userid=my_user_id&action=getmeas',
+        url=re.compile('https://wbsapi.withings.net/measure?.*action=getmeas(&.*)?'),
         status=200,
         json={
             'status': 0,
@@ -324,7 +308,7 @@ def test_get_meas(withings_api: WithingsApi):
                 'more': False,
                 'offset': 0,
                 'updatetime': 1409596058,
-                'timezone': timezone_str0,
+                'timezone': TIMEZONE_STR0,
                 'measuregrps': [
                     {
                         'attrib': MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
@@ -370,17 +354,22 @@ def test_get_meas(withings_api: WithingsApi):
             }
         }
     )
+
+
+@responses.activate
+def test_get_meas(withings_api: WithingsApi):
+    responses_add_meas()
     assert withings_api.get_meas() == GetMeasResponse(
         more=False,
         offset=0,
-        timezone=timezone0,
-        updatetime=arrow.get(1409596058).replace(tzinfo=timezone0),
+        timezone=TIMEZONE0,
+        updatetime=arrow.get(1409596058).replace(tzinfo=TIMEZONE0),
         measuregrps=(
             GetMeasGroup(
                 attrib=MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
                 category=MeasureCategory.REAL,
-                created=arrow.get(1111111111).replace(tzinfo=timezone0),
-                date=arrow.get('2019-01-01').replace(tzinfo=timezone0),
+                created=arrow.get(1111111111).replace(tzinfo=TIMEZONE0),
+                date=arrow.get('2019-01-01').replace(tzinfo=TIMEZONE0),
                 deviceid='dev1',
                 grpid='grp1',
                 measures=(
@@ -399,8 +388,8 @@ def test_get_meas(withings_api: WithingsApi):
             GetMeasGroup(
                 attrib=MeasureGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
                 category=MeasureCategory.USER_OBJECTIVES,
-                created=arrow.get(2222222222).replace(tzinfo=timezone0),
-                date=arrow.get('2019-01-02').replace(tzinfo=timezone0),
+                created=arrow.get(2222222222).replace(tzinfo=TIMEZONE0),
+                date=arrow.get('2019-01-02').replace(tzinfo=TIMEZONE0),
                 deviceid='dev2',
                 grpid='grp2',
                 measures=(
@@ -420,16 +409,10 @@ def test_get_meas(withings_api: WithingsApi):
     )
 
 
-@responses.activate
-def test_get_sleep(withings_api: WithingsApi):
-    timezone_str0 = 'Europe/London'
-    timezone_str1 = 'America/Los_Angeles'
-    timezone0 = tz.gettz(timezone_str0)
-    timezone1 = tz.gettz(timezone_str1)
-
+def responses_add_sleep():
     responses.add(
         method=responses.GET,
-        url='https://wbsapi.withings.net/v2/sleep?access_token=my_access_token&userid=my_user_id&action=get',
+        url=re.compile('https://wbsapi.withings.net/v2/sleep?.*action=get(&.+)?'),
         status=200,
         json={
             'status': 0,
@@ -456,6 +439,11 @@ def test_get_sleep(withings_api: WithingsApi):
             }
         }
     )
+
+
+@responses.activate
+def test_get_sleep(withings_api: WithingsApi):
+    responses_add_sleep()
     assert withings_api.get_sleep() == GetSleepResponse(
         model=SleepModel.TRACKER,
         series=(
@@ -477,16 +465,10 @@ def test_get_sleep(withings_api: WithingsApi):
     )
 
 
-@responses.activate
-def test_get_sleep_summary(withings_api: WithingsApi):
-    timezone_str0 = 'Europe/London'
-    timezone_str1 = 'America/Los_Angeles'
-    timezone0 = tz.gettz(timezone_str0)
-    timezone1 = tz.gettz(timezone_str1)
-
+def responses_add_sleep_summary():
     responses.add(
         method=responses.GET,
-        url='https://wbsapi.withings.net/v2/sleep?access_token=my_access_token&userid=my_user_id&action=getsummary',
+        url=re.compile('https://wbsapi.withings.net/v2/sleep?.*action=getsummary(&.*)?'),
         status=200,
         json={
             'status': 0,
@@ -516,7 +498,7 @@ def test_get_sleep_summary(withings_api: WithingsApi):
                         'model': SleepModel.TRACKER,
                         'modified': 1540897246,
                         'startdate': 1540857420,
-                        'timezone': timezone_str0,
+                        'timezone': TIMEZONE_STR0,
                     },
                     {
                         'data': {
@@ -540,23 +522,28 @@ def test_get_sleep_summary(withings_api: WithingsApi):
                         'model': SleepModel.TRACKER,
                         'modified': 1541020749,
                         'startdate': 1540944960,
-                        'timezone': timezone_str1,
+                        'timezone': TIMEZONE_STR1,
                     }
                 ]
             }
         }
     )
+
+
+@responses.activate
+def test_get_sleep_summary(withings_api: WithingsApi):
+    responses_add_sleep_summary()
     assert withings_api.get_sleep_summary() == GetSleepSummaryResponse(
         more=False,
         offset=1,
         series=(
             GetSleepSummarySerie(
-                date=arrow.get('2018-10-30').replace(tzinfo=timezone0),
-                enddate=arrow.get(1540897020).replace(tzinfo=timezone0),
+                date=arrow.get('2018-10-30').replace(tzinfo=TIMEZONE0),
+                enddate=arrow.get(1540897020).replace(tzinfo=TIMEZONE0),
                 model=SleepModel.TRACKER,
-                modified=arrow.get(1540897246).replace(tzinfo=timezone0),
-                startdate=arrow.get(1540857420).replace(tzinfo=timezone0),
-                timezone=timezone0,
+                modified=arrow.get(1540897246).replace(tzinfo=TIMEZONE0),
+                startdate=arrow.get(1540857420).replace(tzinfo=TIMEZONE0),
+                timezone=TIMEZONE0,
                 data=GetSleepSummaryData(
                     deepsleepduration=110,
                     durationtosleep=111,
@@ -574,12 +561,12 @@ def test_get_sleep_summary(withings_api: WithingsApi):
                 ),
             ),
             GetSleepSummarySerie(
-                date=arrow.get('2018-10-31').replace(tzinfo=timezone1),
-                enddate=arrow.get(1540973400).replace(tzinfo=timezone1),
+                date=arrow.get('2018-10-31').replace(tzinfo=TIMEZONE1),
+                enddate=arrow.get(1540973400).replace(tzinfo=TIMEZONE1),
                 model=SleepModel.TRACKER,
-                modified=arrow.get(1541020749).replace(tzinfo=timezone1),
-                startdate=arrow.get(1540944960).replace(tzinfo=timezone1),
-                timezone=timezone1,
+                modified=arrow.get(1541020749).replace(tzinfo=TIMEZONE1),
+                startdate=arrow.get(1540944960).replace(tzinfo=TIMEZONE1),
+                timezone=TIMEZONE1,
                 data=GetSleepSummaryData(
                     deepsleepduration=210,
                     durationtosleep=211,
@@ -600,40 +587,33 @@ def test_get_sleep_summary(withings_api: WithingsApi):
     )
 
 
-@responses.activate
-def test_get_subscriptions(withings_api: WithingsApi):
-    timezone_str0 = 'Europe/London'
-    timezone_str1 = 'America/Los_Angeles'
-    timezone0 = tz.gettz(timezone_str0)
-    timezone1 = tz.gettz(timezone_str1)
-
+def responses_add_subscriptions():
+    # Subscription add.
     responses.add(
         method=responses.GET,
-        url='https://wbsapi.withings.net/notify?access_token=my_access_token&callbackurl=http%3A%2F%2Flocalhost%2Fcallback&comment=comment1&userid=my_user_id&action=subscribe',
+        url=re.compile('https://wbsapi.withings.net/notify?.*action=subscribe(&.*)?'),
         status=200,
         json={
             'status': 0,
             'body': {}
         }
     )
-    withings_api.subscribe('http://localhost/callback', 'comment1')
 
     # Subscription revoke.
     responses.add(
         method=responses.GET,
-        url='https://wbsapi.withings.net/notify?access_token=my_access_token&callbackurl=http%3A%2F%2Flocalhost%2Fcallback&userid=my_user_id&action=revoke',
+        url=re.compile('https://wbsapi.withings.net/notify?.*action=revoke(&.*)?'),
         status=200,
         json={
             'status': 0,
             'body': {}
         }
     )
-    withings_api.unsubscribe('http://localhost/callback')
 
     # Subscription list.
     responses.add(
         method=responses.GET,
-        url='https://wbsapi.withings.net/notify?access_token=my_access_token&appli=1&userid=my_user_id&action=list',
+        url=re.compile('https://wbsapi.withings.net/notify?.*action=list(&.*)?'),
         status=200,
         json={
             'status': 0,
@@ -643,18 +623,26 @@ def test_get_subscriptions(withings_api: WithingsApi):
                         'appli': SubscriptionParameter.WEIGHT.real,
                         'callbackurl': 'http://localhost/callback',
                         'comment': 'fake_comment1',
-                        'expires': '10000000',
+                        'expires': '2019-09-01',
                     },
                     {
                         'appli': SubscriptionParameter.CIRCULATORY.real,
                         'callbackurl': 'http://localhost/callback2',
                         'comment': 'fake_comment2',
-                        'expires': '20000000',
+                        'expires': '2019-09-02',
                     },
                 ]
             }
         }
     )
+
+
+@responses.activate
+def test_get_subscriptions(withings_api: WithingsApi):
+    responses_add_subscriptions()
+
+    withings_api.subscribe('http://localhost/callback', 'comment1')
+    withings_api.unsubscribe('http://localhost/callback')
     assert withings_api.is_subscribed('http://localhost/callback')
     assert not withings_api.is_subscribed('http://localhost/callbackX')
     assert withings_api.list_subscriptions() == ListSubscriptionsResponse(
@@ -663,21 +651,22 @@ def test_get_subscriptions(withings_api: WithingsApi):
                 appli=SubscriptionParameter.WEIGHT,
                 callbackurl='http://localhost/callback',
                 comment='fake_comment1',
-                expires=arrow.get(10000000)
+                expires=arrow.get('2019-09-01')
             ),
             ListSubscriptionProfile(
                 appli=SubscriptionParameter.CIRCULATORY,
                 callbackurl='http://localhost/callback2',
                 comment='fake_comment2',
-                expires=arrow.get(20000000)
+                expires=arrow.get('2019-09-02')
             ),
         ),
     )
 
 
 @responses.activate
-def test_get_meas_params(catch_all_withings_api: WithingsApi):
-    catch_all_withings_api.get_meas(
+def test_get_meas_params(withings_api: WithingsApi):
+    responses_add_meas()
+    withings_api.get_meas(
         meastype=MeasureType.BONE_MASS,
         category=MeasureCategory.USER_OBJECTIVES,
         startdate=arrow.get('2019-01-01'),
@@ -686,12 +675,23 @@ def test_get_meas_params(catch_all_withings_api: WithingsApi):
         lastupdate=datetime.date(2019, 1, 2)
     )
 
-    assert responses.calls[0].request.url == 'https://wbsapi.withings.net/measure?access_token=my_access_token&meastype=MeasureType.BONE_MASS&category=MeasureCategory.USER_OBJECTIVES&startdate=1546300800&enddate=100000000&offset=12&lastupdate=1546387200&userid=my_user_id&action=getmeas'
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'meastype': '88',
+            'category': '2',
+            'startdate': '1546300800',
+            'enddate': '100000000',
+            'offset': '12',
+            'lastupdate': '1546387200',
+        }
+    )
 
 
 @responses.activate
-def test_get_activity_params(catch_all_withings_api: WithingsApi):
-    catch_all_withings_api.get_activity(
+def test_get_activity_params(withings_api: WithingsApi):
+    responses_add_activity()
+    withings_api.get_activity(
         startdateymd='2019-01-01',
         enddateymd=arrow.get('2019-01-02'),
         offset=2,
@@ -703,12 +703,22 @@ def test_get_activity_params(catch_all_withings_api: WithingsApi):
         lastupdate=10000000
     )
 
-    assert responses.calls[0].request.url == 'https://wbsapi.withings.net/v2/measure?access_token=my_access_token&startdateymd=2019-01-01&enddateymd=2019-01-02&offset=2&data_fields=active%2Ccalories%2Celevation&lastupdate=10000000&userid=my_user_id&action=getactivity'
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'startdateymd': '2019-01-01',
+            'enddateymd': '2019-01-02',
+            'offset': '2',
+            'data_fields': 'active,calories,elevation',
+            'lastupdate': '10000000',
+        }
+    )
 
 
 @responses.activate
-def test_get_sleep_params(catch_all_withings_api: WithingsApi):
-    catch_all_withings_api.get_sleep(
+def test_get_sleep_params(withings_api: WithingsApi):
+    responses_add_sleep()
+    withings_api.get_sleep(
         startdate='2019-01-01',
         enddate=arrow.get('2019-01-02'),
         data_fields=(
@@ -717,12 +727,20 @@ def test_get_sleep_params(catch_all_withings_api: WithingsApi):
         )
     )
 
-    assert responses.calls[0].request.url == 'https://wbsapi.withings.net/v2/sleep?access_token=my_access_token&startdate=1546300800&enddate=1546387200&data_fields=hr%2Chr&userid=my_user_id&action=get'
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'startdate': '1546300800',
+            'enddate': '1546387200',
+            'data_fields': 'hr,hr',
+        }
+    )
 
 
 @responses.activate
-def test_get_sleep_summary_params(catch_all_withings_api: WithingsApi):
-    catch_all_withings_api.get_sleep_summary(
+def test_get_sleep_summary_params(withings_api: WithingsApi):
+    responses_add_sleep_summary()
+    withings_api.get_sleep_summary(
         startdateymd='2019-01-01',
         enddateymd=arrow.get('2019-01-02'),
         data_fields=(
@@ -732,4 +750,20 @@ def test_get_sleep_summary_params(catch_all_withings_api: WithingsApi):
         lastupdate=10000000
     )
 
-    assert responses.calls[0].request.url == 'https://wbsapi.withings.net/v2/sleep?access_token=my_access_token&startdateymd=2019-01-01&enddateymd=2019-01-02&data_fields=deepsleepduration%2Chr_average&lastupdate=10000000&userid=my_user_id&action=getsummary'
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'startdateymd': '2019-01-01',
+            'enddateymd': '2019-01-02',
+            'data_fields': 'deepsleepduration,hr_average',
+            'lastupdate': '10000000',
+        }
+    )
+
+
+def assert_url_query_contains(url: str, expected: dict):
+    params = dict(parse.parse_qsl(parse.urlsplit(url).query))
+
+    for key, value in expected.items():
+        assert key in params
+        assert params[key] == expected[key]

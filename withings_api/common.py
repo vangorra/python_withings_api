@@ -8,8 +8,9 @@ from typing import (
     Optional,
     Tuple,
     Union,
-    Iterable,
-    Any
+    Any,
+    Type,
+    Dict,
 )
 from dateutil import tz
 
@@ -24,6 +25,11 @@ class SleepModel(IntEnum):
     SLEEP_MONITOR = 32
 
 
+def new_sleep_model(value: Optional[int]) -> SleepModel:
+    """Create enum base on primitive."""
+    return cast(SleepModel, enum_or_raise(value, SleepModel))
+
+
 class SleepDataState(IntEnum):
     """Sleep states."""
 
@@ -31,6 +37,11 @@ class SleepDataState(IntEnum):
     LIGHT = 1
     DEEP = 2
     REM = 3
+
+
+def new_sleep_data_state(value: Optional[int]) -> SleepDataState:
+    """Create enum base on primitive."""
+    return cast(SleepDataState, enum_or_raise(value, SleepDataState))
 
 
 class MeasureGroupAttrib(IntEnum):
@@ -45,11 +56,21 @@ class MeasureGroupAttrib(IntEnum):
     SAME_AS_DEVICE_ENTRY_FOR_USER = 8
 
 
+def new_measure_group_attrib(value: Optional[int]) -> MeasureGroupAttrib:
+    """Create enum base on primitive."""
+    return cast(MeasureGroupAttrib, enum_or_raise(value, MeasureGroupAttrib))
+
+
 class MeasureCategory(IntEnum):
     """Measure categories."""
 
     REAL = 1
     USER_OBJECTIVES = 2
+
+
+def new_measure_category(value: Optional[int]) -> MeasureCategory:
+    """Create enum base on primitive."""
+    return cast(MeasureCategory, enum_or_raise(value, MeasureCategory))
 
 
 class MeasureType(IntEnum):
@@ -73,6 +94,11 @@ class MeasureType(IntEnum):
     PULSE_WAVE_VELOCITY = 91
 
 
+def new_measure_type(value: Optional[int]) -> MeasureType:
+    """Create enum base on primitive."""
+    return cast(MeasureType, enum_or_raise(value, MeasureType))
+
+
 class SubscriptionParameter(IntEnum):
     """Data to subscribe to."""
 
@@ -83,6 +109,14 @@ class SubscriptionParameter(IntEnum):
     USER = 46
     BED_IN = 50
     BED_OUT = 51
+
+
+def new_subscription_parameter(value: Optional[int]) -> SubscriptionParameter:
+    """Create enum base on primitive."""
+    return cast(
+        SubscriptionParameter,
+        enum_or_raise(value, SubscriptionParameter)
+    )
 
 
 class GetActivityField(Enum):
@@ -131,18 +165,6 @@ class GetSleepSummaryField(Enum):
     RR_MAX = 'rr_max'
 
 
-AllWithingsEnums = Union[
-    SleepModel,
-    SleepDataState,
-    MeasureGroupAttrib,
-    MeasureCategory,
-    MeasureType,
-    SubscriptionParameter,
-    GetActivityField,
-    GetSleepField,
-    GetSleepSummaryField,
-]
-
 SleepTimestamp = NamedTuple('SleepTimestamp', [
     ('timestamp', Arrow),
 ])
@@ -157,7 +179,7 @@ GetSleepSerie = NamedTuple('GetSleepSerie', [
 
 GetSleepResponse = NamedTuple('GetSleepResponse', [
     ('model', SleepModel),
-    ('series', Tuple[GetSleepSerie]),
+    ('series', Tuple[GetSleepSerie, ...]),
 ])
 
 GetSleepSummaryData = NamedTuple('GetSleepSummaryData', [
@@ -189,7 +211,7 @@ GetSleepSummarySerie = NamedTuple('GetSleepSummarySerie', [
 GetSleepSummaryResponse = NamedTuple('GetSleepSummaryResponse', [
     ('more', bool),
     ('offset', int),
-    ('series', Tuple[GetSleepSummarySerie]),
+    ('series', Tuple[GetSleepSummarySerie, ...]),
 ])
 
 GetMeasMeasure = NamedTuple('GetMeasMeasure', [
@@ -206,12 +228,12 @@ GetMeasGroup = NamedTuple('GetMeasGroup', [
     ('date', Arrow),
     ('deviceid', str),
     ('grpid', str),
-    ('measures', Tuple[GetMeasMeasure]),
+    ('measures', Tuple[GetMeasMeasure, ...]),
 ])
 
 
 GetMeasResponse = NamedTuple('GetMeasResponse', [
-    ('measuregrps', Tuple[GetMeasGroup]),
+    ('measuregrps', Tuple[GetMeasGroup, ...]),
     ('more', bool),
     ('offset', int),
     ('timezone', tzinfo),
@@ -244,7 +266,7 @@ GetActivityActivity = NamedTuple('GetActivityActivities', [
 ])
 
 GetActivityResponse = NamedTuple('GetActivityResponse', [
-    ('activities', Tuple[GetActivityActivity]),
+    ('activities', Tuple[GetActivityActivity, ...]),
     ('more', bool),
     ('offset', int),
 ])
@@ -268,39 +290,97 @@ ListSubscriptionProfile = NamedTuple('ListSubscriptionProfile', [
 ])
 
 ListSubscriptionsResponse = NamedTuple('ListSubscriptionsResponse', [
-    ('profiles', Tuple[ListSubscriptionProfile]),
+    ('profiles', Tuple[ListSubscriptionProfile, ...]),
 ])
 
 
-def enum_value(value: Any, enum: AllWithingsEnums) -> AllWithingsEnums:
-    """Create instance of enum if value is set."""
-    return value and enum(value)
+def enforce_type(value: Any, expected: Type[Any]) -> Any:
+    """Enforce a data type."""
+    if not isinstance(value, expected):
+        raise Exception(
+            'Expected of "%s" to be "%s" but it was not.' % (
+                value, expected
+            )
+        )
+
+    return value
+
+
+def enum_or_raise(
+        value: Optional[Union[str, int]],
+        enum: Type[Enum]
+) -> Enum:
+    """Return Enum or raise exception."""
+    if value is None:
+        raise Exception('Received None value for enum %s' % enum)
+
+    return enum(value)
+
+
+def str_or_raise(value: Any) -> str:
+    """Return string or raise exception."""
+    return enforce_type(value and str(value), str)
+
+
+def bool_or_raise(value: Any) -> bool:
+    """Return bool or raise exception."""
+    return enforce_type(value, bool)
+
+
+def int_or_raise(value: Any) -> int:
+    """Return int or raise exception."""
+    return enforce_type(value and int(value), int)
+
+
+def float_or_raise(value: Any) -> float:
+    """Return float or raise exception."""
+    return enforce_type(value and float(value), float)
+
+
+def arrow_or_raise(value: Any) -> Arrow:
+    """Return Arrow or raise exception."""
+    return enforce_type(value and arrow.get(value), Arrow)
+
+
+def timezone_or_raise(value: Any) -> tzinfo:
+    """Return tzinfo or raise exception."""
+    return enforce_type(value and tz.gettz(value), tzinfo)
+
+
+def dict_or_raise(value: Any) -> Dict[Any, Any]:
+    """Return dict or raise exception."""
+    return enforce_type(value and dict(value), dict)
+
+
+def dict_or_none(value: Any) -> Optional[Dict[Any, Any]]:
+    """Return dict or None."""
+    return value and dict(value)
 
 
 def new_credentials(
         client_id: str,
         consumer_secret: str,
-        data: dict
+        data: Dict[str, Any]
 ) -> Credentials:
     """Create Credentials from config and json."""
     return Credentials(
-        access_token=data.get('access_token'),
+        access_token=str_or_raise(data.get('access_token')),
         token_expiry=arrow.utcnow().timestamp + data.get('expires_in'),
-        token_type=data.get('token_type'),
-        refresh_token=data.get('refresh_token'),
-        user_id=data.get('userid'),
-        client_id=client_id,
-        consumer_secret=consumer_secret,
+        token_type=str_or_raise(data.get('token_type')),
+        refresh_token=str_or_raise(data.get('refresh_token')),
+        user_id=str_or_raise(data.get('userid')),
+        client_id=str_or_raise(client_id),
+        consumer_secret=str_or_raise(consumer_secret),
     )
 
 
 def new_list_subscription_profile(data: dict) -> ListSubscriptionProfile:
     """Create ListSubscriptionProfile from json."""
     return ListSubscriptionProfile(
-        appli=enum_value(data.get('appli'), SubscriptionParameter),
-        callbackurl=data.get('callbackurl'),
-        expires=arrow.get(int(data.get('expires'))),
-        comment=data.get('comment'),
+        appli=new_subscription_parameter(data.get('appli')),
+        callbackurl=str_or_raise(data.get('callbackurl')),
+        expires=arrow_or_raise(data.get('expires')),
+        comment=str_or_raise(data.get('comment')),
     )
 
 
@@ -314,29 +394,31 @@ def new_list_subscription_response(data: dict) -> ListSubscriptionsResponse:
     )
 
 
-def new_sleep_timestamp(data: dict) -> Optional[SleepTimestamp]:
+def new_sleep_timestamp(
+        data: Optional[Dict[Any, Any]]
+) -> Optional[SleepTimestamp]:
     """Create SleepTimestamp from json."""
-    if not data:
-        return
+    if data is None:
+        return data
 
-    return SleepTimestamp(arrow.get(data.get('$timestamp')))
+    return SleepTimestamp(arrow_or_raise(data.get('$timestamp')))
 
 
 def new_get_sleep_serie(data: dict) -> GetSleepSerie:
     """Create GetSleepSerie from json."""
     return GetSleepSerie(
-        enddate=arrow.get(data.get("enddate")),
-        startdate=arrow.get(data.get("startdate")),
-        state=enum_value(data.get("state"), SleepDataState),
-        hr=new_sleep_timestamp(data.get('hr')),
-        rr=new_sleep_timestamp(data.get('rr')),
+        enddate=arrow_or_raise(data.get("enddate")),
+        startdate=arrow_or_raise(data.get("startdate")),
+        state=new_sleep_data_state(data.get("state")),
+        hr=new_sleep_timestamp(dict_or_none(data.get('hr'))),
+        rr=new_sleep_timestamp(dict_or_none(data.get('rr'))),
     )
 
 
 def new_get_sleep_response(data: dict) -> GetSleepResponse:
     """Create GetSleepResponse from json."""
     return GetSleepResponse(
-        model=enum_value(data.get('model'), SleepModel),
+        model=new_sleep_model(data.get('model')),
         series=tuple(
             new_get_sleep_serie(serie)
             for serie in data.get('series', ())
@@ -347,42 +429,44 @@ def new_get_sleep_response(data: dict) -> GetSleepResponse:
 def new_get_sleep_summary_data(data: dict) -> GetSleepSummaryData:
     """Create GetSleepSummarySerie from json."""
     return GetSleepSummaryData(
-        remsleepduration=data.get('remsleepduration'),
-        wakeupduration=data.get('wakeupduration'),
-        lightsleepduration=data.get('lightsleepduration'),
-        deepsleepduration=data.get('deepsleepduration'),
-        wakeupcount=data.get('wakeupcount'),
-        durationtosleep=data.get('durationtosleep'),
-        durationtowakeup=data.get('durationtowakeup'),
-        hr_average=data.get('hr_average'),
-        hr_min=data.get('hr_min'),
-        hr_max=data.get('hr_max'),
-        rr_average=data.get('rr_average'),
-        rr_min=data.get('rr_min'),
-        rr_max=data.get('rr_max'),
+        remsleepduration=int_or_raise(data.get('remsleepduration')),
+        wakeupduration=int_or_raise(data.get('wakeupduration')),
+        lightsleepduration=int_or_raise(data.get('lightsleepduration')),
+        deepsleepduration=int_or_raise(data.get('deepsleepduration')),
+        wakeupcount=int_or_raise(data.get('wakeupcount')),
+        durationtosleep=int_or_raise(data.get('durationtosleep')),
+        durationtowakeup=int_or_raise(data.get('durationtowakeup')),
+        hr_average=int_or_raise(data.get('hr_average')),
+        hr_min=int_or_raise(data.get('hr_min')),
+        hr_max=int_or_raise(data.get('hr_max')),
+        rr_average=int_or_raise(data.get('rr_average')),
+        rr_min=int_or_raise(data.get('rr_min')),
+        rr_max=int_or_raise(data.get('rr_max')),
     )
 
 
 def new_get_sleep_summary_serie(data: dict) -> GetSleepSummarySerie:
     """Create GetSleepSummarySerie from json."""
-    timezone = tz.gettz(data.get('timezone'))
+    timezone = timezone_or_raise(data.get('timezone'))
 
     return GetSleepSummarySerie(
-        date=arrow.get(data.get('date')).replace(tzinfo=timezone),
-        enddate=arrow.get(data.get('enddate')).replace(tzinfo=timezone),
-        model=enum_value(data.get('model'), SleepModel),
-        modified=arrow.get(data.get('modified')).replace(tzinfo=timezone),
-        startdate=arrow.get(data.get('startdate')).replace(tzinfo=timezone),
+        date=arrow_or_raise(data.get('date')).replace(tzinfo=timezone),
+        enddate=arrow_or_raise(data.get('enddate')).replace(tzinfo=timezone),
+        model=new_sleep_model(data.get('model')),
+        modified=arrow_or_raise(data.get('modified')).replace(tzinfo=timezone),
+        startdate=arrow_or_raise(
+            data.get('startdate')
+        ).replace(tzinfo=timezone),
         timezone=timezone,
-        data=new_get_sleep_summary_data(data.get('data'))
+        data=new_get_sleep_summary_data(dict_or_raise(data.get('data')))
     )
 
 
 def new_get_sleep_summary_response(data: dict) -> GetSleepSummaryResponse:
     """Create GetSleepSummaryResponse from json."""
     return GetSleepSummaryResponse(
-        more=data.get('more'),
-        offset=data.get('offset'),
+        more=bool_or_raise(data.get('more')),
+        offset=int_or_raise(data.get('offset')),
         series=tuple(
             new_get_sleep_summary_serie(serie)
             for serie in data.get('series', ())
@@ -392,26 +476,22 @@ def new_get_sleep_summary_response(data: dict) -> GetSleepSummaryResponse:
 
 def new_get_meas_measure(data: dict) -> GetMeasMeasure:
     """Create GetMeasMeasure from json."""
-    value = data.get('value')
-    unit = data.get('unit')
     return GetMeasMeasure(
-        value=value,
-        type=enum_value(data.get('type'), MeasureType),
-        unit=unit
+        value=int_or_raise(data.get('value')),
+        type=new_measure_type(data.get('type')),
+        unit=int_or_raise(data.get('unit'))
     )
 
 
 def new_get_meas_group(data: dict, timezone: tzinfo) -> GetMeasGroup:
     """Create GetMeasGroup from json."""
-    attrib = MeasureGroupAttrib(data.get('attrib'))
-
     return GetMeasGroup(
-        grpid=data.get('grpid'),
-        attrib=attrib,
-        date=arrow.get(data.get('date')).replace(tzinfo=timezone),
-        created=arrow.get(data.get('created')).replace(tzinfo=timezone),
-        category=enum_value(data.get('category'), MeasureCategory),
-        deviceid=data.get('deviceid'),
+        grpid=str_or_raise(data.get('grpid')),
+        attrib=new_measure_group_attrib(data.get('attrib')),
+        date=arrow_or_raise(data.get('date')).replace(tzinfo=timezone),
+        created=arrow_or_raise(data.get('created')).replace(tzinfo=timezone),
+        category=new_measure_category(data.get('category')),
+        deviceid=str_or_raise(data.get('deviceid')),
         measures=tuple(
             new_get_meas_measure(measure)
             for measure in data.get('measures', ())
@@ -421,46 +501,48 @@ def new_get_meas_group(data: dict, timezone: tzinfo) -> GetMeasGroup:
 
 def new_get_meas_response(data: dict) -> GetMeasResponse:
     """Create GetMeasResponse from json."""
-    timezone = tz.gettz(data.get('timezone'))
+    timezone = timezone_or_raise(data.get('timezone'))
 
     return GetMeasResponse(
         measuregrps=tuple(
             new_get_meas_group(group, timezone)
             for group in data.get('measuregrps', ())
         ),
-        more=data.get('more'),
-        offset=data.get('offset'),
+        more=bool_or_raise(data.get('more')),
+        offset=int_or_raise(data.get('offset')),
         timezone=timezone,
-        updatetime=arrow.get(data.get('updatetime')).replace(tzinfo=timezone)
+        updatetime=arrow_or_raise(
+            data.get('updatetime')
+        ).replace(tzinfo=timezone)
     )
 
 
 def new_get_activity_activity(data: dict) -> GetActivityActivity:
     """Create GetActivityActivity from json."""
-    timezone = tz.gettz(data.get('timezone'))
+    timezone = timezone_or_raise(data.get('timezone'))
 
     return GetActivityActivity(
-        date=arrow.get(data.get('date')).replace(tzinfo=timezone),
+        date=arrow_or_raise(data.get('date')).replace(tzinfo=timezone),
         timezone=timezone,
-        deviceid=data.get('deviceid'),
-        brand=data.get('brand'),
-        is_tracker=data.get('is_tracker'),
-        steps=data.get('steps'),
-        distance=data.get('distance'),
-        elevation=data.get('elevation'),
-        soft=data.get('soft'),
-        moderate=data.get('moderate'),
-        intense=data.get('intense'),
-        active=data.get('active'),
-        calories=data.get('calories'),
-        totalcalories=data.get('totalcalories'),
-        hr_average=data.get('hr_average'),
-        hr_min=data.get('hr_min'),
-        hr_max=data.get('hr_max'),
-        hr_zone_0=data.get('hr_zone_0'),
-        hr_zone_1=data.get('hr_zone_1'),
-        hr_zone_2=data.get('hr_zone_2'),
-        hr_zone_3=data.get('hr_zone_3'),
+        deviceid=str_or_raise(data.get('deviceid')),
+        brand=int_or_raise(data.get('brand')),
+        is_tracker=bool_or_raise(data.get('is_tracker')),
+        steps=int_or_raise(data.get('steps')),
+        distance=float_or_raise(data.get('distance')),
+        elevation=float_or_raise(data.get('elevation')),
+        soft=int_or_raise(data.get('soft')),
+        moderate=int_or_raise(data.get('moderate')),
+        intense=int_or_raise(data.get('intense')),
+        active=int_or_raise(data.get('active')),
+        calories=int_or_raise(data.get('calories')),
+        totalcalories=int_or_raise(data.get('totalcalories')),
+        hr_average=int_or_raise(data.get('hr_average')),
+        hr_min=int_or_raise(data.get('hr_min')),
+        hr_max=int_or_raise(data.get('hr_max')),
+        hr_zone_0=int_or_raise(data.get('hr_zone_0')),
+        hr_zone_1=int_or_raise(data.get('hr_zone_1')),
+        hr_zone_2=int_or_raise(data.get('hr_zone_2')),
+        hr_zone_3=int_or_raise(data.get('hr_zone_3')),
     )
 
 
@@ -471,8 +553,8 @@ def new_get_activity_response(data: dict) -> GetActivityResponse:
             new_get_activity_activity(activity)
             for activity in data.get('activities', ())
         ),
-        more=data.get('more'),
-        offset=data.get('offset')
+        more=bool_or_raise(data.get('more')),
+        offset=int_or_raise(data.get('offset')),
     )
 
 
@@ -502,24 +584,24 @@ class MeasureTypes:
 
 def query_measure_groups(
         from_source: Union[
-            GetMeasGroup, GetMeasResponse, Iterable[GetMeasGroup]
+            GetMeasGroup, GetMeasResponse, Tuple[GetMeasGroup, ...]
         ],
         with_measure_type: Union[
             MeasureType,
-            Iterable[MeasureType]
+            Tuple[MeasureType, ...]
         ] = MeasureTypes.ANY,
         with_group_attrib: Union[
             MeasureGroupAttrib,
-            Iterable[MeasureGroupAttrib]
+            Tuple[MeasureGroupAttrib, ...]
         ] = MeasureGroupAttribs.ANY
-) -> Tuple[GetMeasGroup]:
+) -> Tuple[GetMeasGroup, ...]:
     """Return a groups and measurements based on filters."""
     if isinstance(from_source, GetMeasResponse):
         iter_groups = cast(GetMeasResponse, from_source).measuregrps
     elif isinstance(from_source, GetMeasGroup):
         iter_groups = (cast(GetMeasGroup, from_source),)
     else:
-        iter_groups = cast(Iterable[GetMeasGroup], from_source)
+        iter_groups = cast(Tuple[GetMeasGroup], from_source)
 
     if isinstance(with_measure_type, MeasureType):
         iter_measure_type = (
@@ -527,7 +609,7 @@ def query_measure_groups(
         )
     else:
         iter_measure_type = cast(
-            Iterable[MeasureType], with_measure_type
+            Tuple[MeasureType], with_measure_type
         )
 
     if isinstance(with_group_attrib, MeasureGroupAttrib):
@@ -536,7 +618,7 @@ def query_measure_groups(
         )
     else:
         iter_group_attrib = cast(
-            Iterable[MeasureGroupAttrib],
+            Tuple[MeasureGroupAttrib],
             with_group_attrib
         )
 
@@ -567,15 +649,15 @@ def query_measure_groups(
 
 def get_measure_value(
         from_source: Union[
-            GetMeasGroup, GetMeasResponse, Iterable[GetMeasGroup]
+            GetMeasGroup, GetMeasResponse, Tuple[GetMeasGroup, ...]
         ],
         with_measure_type: Union[
             MeasureType,
-            Iterable[MeasureType]
+            Tuple[MeasureType, ...]
         ],
         with_group_attrib: Union[
             MeasureGroupAttrib,
-            Iterable[MeasureGroupAttrib]
+            Tuple[MeasureGroupAttrib, ...]
         ] = MeasureGroupAttribs.ANY
 ) -> Optional[float]:
     """Get the first value of a measure that meet the query requirements."""
@@ -588,3 +670,5 @@ def get_measure_value(
     for group in groups:
         for measure in group.measures:
             return measure.value * pow(10, measure.unit)
+
+    return None
