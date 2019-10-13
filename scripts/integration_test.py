@@ -101,7 +101,7 @@ def main():
     ) is not None
 
     print('Getting subscriptions...')
-    assert api.list_subscriptions() is not None
+    assert api.notify_list() is not None
 
     print('Successfully finished.')
 

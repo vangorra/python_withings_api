@@ -33,13 +33,14 @@ from withings_api.common import (
     MeasureType,
     MeasureGroupAttrib,
     MeasureCategory,
-    ListSubscriptionsResponse,
-    ListSubscriptionProfile,
-    SubscriptionParameter,
+    NotifyListResponse,
+    NotifyListProfile,
+    NotifyAppli,
     Credentials,
     GetActivityField,
     GetSleepField,
     AuthScope,
+    NotifyGetResponse,
 )
 
 
@@ -249,7 +250,7 @@ def responses_add_activity():
 
 
 @responses.activate
-def test_get_activities(withings_api: WithingsApi):
+def test_get_activity(withings_api: WithingsApi):
     responses_add_activity()
     assert withings_api.get_activity() == GetActivityResponse(
         more=False,
@@ -603,34 +604,39 @@ def test_get_sleep_summary(withings_api: WithingsApi):
     )
 
 
-def responses_add_subscriptions():
-    # Subscription add.
+def responses_add_notify_get():
     responses.add(
         method=responses.GET,
         url=re.compile(
-            'https://wbsapi.withings.net/notify?.*action=subscribe(&.*)?'
+            'https://wbsapi.withings.net/notify?.*action=get(&.*)?'
         ),
         status=200,
         json={
             'status': 0,
-            'body': {}
+            'body': {
+                'callbackurl': 'http://localhost/callback',
+                'appli': NotifyAppli.ACTIVITY.real,
+                'comment': 'comment1',
+            },
         }
     )
 
-    # Subscription revoke.
-    responses.add(
-        method=responses.GET,
-        url=re.compile(
-            'https://wbsapi.withings.net/notify?.*action=revoke(&.*)?'
-        ),
-        status=200,
-        json={
-            'status': 0,
-            'body': {}
-        }
+
+@responses.activate
+def test_notify_get(withings_api: WithingsApi):
+    responses_add_notify_get()
+
+    response = withings_api.notify_get(
+        callbackurl='http://localhost/callback',
+    )
+    assert response == NotifyGetResponse(
+        callbackurl='http://localhost/callback',
+        appli=NotifyAppli.ACTIVITY,
+        comment='comment1',
     )
 
-    # Subscription list.
+
+def responses_add_notify_list():
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -642,13 +648,13 @@ def responses_add_subscriptions():
             'body': {
                 'profiles': [
                     {
-                        'appli': SubscriptionParameter.WEIGHT.real,
+                        'appli': NotifyAppli.WEIGHT.real,
                         'callbackurl': 'http://localhost/callback',
                         'comment': 'fake_comment1',
                         'expires': '2019-09-01',
                     },
                     {
-                        'appli': SubscriptionParameter.CIRCULATORY.real,
+                        'appli': NotifyAppli.CIRCULATORY.real,
                         'callbackurl': 'http://localhost/callback2',
                         'comment': 'fake_comment2',
                         'expires': '2019-09-02',
@@ -660,28 +666,170 @@ def responses_add_subscriptions():
 
 
 @responses.activate
-def test_get_subscriptions(withings_api: WithingsApi):
-    responses_add_subscriptions()
+def test_notify_list(withings_api: WithingsApi):
+    responses_add_notify_list()
 
-    withings_api.subscribe('http://localhost/callback', 'comment1')
-    withings_api.unsubscribe('http://localhost/callback')
-    assert withings_api.is_subscribed('http://localhost/callback')
-    assert not withings_api.is_subscribed('http://localhost/callbackX')
-    assert withings_api.list_subscriptions() == ListSubscriptionsResponse(
+    assert withings_api.notify_list() == NotifyListResponse(
         profiles=(
-            ListSubscriptionProfile(
-                appli=SubscriptionParameter.WEIGHT,
+            NotifyListProfile(
+                appli=NotifyAppli.WEIGHT,
                 callbackurl='http://localhost/callback',
                 comment='fake_comment1',
                 expires=arrow.get('2019-09-01')
             ),
-            ListSubscriptionProfile(
-                appli=SubscriptionParameter.CIRCULATORY,
+            NotifyListProfile(
+                appli=NotifyAppli.CIRCULATORY,
                 callbackurl='http://localhost/callback2',
                 comment='fake_comment2',
                 expires=arrow.get('2019-09-02')
             ),
         ),
+    )
+
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/notify'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'list',
+        }
+    )
+
+
+@responses.activate
+def test_notify_get_params(withings_api: WithingsApi):
+    responses_add_notify_get()
+    withings_api.notify_get(
+        callbackurl='http://localhost/callback2',
+        appli=NotifyAppli.CIRCULATORY
+    )
+
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'callbackurl': 'http://localhost/callback2',
+            'appli': str(NotifyAppli.CIRCULATORY.real),
+        }
+    )
+
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/notify'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'get',
+        }
+    )
+
+
+@responses.activate
+def test_notify_list_params(withings_api: WithingsApi):
+    responses_add_notify_list()
+    withings_api.notify_list(
+        appli=NotifyAppli.CIRCULATORY
+    )
+
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'appli': str(NotifyAppli.CIRCULATORY.real),
+        }
+    )
+
+
+def responses_add_notify_subscribe():
+    responses.add(
+        method=responses.GET,
+        url=re.compile(
+            'https://wbsapi.withings.net/notify?.*action=subscribe(&.*)?'
+        ),
+        status=200,
+        json={
+            'status': 0,
+            'body': {},
+        }
+    )
+
+
+@responses.activate
+def test_notify_subscribe_params(withings_api: WithingsApi):
+    responses_add_notify_subscribe()
+    withings_api.notify_subscribe(
+        callbackurl='http://localhost/callback2',
+        appli=NotifyAppli.CIRCULATORY,
+        comment='comment2',
+    )
+
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'callbackurl': 'http://localhost/callback2',
+            'appli': str(NotifyAppli.CIRCULATORY.real),
+            'comment': 'comment2',
+        }
+    )
+
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/notify'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'subscribe',
+        }
+    )
+
+
+def responses_add_notify_update():
+    responses.add(
+        method=responses.GET,
+        url=re.compile(
+            'https://wbsapi.withings.net/notify?.*action=update(&.*)?'
+        ),
+        status=200,
+        json={
+            'status': 0,
+            'body': {},
+        }
+    )
+
+
+@responses.activate
+def test_notify_update_params(withings_api: WithingsApi):
+    responses_add_notify_update()
+    withings_api.notify_update(
+        callbackurl='http://localhost/callback2',
+        appli=NotifyAppli.CIRCULATORY,
+        new_callbackurl='http://localhost/callback2',
+        new_appli=NotifyAppli.SLEEP,
+        comment='comment3',
+    )
+
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'callbackurl': 'http://localhost/callback2',
+            'appli': str(NotifyAppli.CIRCULATORY.real),
+            'new_callbackurl': 'http://localhost/callback2',
+            'new_appli': str(NotifyAppli.SLEEP.real),
+            'comment': 'comment3',
+        }
+    )
+
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/notify'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'update',
+        }
     )
 
 
@@ -706,6 +854,17 @@ def test_get_meas_params(withings_api: WithingsApi):
             'enddate': '100000000',
             'offset': '12',
             'lastupdate': '1546387200',
+        }
+    )
+
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/measure'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'getmeas',
         }
     )
 
@@ -736,6 +895,17 @@ def test_get_activity_params(withings_api: WithingsApi):
         }
     )
 
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/v2/measure'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'getactivity',
+        }
+    )
+
 
 @responses.activate
 def test_get_sleep_params(withings_api: WithingsApi):
@@ -755,6 +925,17 @@ def test_get_sleep_params(withings_api: WithingsApi):
             'startdate': '1546300800',
             'enddate': '1546387200',
             'data_fields': 'hr,hr',
+        }
+    )
+
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/v2/sleep'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'get',
         }
     )
 
@@ -782,6 +963,17 @@ def test_get_sleep_summary_params(withings_api: WithingsApi):
         }
     )
 
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/v2/sleep'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'getsummary',
+        }
+    )
+
 
 def assert_url_query_contains(url: str, expected: dict):
     params = dict(parse.parse_qsl(parse.urlsplit(url).query))
@@ -789,3 +981,7 @@ def assert_url_query_contains(url: str, expected: dict):
     for key, value in expected.items():
         assert key in params
         assert params[key] == expected[key]
+
+
+def assert_url_path(url: str, path: str):
+    assert parse.urlsplit(url).path == path
