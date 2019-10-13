@@ -247,8 +247,17 @@ def test_get_measure_value():
 
     assert get_measure_value(response, MeasureType.WEIGHT) == 100
     assert get_measure_value(response.measuregrps, MeasureType.WEIGHT) == 100
-    assert get_measure_value(response.measuregrps[0], MeasureType.WEIGHT) == 100
+    assert get_measure_value(
+        response.measuregrps[0],
+        MeasureType.WEIGHT
+    ) == 100
 
     assert get_measure_value(response, MeasureType.BONE_MASS) == 0.2
-    assert get_measure_value(response.measuregrps, MeasureType.BONE_MASS) == 0.2
-    assert get_measure_value(response.measuregrps[0], MeasureType.BONE_MASS) == 0.2
+    assert get_measure_value(
+        response.measuregrps,
+        MeasureType.BONE_MASS
+    ) == 0.2
+    assert get_measure_value(
+        response.measuregrps[0],
+        MeasureType.BONE_MASS
+    ) == 0.2

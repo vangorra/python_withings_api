@@ -181,7 +181,9 @@ def test_refresh_token():
 def responses_add_activity():
     responses.add(
         method=responses.GET,
-        url=re.compile('https://wbsapi.withings.net/v2/measure?.*action=getactivity(&.*)?'),
+        url=re.compile(
+            'https://wbsapi.withings.net/v2/measure?.*action=getactivity(&.*)?'
+        ),
         status=200,
         json={
             'status': 0,
@@ -239,6 +241,7 @@ def responses_add_activity():
             },
         }
     )
+
 
 @responses.activate
 def test_get_activities(withings_api: WithingsApi):
@@ -300,7 +303,9 @@ def test_get_activities(withings_api: WithingsApi):
 def responses_add_meas():
     responses.add(
         method=responses.GET,
-        url=re.compile('https://wbsapi.withings.net/measure?.*action=getmeas(&.*)?'),
+        url=re.compile(
+            'https://wbsapi.withings.net/measure?.*action=getmeas(&.*)?'
+        ),
         status=200,
         json={
             'status': 0,
@@ -311,7 +316,8 @@ def responses_add_meas():
                 'timezone': TIMEZONE_STR0,
                 'measuregrps': [
                     {
-                        'attrib': MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
+                        'attrib': MeasureGroupAttrib
+                        .MANUAL_USER_DURING_ACCOUNT_CREATION,
                         'category': MeasureCategory.REAL,
                         'created': 1111111111,
                         'date': '2019-01-01',
@@ -331,7 +337,8 @@ def responses_add_meas():
                         ]
                     },
                     {
-                        'attrib': MeasureGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
+                        'attrib':
+                            MeasureGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
                         'category': MeasureCategory.USER_OBJECTIVES,
                         'created': 2222222222,
                         'date': '2019-01-02',
@@ -412,7 +419,9 @@ def test_get_meas(withings_api: WithingsApi):
 def responses_add_sleep():
     responses.add(
         method=responses.GET,
-        url=re.compile('https://wbsapi.withings.net/v2/sleep?.*action=get(&.+)?'),
+        url=re.compile(
+            'https://wbsapi.withings.net/v2/sleep?.*action=get(&.+)?'
+        ),
         status=200,
         json={
             'status': 0,
@@ -468,7 +477,9 @@ def test_get_sleep(withings_api: WithingsApi):
 def responses_add_sleep_summary():
     responses.add(
         method=responses.GET,
-        url=re.compile('https://wbsapi.withings.net/v2/sleep?.*action=getsummary(&.*)?'),
+        url=re.compile(
+            'https://wbsapi.withings.net/v2/sleep?.*action=getsummary(&.*)?'
+        ),
         status=200,
         json={
             'status': 0,
@@ -591,7 +602,9 @@ def responses_add_subscriptions():
     # Subscription add.
     responses.add(
         method=responses.GET,
-        url=re.compile('https://wbsapi.withings.net/notify?.*action=subscribe(&.*)?'),
+        url=re.compile(
+            'https://wbsapi.withings.net/notify?.*action=subscribe(&.*)?'
+        ),
         status=200,
         json={
             'status': 0,
@@ -602,7 +615,9 @@ def responses_add_subscriptions():
     # Subscription revoke.
     responses.add(
         method=responses.GET,
-        url=re.compile('https://wbsapi.withings.net/notify?.*action=revoke(&.*)?'),
+        url=re.compile(
+            'https://wbsapi.withings.net/notify?.*action=revoke(&.*)?'
+        ),
         status=200,
         json={
             'status': 0,
@@ -613,7 +628,9 @@ def responses_add_subscriptions():
     # Subscription list.
     responses.add(
         method=responses.GET,
-        url=re.compile('https://wbsapi.withings.net/notify?.*action=list(&.*)?'),
+        url=re.compile(
+            'https://wbsapi.withings.net/notify?.*action=list(&.*)?'
+        ),
         status=200,
         json={
             'status': 0,
