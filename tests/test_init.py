@@ -140,7 +140,7 @@ def test_request_exception(withings_api: WithingsApi):
     )
 
     with pytest.raises(requests.exceptions.RequestException):
-        withings_api.get_meas()
+        withings_api.measure_get_meas()
 
 
 @responses.activate
@@ -171,11 +171,11 @@ def test_refresh_token():
         }
     )
 
-    responses_add_activity()
+    responses_add_measure_get_activity()
 
     refresh_callback = MagicMock()
     api = WithingsApi(credentials, refresh_callback)
-    api.get_activity()
+    api.measure_get_activity()
 
     refresh_callback.assert_called_with(api.get_credentials())
     new_credentials = api.get_credentials()
@@ -184,7 +184,7 @@ def test_refresh_token():
     assert new_credentials.token_expiry > credentials.token_expiry
 
 
-def responses_add_activity():
+def responses_add_measure_get_activity():
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -250,9 +250,9 @@ def responses_add_activity():
 
 
 @responses.activate
-def test_get_activity(withings_api: WithingsApi):
-    responses_add_activity()
-    assert withings_api.get_activity() == GetActivityResponse(
+def test_measure_get_activity(withings_api: WithingsApi):
+    responses_add_measure_get_activity()
+    assert withings_api.measure_get_activity() == GetActivityResponse(
         more=False,
         offset=0,
         activities=(
@@ -306,7 +306,7 @@ def test_get_activity(withings_api: WithingsApi):
     )
 
 
-def responses_add_meas():
+def responses_add_measure_get_meas():
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -370,9 +370,9 @@ def responses_add_meas():
 
 
 @responses.activate
-def test_get_meas(withings_api: WithingsApi):
-    responses_add_meas()
-    assert withings_api.get_meas() == GetMeasResponse(
+def test_measure_get_meas(withings_api: WithingsApi):
+    responses_add_measure_get_meas()
+    assert withings_api.measure_get_meas() == GetMeasResponse(
         more=False,
         offset=0,
         timezone=TIMEZONE0,
@@ -422,7 +422,7 @@ def test_get_meas(withings_api: WithingsApi):
     )
 
 
-def responses_add_sleep():
+def responses_add_sleep_get():
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -457,9 +457,9 @@ def responses_add_sleep():
 
 
 @responses.activate
-def test_get_sleep(withings_api: WithingsApi):
-    responses_add_sleep()
-    assert withings_api.get_sleep() == GetSleepResponse(
+def test_sleep_get(withings_api: WithingsApi):
+    responses_add_sleep_get()
+    assert withings_api.sleep_get() == GetSleepResponse(
         model=SleepModel.TRACKER,
         series=(
             GetSleepSerie(
@@ -480,7 +480,7 @@ def test_get_sleep(withings_api: WithingsApi):
     )
 
 
-def responses_add_sleep_summary():
+def responses_add_sleep_get_summary():
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -548,9 +548,9 @@ def responses_add_sleep_summary():
 
 
 @responses.activate
-def test_get_sleep_summary(withings_api: WithingsApi):
-    responses_add_sleep_summary()
-    assert withings_api.get_sleep_summary() == GetSleepSummaryResponse(
+def test_sleep_get_summary(withings_api: WithingsApi):
+    responses_add_sleep_get_summary()
+    assert withings_api.sleep_get_summary() == GetSleepSummaryResponse(
         more=False,
         offset=1,
         series=(
@@ -834,9 +834,9 @@ def test_notify_update_params(withings_api: WithingsApi):
 
 
 @responses.activate
-def test_get_meas_params(withings_api: WithingsApi):
-    responses_add_meas()
-    withings_api.get_meas(
+def test_measure_get_meas_params(withings_api: WithingsApi):
+    responses_add_measure_get_meas()
+    withings_api.measure_get_meas(
         meastype=MeasureType.BONE_MASS,
         category=MeasureCategory.USER_OBJECTIVES,
         startdate=arrow.get('2019-01-01'),
@@ -870,9 +870,9 @@ def test_get_meas_params(withings_api: WithingsApi):
 
 
 @responses.activate
-def test_get_activity_params(withings_api: WithingsApi):
-    responses_add_activity()
-    withings_api.get_activity(
+def test_measure_get_activity_params(withings_api: WithingsApi):
+    responses_add_measure_get_activity()
+    withings_api.measure_get_activity(
         startdateymd='2019-01-01',
         enddateymd=arrow.get('2019-01-02'),
         offset=2,
@@ -909,8 +909,8 @@ def test_get_activity_params(withings_api: WithingsApi):
 
 @responses.activate
 def test_get_sleep_params(withings_api: WithingsApi):
-    responses_add_sleep()
-    withings_api.get_sleep(
+    responses_add_sleep_get()
+    withings_api.sleep_get(
         startdate='2019-01-01',
         enddate=arrow.get('2019-01-02'),
         data_fields=(
@@ -942,8 +942,8 @@ def test_get_sleep_params(withings_api: WithingsApi):
 
 @responses.activate
 def test_get_sleep_summary_params(withings_api: WithingsApi):
-    responses_add_sleep_summary()
-    withings_api.get_sleep_summary(
+    responses_add_sleep_get_summary()
+    withings_api.sleep_get_summary(
         startdateymd='2019-01-01',
         enddateymd=arrow.get('2019-01-02'),
         data_fields=(

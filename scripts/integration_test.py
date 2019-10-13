@@ -77,25 +77,25 @@ def main():
     api = WithingsApi(credentials)
 
     print('Getting measures...')
-    assert api.get_meas(
+    assert api.measure_get_meas(
         startdate=arrow.utcnow().shift(days=-21),
         enddate=arrow.utcnow()
     ) is not None
 
     print('Getting activity...')
-    assert api.get_activity(
+    assert api.measure_get_activity(
         startdateymd=arrow.utcnow().shift(days=-21),
         enddateymd=arrow.utcnow(),
     ) is not None
 
     print('Getting sleep...')
-    assert api.get_sleep(
+    assert api.sleep_get(
         startdate=arrow.utcnow().shift(days=-2),
         enddate=arrow.utcnow()
     ) is not None
 
     print('Getting sleep summary...')
-    assert api.get_sleep_summary(
+    assert api.sleep_get_summary(
         startdateymd=arrow.utcnow().shift(days=-2),
         enddateymd=arrow.utcnow()
     ) is not None

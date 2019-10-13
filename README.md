@@ -43,7 +43,7 @@ credentials = auth.get_credentials('code from the url args of redirect_uri')
 # Now you are ready to make calls for data.
 api = WithingsApi(credentials)
 
-meas_result = api.get_meas()
+meas_result = api.measure_get_meas()
 weight_or_none = get_measure_value(meas_result, with_measure_type=MeasureType.WEIGHT)
 ```
 

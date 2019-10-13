@@ -213,7 +213,7 @@ class WithingsApi:
             )
         return parsed_response.get('body', None)
 
-    def get_activity(
+    def measure_get_activity(
             self,
             startdateymd: DateType = None,
             enddateymd: DateType = None,
@@ -266,7 +266,7 @@ class WithingsApi:
             )
         )
 
-    def get_meas(
+    def measure_get_meas(
             self,
             meastype: MeasureType = None,
             category: MeasureCategory = None,
@@ -322,7 +322,7 @@ class WithingsApi:
             )
         )
 
-    def get_sleep(
+    def sleep_get(
             self,
             startdate: DateType = None,
             enddate: DateType = None,
@@ -362,7 +362,7 @@ class WithingsApi:
             )
         )
 
-    def get_sleep_summary(
+    def sleep_get_summary(
             self,
             startdateymd: DateType = None,
             enddateymd: DateType = None,
