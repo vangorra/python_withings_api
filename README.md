@@ -20,6 +20,7 @@ here: <http://developer.withings.com/oauth2/>
 For a complete example, checkout the integration test in `scripts/integration_test.py`. It has a working example on how to use the API.
 ```python
 from withings_api import WithingsAuth, WithingsApi, AuthScope
+from withings_api.common import get_measure_value, MeasureType
 
 auth = WithingsAuth(
     client_id='your client id',
@@ -41,6 +42,9 @@ credentials = auth.get_credentials('code from the url args of redirect_uri')
 
 # Now you are ready to make calls for data.
 api = WithingsApi(credentials)
+
+meas_result = api.get_meas()
+weight_or_none = get_measure_value(meas_result, with_measure_type=MeasureType.WEIGHT)
 ```
 
 ## Building
