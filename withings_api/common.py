@@ -99,8 +99,8 @@ def new_measure_type(value: Optional[int]) -> MeasureType:
     return cast(MeasureType, enum_or_raise(value, MeasureType))
 
 
-class SubscriptionParameter(IntEnum):
-    """Data to subscribe to."""
+class NotifyAppli(IntEnum):
+    """Data to notify_subscribe to."""
 
     WEIGHT = 1
     CIRCULATORY = 4
@@ -111,11 +111,11 @@ class SubscriptionParameter(IntEnum):
     BED_OUT = 51
 
 
-def new_subscription_parameter(value: Optional[int]) -> SubscriptionParameter:
+def new_notify_appli(value: Optional[int]) -> NotifyAppli:
     """Create enum base on primitive."""
     return cast(
-        SubscriptionParameter,
-        enum_or_raise(value, SubscriptionParameter)
+        NotifyAppli,
+        enum_or_raise(value, NotifyAppli)
     )
 
 
@@ -291,15 +291,21 @@ Credentials = NamedTuple('Credentials', [
 ])
 
 
-ListSubscriptionProfile = NamedTuple('ListSubscriptionProfile', [
-    ('appli', SubscriptionParameter),
+NotifyListProfile = NamedTuple('NotifyListProfile', [
+    ('appli', NotifyAppli),
     ('callbackurl', str),
     ('expires', Arrow),
-    ('comment', str),
+    ('comment', Optional[str]),
 ])
 
-ListSubscriptionsResponse = NamedTuple('ListSubscriptionsResponse', [
-    ('profiles', Tuple[ListSubscriptionProfile, ...]),
+NotifyListResponse = NamedTuple('NotifyListResponse', [
+    ('profiles', Tuple[NotifyListProfile, ...]),
+])
+
+NotifyGetResponse = NamedTuple('NotifyGetResponse', [
+    ('appli', NotifyAppli),
+    ('callbackurl', str),
+    ('comment', Optional[str]),
 ])
 
 
@@ -403,23 +409,32 @@ def new_credentials(
     )
 
 
-def new_list_subscription_profile(data: dict) -> ListSubscriptionProfile:
+def new_notify_list_profile(data: dict) -> NotifyListProfile:
     """Create ListSubscriptionProfile from json."""
-    return ListSubscriptionProfile(
-        appli=new_subscription_parameter(data.get('appli')),
+    return NotifyListProfile(
+        appli=new_notify_appli(data.get('appli')),
         callbackurl=str_or_raise(data.get('callbackurl')),
         expires=arrow_or_raise(data.get('expires')),
-        comment=str_or_raise(data.get('comment')),
+        comment=str_or_none(data.get('comment')),
     )
 
 
-def new_list_subscription_response(data: dict) -> ListSubscriptionsResponse:
-    """Create ListSubscriptionsResponse from json."""
-    return ListSubscriptionsResponse(
+def new_notify_list_response(data: dict) -> NotifyListResponse:
+    """Create NotifyListResponse from json."""
+    return NotifyListResponse(
         profiles=tuple(
-            new_list_subscription_profile(profile)
+            new_notify_list_profile(profile)
             for profile in data.get('profiles', ())
         )
+    )
+
+
+def new_notify_get_response(data: dict) -> NotifyGetResponse:
+    """Create NotifyGetResponse from json."""
+    return NotifyGetResponse(
+        appli=new_notify_appli(data.get('appli')),
+        callbackurl=str_or_raise(data.get('callbackurl')),
+        comment=str_or_none(data.get('comment')),
     )
 
 

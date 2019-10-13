@@ -22,7 +22,8 @@ from .common import (
     new_get_sleep_response,
     new_get_sleep_summary_response,
     new_get_meas_response,
-    new_list_subscription_response,
+    new_notify_list_response,
+    new_notify_get_response,
     new_credentials,
     GetActivityResponse,
     GetSleepResponse,
@@ -30,12 +31,16 @@ from .common import (
     GetMeasResponse,
     MeasureType,
     MeasureCategory,
-    ListSubscriptionsResponse,
+    NotifyListResponse,
+    NotifyGetResponse,
     Credentials,
     GetActivityField,
     GetSleepField,
     GetSleepSummaryField,
     AuthScope,
+    NotifyAppli,
+    str_or_raise,
+    int_or_raise,
 )
 
 DateType = Union[arrow.Arrow, datetime.date, datetime.datetime, int, str]
@@ -93,7 +98,7 @@ class WithingsAuth:
 
         return url
 
-    def get_credentials(self, code) -> Credentials:
+    def get_credentials(self, code: str) -> Credentials:
         """Get the oauth credentials."""
         response = self._session.fetch_token(
             '%s/oauth2/token' % self.URL,
@@ -169,13 +174,15 @@ class WithingsApi:
         """Get the current oauth credentials."""
         return self._credentials
 
-    def _update_token(self, token):
+    def _update_token(self, token: Dict[str, Union[str, int]]):
         """Set the oauth token."""
         self._credentials = Credentials(
-            access_token=token.get('access_token'),
-            token_expiry=arrow.utcnow().timestamp + token.get('expires_in'),
+            access_token=str_or_raise(token.get('access_token')),
+            token_expiry=arrow.utcnow().timestamp + int_or_raise(
+                token.get('expires_in')
+            ),
             token_type=self._credentials.token_type,
-            refresh_token=token.get('refresh_token'),
+            refresh_token=str_or_raise(token.get('refresh_token')),
             user_id=self._credentials.user_id,
             client_id=self._credentials.client_id,
             consumer_secret=self._credentials.consumer_secret,
@@ -184,16 +191,18 @@ class WithingsApi:
         if self._refresh_cb:
             self._refresh_cb(self._credentials)
 
-    def request(self, service, action, params=None, method='GET',
-                version=None):
+    def request(
+            self,
+            path: str,
+            params: Dict[str, Any],
+            method='GET'
+    ) -> Dict[str, Any]:
         """Request a specific service."""
         params = (params or {}).copy()
         params['userid'] = self._credentials.user_id
-        params['action'] = action
-        url_parts = filter(None, [self.URL, version, service])
         response = self._client.request(
-            method,
-            '/'.join(url_parts),
+            method=method,
+            url='%s/%s' % (self.URL.strip('/'), path.strip('/')),
             params=params
         )
         parsed_response = json.loads(response.content.decode())
@@ -204,7 +213,7 @@ class WithingsApi:
             )
         return parsed_response.get('body', None)
 
-    def get_activity(
+    def measure_get_activity(
             self,
             startdateymd: DateType = None,
             enddateymd: DateType = None,
@@ -244,17 +253,20 @@ class WithingsApi:
             lastupdate,
             lambda val: arrow.get(val).timestamp
         )
+        update_params(
+            params,
+            'action',
+            'getactivity'
+        )
 
         return new_get_activity_response(
             self.request(
-                'measure',
-                'getactivity',
-                params=params,
-                version='v2'
+                path='v2/measure',
+                params=params
             )
         )
 
-    def get_meas(
+    def measure_get_meas(
             self,
             meastype: MeasureType = None,
             category: MeasureCategory = None,
@@ -297,12 +309,20 @@ class WithingsApi:
             lastupdate,
             lambda val: arrow.get(val).timestamp
         )
-
-        return new_get_meas_response(
-            self.request('measure', 'getmeas', params)
+        update_params(
+            params,
+            'action',
+            'getmeas'
         )
 
-    def get_sleep(
+        return new_get_meas_response(
+            self.request(
+                path='measure',
+                params=params
+            )
+        )
+
+    def sleep_get(
             self,
             startdate: DateType = None,
             enddate: DateType = None,
@@ -329,12 +349,20 @@ class WithingsApi:
             data_fields,
             lambda fields: ','.join([field.value for field in fields])
         )
-
-        return new_get_sleep_response(
-            self.request('sleep', 'get', params=params, version='v2')
+        update_params(
+            params,
+            'action',
+            'get'
         )
 
-    def get_sleep_summary(
+        return new_get_sleep_response(
+            self.request(
+                path='v2/sleep',
+                params=params
+            )
+        )
+
+    def sleep_get_summary(
             self,
             startdateymd: DateType = None,
             enddateymd: DateType = None,
@@ -368,37 +396,183 @@ class WithingsApi:
             lastupdate,
             lambda val: arrow.get(val).timestamp
         )
+        update_params(
+            params,
+            'action',
+            'getsummary'
+        )
 
         return new_get_sleep_summary_response(
             self.request(
-                'sleep',
-                'getsummary',
-                params=params,
-                version='v2'
+                path='v2/sleep',
+                params=params
             )
         )
 
-    def subscribe(self, callback_url, comment, **kwargs):
-        """Subscribe an application."""
-        params = {'callbackurl': callback_url, 'comment': comment}
-        params.update(kwargs)
-        self.request('notify', 'subscribe', params)
+    def notify_get(
+            self,
+            callbackurl: str,
+            appli: NotifyAppli = None
+    ) -> NotifyGetResponse:
+        """
+        Get subscription.
 
-    def unsubscribe(self, callback_url, **kwargs):
-        """Unsubscribe an application."""
-        params = {'callbackurl': callback_url}
-        params.update(kwargs)
-        self.request('notify', 'revoke', params)
+        Return the last notification service that a user was subscribed to,
+        and its expiry date.
+        """
+        params = {}  # type: Dict[str, Any]
 
-    def is_subscribed(self, callback_url, appli=1):
-        """Return true if withings profile has a subscription."""
-        for profile in self.list_subscriptions(appli=appli).profiles:
-            if profile.callbackurl == callback_url:
-                return True
+        update_params(
+            params,
+            'callbackurl',
+            callbackurl
+        )
+        update_params(
+            params,
+            'appli',
+            appli,
+            lambda appli: appli.value
+        )
+        update_params(
+            params,
+            'action',
+            'get'
+        )
 
-        return False
+        return new_notify_get_response(
+            self.request(path='notify', params=params)
+        )
 
-    def list_subscriptions(self, appli=1) -> ListSubscriptionsResponse:
-        """List current subscriptions from withings profile."""
-        response = self.request('notify', 'list', {'appli': appli})
-        return new_list_subscription_response(response)
+    def notify_list(
+            self,
+            appli: NotifyAppli = None
+    ) -> NotifyListResponse:
+        """List notification configuration for this user."""
+        params = {}  # type: Dict[str, Any]
+
+        update_params(
+            params,
+            'appli',
+            appli,
+            lambda appli: appli.value
+        )
+        update_params(
+            params,
+            'action',
+            'list'
+        )
+
+        return new_notify_list_response(
+            self.request(path='notify', params=params)
+        )
+
+    def notify_revoke(
+            self,
+            callbackurl: str = None,
+            appli: NotifyAppli = None
+    ):
+        """
+        Revoke a subscription.
+
+        This service disables the notification between the API and the
+        specified applications for the user.
+        """
+        params = {}  # type: Dict[str, Any]
+
+        update_params(
+            params,
+            'callbackurl',
+            callbackurl
+        )
+        update_params(
+            params,
+            'appli',
+            appli,
+            lambda appli: appli.value
+        )
+        update_params(
+            params,
+            'action',
+            'revoke'
+        )
+
+        self.request(path='notify', params=params)
+
+    def notify_subscribe(
+            self,
+            callbackurl: str,
+            appli: NotifyAppli = None,
+            comment: str = None
+    ) -> None:
+        """Subscribe to receive notifications when new data is available."""
+        params = {}  # type: Dict[str, Any]
+
+        update_params(
+            params,
+            'callbackurl',
+            callbackurl
+        )
+        update_params(
+            params,
+            'appli',
+            appli,
+            lambda appli: appli.value
+        )
+        update_params(
+            params,
+            'comment',
+            comment
+        )
+        update_params(
+            params,
+            'action',
+            'subscribe'
+        )
+
+        self.request(path='notify', params=params)
+
+    def notify_update(
+            self,
+            callbackurl: str,
+            appli: NotifyAppli,
+            new_callbackurl: str,
+            new_appli: NotifyAppli = None,
+            comment: str = None
+    ) -> None:
+        """Update the callbackurl and or appli of a created notification."""
+        params = {}  # type: Dict[str, Any]
+
+        update_params(
+            params,
+            'callbackurl',
+            callbackurl
+        )
+        update_params(
+            params,
+            'appli',
+            appli,
+            lambda appli: appli.value
+        )
+        update_params(
+            params,
+            'new_callbackurl',
+            new_callbackurl
+        )
+        update_params(
+            params,
+            'new_appli',
+            new_appli,
+            lambda new_appli: new_appli.value
+        )
+        update_params(
+            params,
+            'comment',
+            comment
+        )
+        update_params(
+            params,
+            'action',
+            'update'
+        )
+
+        self.request(path='notify', params=params)
