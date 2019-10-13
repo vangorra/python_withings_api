@@ -188,13 +188,13 @@ class WithingsApi:
             '/'.join(url_parts),
             params=params
         )
-        response = json.loads(response.content.decode())
-        status = response.get('status')
-        if status != 0:
+        parsed_response = json.loads(response.content.decode())
+        if parsed_response['status'] != 0:
             raise requests.exceptions.RequestException(
-                "Error code %s" % response['status']
+                "Error code %s" % parsed_response['status'],
+                response=response
             )
-        return response.get('body', None)
+        return parsed_response.get('body', None)
 
     def get_activity(
             self,
