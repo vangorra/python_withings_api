@@ -7,7 +7,7 @@ with open("README.md", 'r') as f:
 
 setup(
     name='withings_api',
-    version='2.0.0b8',
+    version='2.0.0',
     description="Library for the Withings API",
     long_description=long_description,
     long_description_content_type='text/markdown',
