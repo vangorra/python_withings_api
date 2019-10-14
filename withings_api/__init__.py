@@ -24,6 +24,7 @@ from .common import (
     new_get_meas_response,
     new_notify_list_response,
     new_notify_get_response,
+    new_user_get_device_response,
     new_credentials,
     GetActivityResponse,
     GetSleepResponse,
@@ -41,6 +42,7 @@ from .common import (
     NotifyAppli,
     str_or_raise,
     int_or_raise,
+    GetDeviceResponse
 )
 
 DateType = Union[arrow.Arrow, datetime.date, datetime.datetime, int, str]
@@ -212,6 +214,19 @@ class WithingsApi:
                 response=response
             )
         return parsed_response.get('body', None)
+
+    def user_get_device(self) -> GetDeviceResponse:
+        """
+        Get user device.
+
+        Some data related to user profile are available through those services.
+        """
+        return new_user_get_device_response(
+            self.request(
+                path='v2/user',
+                params={'action': 'getdevice'}
+            )
+        )
 
     def measure_get_activity(
             self,

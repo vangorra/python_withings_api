@@ -76,6 +76,9 @@ def main() -> None:
 
     api = WithingsApi(credentials)
 
+    print('Getting devices...')
+    assert api.measure_get_meas() is not None
+
     print('Getting measures...')
     assert api.measure_get_meas(
         startdate=arrow.utcnow().shift(days=-21),

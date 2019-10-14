@@ -40,6 +40,8 @@ from withings_api.common import (
     GetSleepField,
     AuthScope,
     NotifyGetResponse,
+    GetDeviceResponse,
+    GetDeviceDevice,
 )
 
 
@@ -175,6 +177,71 @@ def test_refresh_token() -> None:
     assert new_credentials.access_token == 'my_access_token'
     assert new_credentials.refresh_token == 'my_refresh_token'
     assert new_credentials.token_expiry > credentials.token_expiry
+
+
+def responses_add_user_get_device() -> None:
+    responses.add(
+        method=responses.GET,
+        url=re.compile(
+            'https://wbsapi.withings.net/v2/user?.*action=getdevice(&.*)?'
+        ),
+        status=200,
+        json={
+            'status': 0,
+            'body': {
+                'devices': [
+                    {
+                        'type': 'type0',
+                        'model': 'model0',
+                        'battery': 'battery0',
+                        'deviceid': 'deviceid0',
+                        'timezone': TIMEZONE_STR0,
+                    },
+                    {
+                        'type': 'type1',
+                        'model': 'model1',
+                        'battery': 'battery1',
+                        'deviceid': 'deviceid1',
+                        'timezone': TIMEZONE_STR1,
+                    }
+                ]
+            }
+         }
+    )
+
+
+@responses.activate
+def test_user_get_device(withings_api: WithingsApi) -> None:
+    responses_add_user_get_device()
+    assert withings_api.user_get_device() == GetDeviceResponse(
+        devices=(
+            GetDeviceDevice(
+                type='type0',
+                model='model0',
+                battery='battery0',
+                deviceid='deviceid0',
+                timezone=TIMEZONE0,
+            ),
+            GetDeviceDevice(
+                type='type1',
+                model='model1',
+                battery='battery1',
+                deviceid='deviceid1',
+                timezone=TIMEZONE1,
+            )
+        )
+    )
+
+    assert_url_path(
+        responses.calls[0].request.url,
+        '/v2/user'
+    )
+    assert_url_query_contains(
+        responses.calls[0].request.url,
+        {
+            'action': 'getdevice',
+        }
+    )
 
 
 def responses_add_measure_get_activity() -> None:

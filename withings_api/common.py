@@ -175,6 +175,20 @@ class AuthScope(Enum):
     USER_SLEEP_EVENTS = 'user.sleepevents'
 
 
+GetDeviceDevice = NamedTuple('GetDeviceDevice', [
+    ('type', str),
+    ('model', str),
+    ('battery', str),
+    ('deviceid', str),
+    ('timezone', tzinfo),
+])
+
+
+GetDeviceResponse = NamedTuple('GetDeviceResponse', [
+    ('devices', Tuple[GetDeviceDevice, ...])
+])
+
+
 SleepTimestamp = NamedTuple('SleepTimestamp', [
     ('timestamp', Arrow),
 ])
@@ -410,6 +424,27 @@ def new_credentials(
         user_id=str_or_raise(data.get('userid')),
         client_id=str_or_raise(client_id),
         consumer_secret=str_or_raise(consumer_secret),
+    )
+
+
+def new_user_get_device_device(data: dict) -> GetDeviceDevice:
+    """Create GetDeviceDevice from json."""
+    return GetDeviceDevice(
+        type=str_or_raise(data.get('type')),
+        model=str_or_raise(data.get('model')),
+        battery=str_or_raise(data.get('battery')),
+        deviceid=str_or_raise(data.get('deviceid')),
+        timezone=timezone_or_raise(data.get('timezone')),
+    )
+
+
+def new_user_get_device_response(data: dict) -> GetDeviceResponse:
+    """Create GetDeviceResponse from json."""
+    return GetDeviceResponse(
+        devices=tuple(
+            new_user_get_device_device(device)
+            for device in data.get('devices', ())
+        )
     )
 
 
