@@ -151,13 +151,13 @@ class GetSleepField(Enum):
 class GetSleepSummaryField(Enum):
     """Fields for get sleep summary api call."""
 
-    REMSLEEPDURATION = 'remsleepduration'
-    WAKEUPDURATION = 'wakeupduration'
-    LIGHTSLEEPDURATION = 'lightsleepduration'
-    DEEPSLEEPDURATION = 'deepsleepduration'
-    WAKEUPCOUNT = 'wakeupcount'
-    DURATIONTOSLEEP = 'durationtosleep'
-    DURATIONTOWAKEUP = 'durationtowakeup'
+    REM_SLEEP_DURATION = 'remsleepduration'
+    WAKEUP_DURATION = 'wakeupduration'
+    LIGHT_SLEEP_DURATION = 'lightsleepduration'
+    DEEP_SLEEP_DURATION = 'deepsleepduration'
+    WAKEUP_COUNT = 'wakeupcount'
+    DURATION_TO_SLEEP = 'durationtosleep'
+    DURATION_TO_WAKEUP = 'durationtowakeup'
     HR_AVERAGE = 'hr_average'
     HR_MIN = 'hr_min'
     HR_MAX = 'hr_max'

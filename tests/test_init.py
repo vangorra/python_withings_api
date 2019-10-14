@@ -991,7 +991,7 @@ def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
         startdateymd='2019-01-01',
         enddateymd=arrow.get('2019-01-02'),
         data_fields=(
-            GetSleepSummaryField.DEEPSLEEPDURATION,
+            GetSleepSummaryField.DEEP_SLEEP_DURATION,
             GetSleepSummaryField.HR_AVERAGE,
         ),
         lastupdate=10000000
