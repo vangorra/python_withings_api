@@ -15,23 +15,23 @@ from withings_api import (
 )
 
 from withings_api.common import (
-    SleepDataState,
+    SleepState,
     SleepModel,
-    GetActivityResponse,
-    GetActivityActivity,
-    GetSleepResponse,
-    GetSleepSerie,
-    GetSleepSummaryResponse,
+    MeasureGetActivityResponse,
+    MeasureGetActivityActivity,
+    SleepGetResponse,
+    SleepGetSerie,
+    SleepGetSummaryResponse,
     GetSleepSummarySerie,
     GetSleepSummaryData,
     GetSleepSummaryField,
-    GetMeasResponse,
-    GetMeasGroup,
-    SleepTimestamp,
-    GetMeasMeasure,
+    MeasureGetMeasResponse,
+    MeasureGetMeasGroup,
+    SleepGetTimestamp,
+    MeasureGetMeasMeasure,
     MeasureType,
-    MeasureGroupAttrib,
-    MeasureCategory,
+    MeasureGetMeasGroupAttrib,
+    MeasureGetMeasGroupCategory,
     NotifyListResponse,
     NotifyListProfile,
     NotifyAppli,
@@ -40,8 +40,8 @@ from withings_api.common import (
     GetSleepField,
     AuthScope,
     NotifyGetResponse,
-    GetDeviceResponse,
-    GetDeviceDevice,
+    UserGetDeviceResponse,
+    UserGetDeviceDevice,
 )
 
 
@@ -54,7 +54,7 @@ def withings_api() -> WithingsApi:
         token_expiry=arrow.utcnow().timestamp + 10000,
         token_type='Bearer',
         refresh_token='my_refresh_token',
-        user_id='my_user_id',
+        userid='my_userid',
         client_id=client_id,
         consumer_secret=consumer_secret,
     )
@@ -77,7 +77,7 @@ def test_authorize() -> None:
             'expires_in': 11,
             'token_type': 'Bearer',
             'refresh_token': 'fake_refresh_token',
-            'userid': 'fake_user_id',
+            'userid': 'fake_userid',
         },
         status=200
     )
@@ -116,7 +116,7 @@ def test_authorize() -> None:
         token_expiry=100000011,
         token_type='Bearer',
         refresh_token='fake_refresh_token',
-        user_id='fake_user_id',
+        userid='fake_userid',
         client_id=client_id,
         consumer_secret=consumer_secret,
     )
@@ -148,7 +148,7 @@ def test_refresh_token() -> None:
         token_expiry=arrow.utcnow().timestamp - 1,
         token_type='Bearer',
         refresh_token='my_refresh_token_old',
-        user_id='my_user_id',
+        userid='my_userid',
         client_id=client_id,
         consumer_secret=consumer_secret,
     )
@@ -162,7 +162,7 @@ def test_refresh_token() -> None:
             'expires_in': 11,
             'token_type': 'Bearer',
             'refresh_token': 'my_refresh_token',
-            'userid': 'my_user_id',
+            'userid': 'my_userid',
         }
     )
 
@@ -213,16 +213,16 @@ def responses_add_user_get_device() -> None:
 @responses.activate
 def test_user_get_device(withings_api: WithingsApi) -> None:
     responses_add_user_get_device()
-    assert withings_api.user_get_device() == GetDeviceResponse(
+    assert withings_api.user_get_device() == UserGetDeviceResponse(
         devices=(
-            GetDeviceDevice(
+            UserGetDeviceDevice(
                 type='type0',
                 model='model0',
                 battery='battery0',
                 deviceid='deviceid0',
                 timezone=TIMEZONE0,
             ),
-            GetDeviceDevice(
+            UserGetDeviceDevice(
                 type='type1',
                 model='model1',
                 battery='battery1',
@@ -312,11 +312,11 @@ def responses_add_measure_get_activity() -> None:
 @responses.activate
 def test_measure_get_activity(withings_api: WithingsApi) -> None:
     responses_add_measure_get_activity()
-    assert withings_api.measure_get_activity() == GetActivityResponse(
+    assert withings_api.measure_get_activity() == MeasureGetActivityResponse(
         more=False,
         offset=0,
         activities=(
-            GetActivityActivity(
+            MeasureGetActivityActivity(
                 date=arrow.get('2019-01-01').replace(tzinfo=TIMEZONE0),
                 timezone=TIMEZONE0,
                 is_tracker=True,
@@ -339,7 +339,7 @@ def test_measure_get_activity(withings_api: WithingsApi) -> None:
                 hr_zone_2=115,
                 hr_zone_3=116,
             ),
-            GetActivityActivity(
+            MeasureGetActivityActivity(
                 date=arrow.get('2019-01-02').replace(tzinfo=TIMEZONE1),
                 timezone=TIMEZONE1,
                 is_tracker=False,
@@ -382,9 +382,9 @@ def responses_add_measure_get_meas() -> None:
                 'timezone': TIMEZONE_STR0,
                 'measuregrps': [
                     {
-                        'attrib': MeasureGroupAttrib
+                        'attrib': MeasureGetMeasGroupAttrib
                         .MANUAL_USER_DURING_ACCOUNT_CREATION,
-                        'category': MeasureCategory.REAL,
+                        'category': MeasureGetMeasGroupCategory.REAL,
                         'created': 1111111111,
                         'date': '2019-01-01',
                         'deviceid': 'dev1',
@@ -403,9 +403,10 @@ def responses_add_measure_get_meas() -> None:
                         ]
                     },
                     {
-                        'attrib':
-                            MeasureGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
-                        'category': MeasureCategory.USER_OBJECTIVES,
+                        'attrib': MeasureGetMeasGroupAttrib
+                        .DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
+                        'category':
+                            MeasureGetMeasGroupCategory.USER_OBJECTIVES,
                         'created': 2222222222,
                         'date': '2019-01-02',
                         'deviceid': 'dev2',
@@ -432,46 +433,48 @@ def responses_add_measure_get_meas() -> None:
 @responses.activate
 def test_measure_get_meas(withings_api: WithingsApi) -> None:
     responses_add_measure_get_meas()
-    assert withings_api.measure_get_meas() == GetMeasResponse(
+    assert withings_api.measure_get_meas() == MeasureGetMeasResponse(
         more=False,
         offset=0,
         timezone=TIMEZONE0,
         updatetime=arrow.get(1409596058).replace(tzinfo=TIMEZONE0),
         measuregrps=(
-            GetMeasGroup(
-                attrib=MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
-                category=MeasureCategory.REAL,
+            MeasureGetMeasGroup(
+                attrib=MeasureGetMeasGroupAttrib
+                .MANUAL_USER_DURING_ACCOUNT_CREATION,
+                category=MeasureGetMeasGroupCategory.REAL,
                 created=arrow.get(1111111111).replace(tzinfo=TIMEZONE0),
                 date=arrow.get('2019-01-01').replace(tzinfo=TIMEZONE0),
                 deviceid='dev1',
                 grpid='grp1',
                 measures=(
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.HEIGHT,
                         unit=110,
                         value=110,
                     ),
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.WEIGHT,
                         unit=120,
                         value=120,
                     )
                 ),
             ),
-            GetMeasGroup(
-                attrib=MeasureGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
-                category=MeasureCategory.USER_OBJECTIVES,
+            MeasureGetMeasGroup(
+                attrib=MeasureGetMeasGroupAttrib
+                .DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
+                category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
                 created=arrow.get(2222222222).replace(tzinfo=TIMEZONE0),
                 date=arrow.get('2019-01-02').replace(tzinfo=TIMEZONE0),
                 deviceid='dev2',
                 grpid='grp2',
                 measures=(
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.BODY_TEMPERATURE,
                         unit=210,
                         value=210,
                     ),
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.BONE_MASS,
                         unit=220,
                         value=220,
@@ -495,12 +498,12 @@ def responses_add_sleep_get() -> None:
                 "series": [
                     {
                         "startdate": 1387235398,
-                        "state": SleepDataState.AWAKE,
+                        "state": SleepState.AWAKE,
                         "enddate": 1387235758
                     },
                     {
                         "startdate": 1387243618,
-                        "state": SleepDataState.LIGHT,
+                        "state": SleepState.LIGHT,
                         "enddate": 1387244518,
                         "hr": {
                             "$timestamp": 123,
@@ -519,22 +522,22 @@ def responses_add_sleep_get() -> None:
 @responses.activate
 def test_sleep_get(withings_api: WithingsApi) -> None:
     responses_add_sleep_get()
-    assert withings_api.sleep_get() == GetSleepResponse(
+    assert withings_api.sleep_get() == SleepGetResponse(
         model=SleepModel.TRACKER,
         series=(
-            GetSleepSerie(
+            SleepGetSerie(
                 startdate=arrow.get(1387235398),
-                state=SleepDataState.AWAKE,
+                state=SleepState.AWAKE,
                 enddate=arrow.get(1387235758),
                 hr=None,
                 rr=None,
             ),
-            GetSleepSerie(
+            SleepGetSerie(
                 startdate=arrow.get(1387243618),
-                state=SleepDataState.LIGHT,
+                state=SleepState.LIGHT,
                 enddate=arrow.get(1387244518),
-                hr=SleepTimestamp(arrow.get(123)),
-                rr=SleepTimestamp(arrow.get(456)),
+                hr=SleepGetTimestamp(arrow.get(123)),
+                rr=SleepGetTimestamp(arrow.get(456)),
             )
         )
     )
@@ -610,7 +613,7 @@ def responses_add_sleep_get_summary() -> None:
 @responses.activate
 def test_sleep_get_summary(withings_api: WithingsApi) -> None:
     responses_add_sleep_get_summary()
-    assert withings_api.sleep_get_summary() == GetSleepSummaryResponse(
+    assert withings_api.sleep_get_summary() == SleepGetSummaryResponse(
         more=False,
         offset=1,
         series=(
@@ -949,7 +952,7 @@ def test_measure_get_meas_params(withings_api: WithingsApi) -> None:
     responses_add_measure_get_meas()
     withings_api.measure_get_meas(
         meastype=MeasureType.BONE_MASS,
-        category=MeasureCategory.USER_OBJECTIVES,
+        category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
         startdate=arrow.get('2019-01-01'),
         enddate=100000000,
         offset=12,
