@@ -31,7 +31,7 @@ def new_sleep_model(value: Optional[int]) -> SleepModel:
     return cast(SleepModel, enum_or_raise(value, SleepModel))
 
 
-class SleepDataState(IntEnum):
+class SleepState(IntEnum):
     """Sleep states."""
 
     AWAKE = 0
@@ -40,12 +40,12 @@ class SleepDataState(IntEnum):
     REM = 3
 
 
-def new_sleep_data_state(value: Optional[int]) -> SleepDataState:
+def new_sleep_state(value: Optional[int]) -> SleepState:
     """Create enum base on primitive."""
-    return cast(SleepDataState, enum_or_raise(value, SleepDataState))
+    return cast(SleepState, enum_or_raise(value, SleepState))
 
 
-class MeasureGroupAttrib(IntEnum):
+class MeasureGetMeasGroupAttrib(IntEnum):
     """Measure group attributions."""
 
     DEVICE_ENTRY_FOR_USER = 0
@@ -57,21 +57,29 @@ class MeasureGroupAttrib(IntEnum):
     SAME_AS_DEVICE_ENTRY_FOR_USER = 8
 
 
-def new_measure_group_attrib(value: Optional[int]) -> MeasureGroupAttrib:
+def new_measure_group_attrib(
+        value: Optional[int]
+) -> MeasureGetMeasGroupAttrib:
     """Create enum base on primitive."""
-    return cast(MeasureGroupAttrib, enum_or_raise(value, MeasureGroupAttrib))
+    return cast(
+        MeasureGetMeasGroupAttrib,
+        enum_or_raise(value, MeasureGetMeasGroupAttrib)
+    )
 
 
-class MeasureCategory(IntEnum):
+class MeasureGetMeasGroupCategory(IntEnum):
     """Measure categories."""
 
     REAL = 1
     USER_OBJECTIVES = 2
 
 
-def new_measure_category(value: Optional[int]) -> MeasureCategory:
+def new_measure_category(value: Optional[int]) -> MeasureGetMeasGroupCategory:
     """Create enum base on primitive."""
-    return cast(MeasureCategory, enum_or_raise(value, MeasureCategory))
+    return cast(
+        MeasureGetMeasGroupCategory,
+        enum_or_raise(value, MeasureGetMeasGroupCategory)
+    )
 
 
 class MeasureType(IntEnum):
@@ -175,7 +183,7 @@ class AuthScope(Enum):
     USER_SLEEP_EVENTS = 'user.sleepevents'
 
 
-GetDeviceDevice = NamedTuple('GetDeviceDevice', [
+UserGetDeviceDevice = NamedTuple('UserGetDeviceDevice', [
     ('type', str),
     ('model', str),
     ('battery', str),
@@ -184,26 +192,26 @@ GetDeviceDevice = NamedTuple('GetDeviceDevice', [
 ])
 
 
-GetDeviceResponse = NamedTuple('GetDeviceResponse', [
-    ('devices', Tuple[GetDeviceDevice, ...])
+UserGetDeviceResponse = NamedTuple('GetDeviceResponse', [
+    ('devices', Tuple[UserGetDeviceDevice, ...])
 ])
 
 
-SleepTimestamp = NamedTuple('SleepTimestamp', [
+SleepGetTimestamp = NamedTuple('SleepGetTimestamp', [
     ('timestamp', Arrow),
 ])
 
-GetSleepSerie = NamedTuple('GetSleepSerie', [
+SleepGetSerie = NamedTuple('SleepGetSerie', [
     ('enddate', Arrow),
     ('startdate', Arrow),
-    ('state', SleepDataState),
-    ('hr', Optional[SleepTimestamp]),
-    ('rr', Optional[SleepTimestamp]),
+    ('state', SleepState),
+    ('hr', Optional[SleepGetTimestamp]),
+    ('rr', Optional[SleepGetTimestamp]),
 ])
 
-GetSleepResponse = NamedTuple('GetSleepResponse', [
+SleepGetResponse = NamedTuple('GetSleepResponse', [
     ('model', SleepModel),
-    ('series', Tuple[GetSleepSerie, ...]),
+    ('series', Tuple[SleepGetSerie, ...]),
 ])
 
 GetSleepSummaryData = NamedTuple('GetSleepSummaryData', [
@@ -232,32 +240,32 @@ GetSleepSummarySerie = NamedTuple('GetSleepSummarySerie', [
     ('data', GetSleepSummaryData),
 ])
 
-GetSleepSummaryResponse = NamedTuple('GetSleepSummaryResponse', [
+SleepGetSummaryResponse = NamedTuple('GetSleepSummaryResponse', [
     ('more', bool),
     ('offset', int),
     ('series', Tuple[GetSleepSummarySerie, ...]),
 ])
 
-GetMeasMeasure = NamedTuple('GetMeasMeasure', [
+MeasureGetMeasMeasure = NamedTuple('MeasureGetMeasMeasure', [
     ('type', MeasureType),
     ('unit', int),
     ('value', int),
 ])
 
 
-GetMeasGroup = NamedTuple('GetMeasGroup', [
-    ('attrib', MeasureGroupAttrib),
-    ('category', MeasureCategory),
+MeasureGetMeasGroup = NamedTuple('MeasureGetMeasGroup', [
+    ('attrib', MeasureGetMeasGroupAttrib),
+    ('category', MeasureGetMeasGroupCategory),
     ('created', Arrow),
     ('date', Arrow),
     ('deviceid', Optional[str]),
     ('grpid', str),
-    ('measures', Tuple[GetMeasMeasure, ...]),
+    ('measures', Tuple[MeasureGetMeasMeasure, ...]),
 ])
 
 
-GetMeasResponse = NamedTuple('GetMeasResponse', [
-    ('measuregrps', Tuple[GetMeasGroup, ...]),
+MeasureGetMeasResponse = NamedTuple('GetMeasResponse', [
+    ('measuregrps', Tuple[MeasureGetMeasGroup, ...]),
     ('more', Optional[bool]),
     ('offset', Optional[int]),
     ('timezone', tzinfo),
@@ -265,7 +273,7 @@ GetMeasResponse = NamedTuple('GetMeasResponse', [
 ])
 
 
-GetActivityActivity = NamedTuple('GetActivityActivities', [
+MeasureGetActivityActivity = NamedTuple('MeasureGetActivityActivity', [
     ('date', Arrow),
     ('timezone', tzinfo),
     ('deviceid', Optional[str]),
@@ -289,8 +297,8 @@ GetActivityActivity = NamedTuple('GetActivityActivities', [
     ('hr_zone_3', Optional[int]),
 ])
 
-GetActivityResponse = NamedTuple('GetActivityResponse', [
-    ('activities', Tuple[GetActivityActivity, ...]),
+MeasureGetActivityResponse = NamedTuple('GetActivityResponse', [
+    ('activities', Tuple[MeasureGetActivityActivity, ...]),
     ('more', bool),
     ('offset', int),
 ])
@@ -300,7 +308,7 @@ Credentials = NamedTuple('Credentials', [
     ('token_expiry', int),
     ('token_type', str),
     ('refresh_token', str),
-    ('user_id', str),
+    ('userid', str),
     ('client_id', str),
     ('consumer_secret', str),
 ])
@@ -421,15 +429,15 @@ def new_credentials(
         token_expiry=arrow.utcnow().timestamp + data.get('expires_in'),
         token_type=str_or_raise(data.get('token_type')),
         refresh_token=str_or_raise(data.get('refresh_token')),
-        user_id=str_or_raise(data.get('userid')),
+        userid=str_or_raise(data.get('userid')),
         client_id=str_or_raise(client_id),
         consumer_secret=str_or_raise(consumer_secret),
     )
 
 
-def new_user_get_device_device(data: dict) -> GetDeviceDevice:
+def new_user_get_device_device(data: dict) -> UserGetDeviceDevice:
     """Create GetDeviceDevice from json."""
-    return GetDeviceDevice(
+    return UserGetDeviceDevice(
         type=str_or_raise(data.get('type')),
         model=str_or_raise(data.get('model')),
         battery=str_or_raise(data.get('battery')),
@@ -438,9 +446,9 @@ def new_user_get_device_device(data: dict) -> GetDeviceDevice:
     )
 
 
-def new_user_get_device_response(data: dict) -> GetDeviceResponse:
+def new_user_get_device_response(data: dict) -> UserGetDeviceResponse:
     """Create GetDeviceResponse from json."""
-    return GetDeviceResponse(
+    return UserGetDeviceResponse(
         devices=tuple(
             new_user_get_device_device(device)
             for device in data.get('devices', ())
@@ -479,31 +487,31 @@ def new_notify_get_response(data: dict) -> NotifyGetResponse:
 
 def new_sleep_timestamp(
         data: Optional[Dict[Any, Any]]
-) -> Optional[SleepTimestamp]:
+) -> Optional[SleepGetTimestamp]:
     """Create SleepTimestamp from json."""
     if data is None:
         return data
 
-    return SleepTimestamp(arrow_or_raise(data.get('$timestamp')))
+    return SleepGetTimestamp(arrow_or_raise(data.get('$timestamp')))
 
 
-def new_get_sleep_serie(data: dict) -> GetSleepSerie:
+def new_sleep_get_serie(data: dict) -> SleepGetSerie:
     """Create GetSleepSerie from json."""
-    return GetSleepSerie(
+    return SleepGetSerie(
         enddate=arrow_or_raise(data.get("enddate")),
         startdate=arrow_or_raise(data.get("startdate")),
-        state=new_sleep_data_state(data.get("state")),
+        state=new_sleep_state(data.get("state")),
         hr=new_sleep_timestamp(dict_or_none(data.get('hr'))),
         rr=new_sleep_timestamp(dict_or_none(data.get('rr'))),
     )
 
 
-def new_get_sleep_response(data: dict) -> GetSleepResponse:
+def new_sleep_get_response(data: dict) -> SleepGetResponse:
     """Create GetSleepResponse from json."""
-    return GetSleepResponse(
+    return SleepGetResponse(
         model=new_sleep_model(data.get('model')),
         series=tuple(
-            new_get_sleep_serie(serie)
+            new_sleep_get_serie(serie)
             for serie in data.get('series', ())
         )
     )
@@ -545,9 +553,9 @@ def new_get_sleep_summary_serie(data: dict) -> GetSleepSummarySerie:
     )
 
 
-def new_get_sleep_summary_response(data: dict) -> GetSleepSummaryResponse:
+def new_sleep_get_summary_response(data: dict) -> SleepGetSummaryResponse:
     """Create GetSleepSummaryResponse from json."""
-    return GetSleepSummaryResponse(
+    return SleepGetSummaryResponse(
         more=bool_or_raise(data.get('more')),
         offset=int_or_raise(data.get('offset')),
         series=tuple(
@@ -557,18 +565,21 @@ def new_get_sleep_summary_response(data: dict) -> GetSleepSummaryResponse:
     )
 
 
-def new_get_meas_measure(data: dict) -> GetMeasMeasure:
+def new_measure_get_meas_measure(data: dict) -> MeasureGetMeasMeasure:
     """Create GetMeasMeasure from json."""
-    return GetMeasMeasure(
+    return MeasureGetMeasMeasure(
         value=int_or_raise(data.get('value')),
         type=new_measure_type(data.get('type')),
         unit=int_or_raise(data.get('unit'))
     )
 
 
-def new_get_meas_group(data: dict, timezone: tzinfo) -> GetMeasGroup:
+def new_measure_get_meas_group(
+        data: dict,
+        timezone: tzinfo
+) -> MeasureGetMeasGroup:
     """Create GetMeasGroup from json."""
-    return GetMeasGroup(
+    return MeasureGetMeasGroup(
         grpid=str_or_raise(data.get('grpid')),
         attrib=new_measure_group_attrib(data.get('attrib')),
         date=arrow_or_raise(data.get('date')).replace(tzinfo=timezone),
@@ -576,19 +587,19 @@ def new_get_meas_group(data: dict, timezone: tzinfo) -> GetMeasGroup:
         category=new_measure_category(data.get('category')),
         deviceid=data.get('deviceid'),
         measures=tuple(
-            new_get_meas_measure(measure)
+            new_measure_get_meas_measure(measure)
             for measure in data.get('measures', ())
         )
     )
 
 
-def new_get_meas_response(data: dict) -> GetMeasResponse:
+def new_measure_get_meas_response(data: dict) -> MeasureGetMeasResponse:
     """Create GetMeasResponse from json."""
     timezone = timezone_or_raise(data.get('timezone'))
 
-    return GetMeasResponse(
+    return MeasureGetMeasResponse(
         measuregrps=tuple(
-            new_get_meas_group(group, timezone)
+            new_measure_get_meas_group(group, timezone)
             for group in data.get('measuregrps', ())
         ),
         more=data.get('more'),
@@ -600,11 +611,13 @@ def new_get_meas_response(data: dict) -> GetMeasResponse:
     )
 
 
-def new_get_activity_activity(data: dict) -> GetActivityActivity:
+def new_measure_get_activity_activity(
+        data: dict
+) -> MeasureGetActivityActivity:
     """Create GetActivityActivity from json."""
     timezone = timezone_or_raise(data.get('timezone'))
 
-    return GetActivityActivity(
+    return MeasureGetActivityActivity(
         date=arrow_or_raise(data.get('date')).replace(tzinfo=timezone),
         timezone=timezone,
         deviceid=str_or_none(data.get('deviceid')),
@@ -629,11 +642,13 @@ def new_get_activity_activity(data: dict) -> GetActivityActivity:
     )
 
 
-def new_get_activity_response(data: dict) -> GetActivityResponse:
+def new_measure_get_activity_response(
+        data: dict
+) -> MeasureGetActivityResponse:
     """Create GetActivityResponse from json."""
-    return GetActivityResponse(
+    return MeasureGetActivityResponse(
         activities=tuple(
-            new_get_activity_activity(activity)
+            new_measure_get_activity_activity(activity)
             for activity in data.get('activities', ())
         ),
         more=bool_or_raise(data.get('more')),
@@ -642,19 +657,19 @@ def new_get_activity_response(data: dict) -> GetActivityResponse:
 
 
 AMBIGUOUS_GROUP_ATTRIBS = (
-    MeasureGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
-    MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
+    MeasureGetMeasGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
+    MeasureGetMeasGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
 )
 
 
 class MeasureGroupAttribs:
-    """Groups of MeasureGroupAttrib."""
+    """Groups of MeasureGetMeasGroupAttrib."""
 
-    ANY = tuple(enum_val for enum_val in MeasureGroupAttrib)
+    ANY = tuple(enum_val for enum_val in MeasureGetMeasGroupAttrib)
     AMBIGUOUS = AMBIGUOUS_GROUP_ATTRIBS
     UNAMBIGUOUS = tuple(
         enum_val
-        for enum_val in MeasureGroupAttrib
+        for enum_val in MeasureGetMeasGroupAttrib
         if enum_val not in AMBIGUOUS_GROUP_ATTRIBS
     )
 
@@ -667,24 +682,26 @@ class MeasureTypes:
 
 def query_measure_groups(
         from_source: Union[
-            GetMeasGroup, GetMeasResponse, Tuple[GetMeasGroup, ...]
+            MeasureGetMeasGroup,
+            MeasureGetMeasResponse,
+            Tuple[MeasureGetMeasGroup, ...]
         ],
         with_measure_type: Union[
             MeasureType,
             Tuple[MeasureType, ...]
         ] = MeasureTypes.ANY,
         with_group_attrib: Union[
-            MeasureGroupAttrib,
-            Tuple[MeasureGroupAttrib, ...]
+            MeasureGetMeasGroupAttrib,
+            Tuple[MeasureGetMeasGroupAttrib, ...]
         ] = MeasureGroupAttribs.ANY
-) -> Tuple[GetMeasGroup, ...]:
+) -> Tuple[MeasureGetMeasGroup, ...]:
     """Return a groups and measurements based on filters."""
-    if isinstance(from_source, GetMeasResponse):
-        iter_groups = cast(GetMeasResponse, from_source).measuregrps
-    elif isinstance(from_source, GetMeasGroup):
-        iter_groups = (cast(GetMeasGroup, from_source),)
+    if isinstance(from_source, MeasureGetMeasResponse):
+        iter_groups = cast(MeasureGetMeasResponse, from_source).measuregrps
+    elif isinstance(from_source, MeasureGetMeasGroup):
+        iter_groups = (cast(MeasureGetMeasGroup, from_source),)
     else:
-        iter_groups = cast(Tuple[GetMeasGroup], from_source)
+        iter_groups = cast(Tuple[MeasureGetMeasGroup], from_source)
 
     if isinstance(with_measure_type, MeasureType):
         iter_measure_type = (
@@ -695,13 +712,13 @@ def query_measure_groups(
             Tuple[MeasureType], with_measure_type
         )
 
-    if isinstance(with_group_attrib, MeasureGroupAttrib):
+    if isinstance(with_group_attrib, MeasureGetMeasGroupAttrib):
         iter_group_attrib = (
-            cast(MeasureGroupAttrib, with_group_attrib),
+            cast(MeasureGetMeasGroupAttrib, with_group_attrib),
         )
     else:
         iter_group_attrib = cast(
-            Tuple[MeasureGroupAttrib],
+            Tuple[MeasureGetMeasGroupAttrib],
             with_group_attrib
         )
 
@@ -717,7 +734,7 @@ def query_measure_groups(
 
             measures.append(measure)
 
-        groups.append(GetMeasGroup(
+        groups.append(MeasureGetMeasGroup(
             attrib=group.attrib,
             category=group.category,
             created=group.created,
@@ -732,15 +749,17 @@ def query_measure_groups(
 
 def get_measure_value(
         from_source: Union[
-            GetMeasGroup, GetMeasResponse, Tuple[GetMeasGroup, ...]
+            MeasureGetMeasGroup,
+            MeasureGetMeasResponse,
+            Tuple[MeasureGetMeasGroup, ...]
         ],
         with_measure_type: Union[
             MeasureType,
             Tuple[MeasureType, ...]
         ],
         with_group_attrib: Union[
-            MeasureGroupAttrib,
-            Tuple[MeasureGroupAttrib, ...]
+            MeasureGetMeasGroupAttrib,
+            Tuple[MeasureGetMeasGroupAttrib, ...]
         ] = MeasureGroupAttribs.ANY
 ) -> Optional[float]:
     """Get the first value of a measure that meet the query requirements."""

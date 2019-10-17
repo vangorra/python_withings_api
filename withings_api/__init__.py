@@ -18,20 +18,20 @@ import requests
 from requests_oauthlib import OAuth2Session
 
 from .common import (
-    new_get_activity_response,
-    new_get_sleep_response,
-    new_get_sleep_summary_response,
-    new_get_meas_response,
+    new_measure_get_activity_response,
+    new_sleep_get_response,
+    new_sleep_get_summary_response,
+    new_measure_get_meas_response,
     new_notify_list_response,
     new_notify_get_response,
     new_user_get_device_response,
     new_credentials,
-    GetActivityResponse,
-    GetSleepResponse,
-    GetSleepSummaryResponse,
-    GetMeasResponse,
+    MeasureGetActivityResponse,
+    SleepGetResponse,
+    SleepGetSummaryResponse,
+    MeasureGetMeasResponse,
     MeasureType,
-    MeasureCategory,
+    MeasureGetMeasGroupCategory,
     NotifyListResponse,
     NotifyGetResponse,
     Credentials,
@@ -42,7 +42,7 @@ from .common import (
     NotifyAppli,
     str_or_raise,
     int_or_raise,
-    GetDeviceResponse
+    UserGetDeviceResponse
 )
 
 DateType = Union[arrow.Arrow, datetime.date, datetime.datetime, int, str]
@@ -185,7 +185,7 @@ class WithingsApi:
             ),
             token_type=self._credentials.token_type,
             refresh_token=str_or_raise(token.get('refresh_token')),
-            user_id=self._credentials.user_id,
+            userid=self._credentials.userid,
             client_id=self._credentials.client_id,
             consumer_secret=self._credentials.consumer_secret,
         )
@@ -201,7 +201,7 @@ class WithingsApi:
     ) -> Dict[str, Any]:
         """Request a specific service."""
         params = (params or {}).copy()
-        params['userid'] = self._credentials.user_id
+        params['userid'] = self._credentials.userid
         response = self._client.request(
             method=method,
             url='%s/%s' % (self.URL.strip('/'), path.strip('/')),
@@ -215,7 +215,7 @@ class WithingsApi:
             )
         return parsed_response.get('body', None)
 
-    def user_get_device(self) -> GetDeviceResponse:
+    def user_get_device(self) -> UserGetDeviceResponse:
         """
         Get user device.
 
@@ -235,7 +235,7 @@ class WithingsApi:
             offset: Optional[int] = None,
             data_fields: Optional[Iterable[GetActivityField]] = None,
             lastupdate: Optional[DateType] = None
-    ) -> GetActivityResponse:
+    ) -> MeasureGetActivityResponse:
         """Get user created activities."""
         params = {}  # type: Dict[str, Any]
 
@@ -274,7 +274,7 @@ class WithingsApi:
             'getactivity'
         )
 
-        return new_get_activity_response(
+        return new_measure_get_activity_response(
             self.request(
                 path='v2/measure',
                 params=params
@@ -284,12 +284,12 @@ class WithingsApi:
     def measure_get_meas(
             self,
             meastype: Optional[MeasureType] = None,
-            category: Optional[MeasureCategory] = None,
+            category: Optional[MeasureGetMeasGroupCategory] = None,
             startdate: Optional[DateType] = None,
             enddate: Optional[DateType] = None,
             offset: Optional[int] = None,
             lastupdate: Optional[DateType] = None
-    ) -> GetMeasResponse:
+    ) -> MeasureGetMeasResponse:
         """Get measures."""
         params = {}  # type: Dict[str, Any]
 
@@ -330,7 +330,7 @@ class WithingsApi:
             'getmeas'
         )
 
-        return new_get_meas_response(
+        return new_measure_get_meas_response(
             self.request(
                 path='measure',
                 params=params
@@ -342,7 +342,7 @@ class WithingsApi:
             startdate: Optional[DateType] = None,
             enddate: Optional[DateType] = None,
             data_fields: Optional[Iterable[GetSleepField]] = None
-    ) -> GetSleepResponse:
+    ) -> SleepGetResponse:
         """Get sleep data."""
         params = {}  # type: Dict[str, Any]
 
@@ -370,7 +370,7 @@ class WithingsApi:
             'get'
         )
 
-        return new_get_sleep_response(
+        return new_sleep_get_response(
             self.request(
                 path='v2/sleep',
                 params=params
@@ -383,7 +383,7 @@ class WithingsApi:
             enddateymd: Optional[DateType] = None,
             data_fields: Optional[Iterable[GetSleepSummaryField]] = None,
             lastupdate: Optional[DateType] = None
-    ) -> GetSleepSummaryResponse:
+    ) -> SleepGetSummaryResponse:
         """Get sleep summary."""
         params = {}  # type: Dict[str, Any]
 
@@ -417,7 +417,7 @@ class WithingsApi:
             'getsummary'
         )
 
-        return new_get_sleep_summary_response(
+        return new_sleep_get_summary_response(
             self.request(
                 path='v2/sleep',
                 params=params

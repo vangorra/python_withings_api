@@ -5,14 +5,14 @@ import arrow
 import pytest
 
 from withings_api.common import (
-    GetMeasResponse,
-    GetMeasGroup,
-    GetMeasMeasure,
+    MeasureGetMeasResponse,
+    MeasureGetMeasGroup,
+    MeasureGetMeasMeasure,
     MeasureType,
     MeasureTypes,
-    MeasureGroupAttrib,
+    MeasureGetMeasGroupAttrib,
     MeasureGroupAttribs,
-    MeasureCategory,
+    MeasureGetMeasGroupCategory,
     get_measure_value,
     query_measure_groups,
     enforce_type,
@@ -32,46 +32,47 @@ def test_enum_or_raise() -> None:
 
 
 def test_query_measure_groups() -> None:
-    response = GetMeasResponse(
+    response = MeasureGetMeasResponse(
         offset=0,
         more=False,
         timezone=TIMEZONE0,
         updatetime=arrow.get(100000),
         measuregrps=(
-            GetMeasGroup(
-                attrib=MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
-                category=MeasureCategory.USER_OBJECTIVES,
+            MeasureGetMeasGroup(
+                attrib=MeasureGetMeasGroupAttrib
+                .MANUAL_USER_DURING_ACCOUNT_CREATION,
+                category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
                 created=arrow.get(10000200),
                 date=arrow.get(10000300),
                 deviceid='dev1',
                 grpid='1',
                 measures=(
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.WEIGHT,
                         unit=1,
                         value=10,
                     ),
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.BONE_MASS,
                         unit=-2,
                         value=20,
                     ),
                 ),
             ),
-            GetMeasGroup(
-                attrib=MeasureGroupAttrib.MEASURE_USER_CONFIRMED,
-                category=MeasureCategory.USER_OBJECTIVES,
+            MeasureGetMeasGroup(
+                attrib=MeasureGetMeasGroupAttrib.MEASURE_USER_CONFIRMED,
+                category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
                 created=arrow.get(10000400),
                 date=arrow.get(10000500),
                 deviceid='dev2',
                 grpid='2',
                 measures=(
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.BONE_MASS,
                         unit=21,
                         value=210,
                     ),
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.FAT_FREE_MASS,
                         unit=-22,
                         value=220,
@@ -83,24 +84,25 @@ def test_query_measure_groups() -> None:
 
     # Measure type filter.
     expected = tuple([
-        GetMeasGroup(
-            attrib=MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
-            category=MeasureCategory.USER_OBJECTIVES,
+        MeasureGetMeasGroup(
+            attrib=MeasureGetMeasGroupAttrib
+            .MANUAL_USER_DURING_ACCOUNT_CREATION,
+            category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
             created=arrow.get(10000200),
             date=arrow.get(10000300),
             deviceid='dev1',
             grpid='1',
             measures=(),
         ),
-        GetMeasGroup(
-            attrib=MeasureGroupAttrib.MEASURE_USER_CONFIRMED,
-            category=MeasureCategory.USER_OBJECTIVES,
+        MeasureGetMeasGroup(
+            attrib=MeasureGetMeasGroupAttrib.MEASURE_USER_CONFIRMED,
+            category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
             created=arrow.get(10000400),
             date=arrow.get(10000500),
             deviceid='dev2',
             grpid='2',
             measures=(
-                GetMeasMeasure(
+                MeasureGetMeasMeasure(
                     type=MeasureType.FAT_FREE_MASS,
                     unit=-22,
                     value=220,
@@ -114,15 +116,15 @@ def test_query_measure_groups() -> None:
     ) == expected
 
     expected = tuple([
-        GetMeasGroup(
-            attrib=MeasureGroupAttrib.MEASURE_USER_CONFIRMED,
-            category=MeasureCategory.USER_OBJECTIVES,
+        MeasureGetMeasGroup(
+            attrib=MeasureGetMeasGroupAttrib.MEASURE_USER_CONFIRMED,
+            category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
             created=arrow.get(10000400),
             date=arrow.get(10000500),
             deviceid='dev2',
             grpid='2',
             measures=(
-                GetMeasMeasure(
+                MeasureGetMeasMeasure(
                     type=MeasureType.FAT_FREE_MASS,
                     unit=-22,
                     value=220,
@@ -133,34 +135,35 @@ def test_query_measure_groups() -> None:
     assert query_measure_groups(
         response,
         MeasureType.FAT_FREE_MASS,
-        MeasureGroupAttrib.MEASURE_USER_CONFIRMED
+        MeasureGetMeasGroupAttrib.MEASURE_USER_CONFIRMED
     ) == expected
 
     expected = tuple([
-        GetMeasGroup(
-            attrib=MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
-            category=MeasureCategory.USER_OBJECTIVES,
+        MeasureGetMeasGroup(
+            attrib=MeasureGetMeasGroupAttrib
+            .MANUAL_USER_DURING_ACCOUNT_CREATION,
+            category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
             created=arrow.get(10000200),
             date=arrow.get(10000300),
             deviceid='dev1',
             grpid='1',
             measures=(
-                GetMeasMeasure(
+                MeasureGetMeasMeasure(
                     type=MeasureType.BONE_MASS,
                     unit=-2,
                     value=20,
                 ),
             ),
         ),
-        GetMeasGroup(
-            attrib=MeasureGroupAttrib.MEASURE_USER_CONFIRMED,
-            category=MeasureCategory.USER_OBJECTIVES,
+        MeasureGetMeasGroup(
+            attrib=MeasureGetMeasGroupAttrib.MEASURE_USER_CONFIRMED,
+            category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
             created=arrow.get(10000400),
             date=arrow.get(10000500),
             deviceid='dev2',
             grpid='2',
             measures=(
-                GetMeasMeasure(
+                MeasureGetMeasMeasure(
                     type=MeasureType.BONE_MASS,
                     unit=21,
                     value=210,
@@ -202,26 +205,27 @@ def test_query_measure_groups() -> None:
 
 
 def test_get_measure_value() -> None:
-    response = GetMeasResponse(
+    response = MeasureGetMeasResponse(
         offset=0,
         more=False,
         timezone=TIMEZONE0,
         updatetime=arrow.get(100000),
         measuregrps=(
-            GetMeasGroup(
-                attrib=MeasureGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
-                category=MeasureCategory.USER_OBJECTIVES,
+            MeasureGetMeasGroup(
+                attrib=MeasureGetMeasGroupAttrib
+                .MANUAL_USER_DURING_ACCOUNT_CREATION,
+                category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
                 created=arrow.utcnow(),
                 date=arrow.utcnow(),
                 deviceid='dev1',
                 grpid='1',
                 measures=(
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.WEIGHT,
                         unit=1,
                         value=10,
                     ),
-                    GetMeasMeasure(
+                    MeasureGetMeasMeasure(
                         type=MeasureType.BONE_MASS,
                         unit=-2,
                         value=20,
