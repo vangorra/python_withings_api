@@ -42,9 +42,12 @@ echo "Running module dependencies."
 python setup.py install
 
 echo "Formatting code."
-black $BLACK_ARGS "$SELF_DIR/../withings_api" "$SELF_DIR/../tests" "$SELF_DIR/../scripts" "$SELF_DIR/../setup.py"
+python setup.py format
 
 echo "Running tests."
 python setup.py test
+
+echo "Running pylint";
+python setup.py lint
 
 echo "Build complete."

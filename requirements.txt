@@ -6,4 +6,5 @@ pytest-cov==2.8.1
 pytest-docstyle==1.5.0
 pytest-mypy==0.4.1
 pytest-flake8==1.0.4
-pytest-pylint==0.14.1
+setuptools-black==0.1.4
+setuptools-lint==0.6.0

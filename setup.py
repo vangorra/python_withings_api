@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Setup functions for the project."""
 from setuptools import setup
+import setuptools_black
 
 with open("README.md", "r") as f:
     LONG_DESCRIPTION = f.read()
@@ -21,6 +22,7 @@ setup(
         "requests-oauth>=0.4.1",
         "requests-oauthlib>=1.2",
     ],
+    cmdclass={"build": setuptools_black.BuildCommand},
     keywords="withings api",
     zip_safe=True,
     classifiers=[
