@@ -3,13 +3,13 @@
 from setuptools import setup
 
 with open("README.md", "r") as f:
-    long_description = f.read()
+    LONG_DESCRIPTION = f.read()
 
 setup(
     name="withings_api",
     version="2.1.0",
     description="Library for the Withings API",
-    long_description=long_description,
+    long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     author="Robbie Van Gorkom",
     author_email="robbie.van.gorkom@protonmail.com",
@@ -21,18 +21,6 @@ setup(
         "requests-oauth>=0.4.1",
         "requests-oauthlib>=1.2",
     ],
-    tests_require=["responses==0.10.6"],
-    setup_requires=[
-        "wheel==0.33.6",  # Needed for successful compile of other modules.
-        "pytest-runner==5.1",
-        "pytest-cov==2.8.1",
-        "pytest-docstyle==1.5.0",
-        "pytest-mypy==0.4.1",
-        "pytest-flake8==1.0.4",
-        "black==19.3b0",
-        "setuptools-lint>=0.6.0",
-    ],
-    test_suite="tests.all_tests",
     keywords="withings api",
     zip_safe=True,
     classifiers=[

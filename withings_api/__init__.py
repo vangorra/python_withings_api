@@ -64,7 +64,7 @@ def update_params(
 class WithingsAuth:
     """Handles management of oauth2 authorization calls."""
 
-    URL = 'https://account.withings.com'
+    URL = "https://account.withings.com"
 
     def __init__(
         self,

@@ -35,14 +35,14 @@ if ! [[ `env | grep VIRTUAL_ENV` ]]; then
   source "$VENV_DIR/bin/activate"
 fi
 
-echo "Installing dependencies."
+echo "Installing build dependencies."
+pip install -r "$SELF_DIR/../requirements.txt"
+
+echo "Running module dependencies."
 python setup.py install
 
 echo "Formatting code."
-black $BLACK_ARGS "$SELF_DIR/../withings_api" "$SELF_DIR/../tests" "$SELF_DIR/../setup.py"
-
-echo "Linting with pylint."
-python setup.py lint
+black $BLACK_ARGS "$SELF_DIR/../withings_api" "$SELF_DIR/../tests" "$SELF_DIR/../scripts" "$SELF_DIR/../setup.py"
 
 echo "Running tests."
 python setup.py test
