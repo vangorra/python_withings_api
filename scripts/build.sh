@@ -7,6 +7,11 @@ cd "$SELF_DIR/.."
 VENV_DIR="venv"
 PYTHON_BIN="python3"
 
+BLACK_ARGS=""
+if [[ -n "${CI:-}" ]]; then
+  BLACK_ARGS="--check"
+fi
+
 if ! [[ `which "$PYTHON_BIN"` ]]; then
   echo "Error: '$PYTHON_BIN' is not in your path."
   exit 1
@@ -32,6 +37,9 @@ fi
 
 echo "Installing dependencies."
 python setup.py install
+
+echo "Formatting code."
+black $BLACK_ARGS "$SELF_DIR/../withings_api" "$SELF_DIR/../tests" "$SELF_DIR/../setup.py"
 
 echo "Linting with pylint."
 python setup.py lint
