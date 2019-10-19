@@ -4,9 +4,6 @@ Python library for the Withings Health API.
 Withings Health API
 <https://developer.health.withings.com/api>
 """
-
-from __future__ import unicode_literals
-
 from typing import Callable, Union, Any, Iterable, Dict, Optional
 import datetime
 from types import LambdaType

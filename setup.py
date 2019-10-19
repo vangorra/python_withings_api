@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 """Setup functions for the project."""
 from setuptools import setup
-import setuptools_black
 
 with open("README.md", "r") as f:
     LONG_DESCRIPTION = f.read()
-
 setup(
     name="withings_api",
     version="2.1.0",
@@ -22,7 +20,22 @@ setup(
         "requests-oauth>=0.4.1",
         "requests-oauthlib>=1.2",
     ],
-    cmdclass={"build": setuptools_black.BuildCommand},
+    setup_requires=[
+        "coverage==4.5.4",
+        "flake8==3.7.8",
+        "mypy==0.740",
+        "pydocstyle==4.0.1",
+        "pylint==2.4.3",
+        "pytest==5.2.1",
+        "pytest-cov==2.8.1",
+        "pytest-docstyle==1.5.0",
+        "pytest-flake8==1.0.4",
+        "pytest-mypy==0.4.1",
+        "pytest-pylint==0.14.1",
+        "pytest-runner==5.1",
+        "responses==0.10.6",
+        "wheel==0.33.6",  # Needed for successful compile of other modules.
+    ],
     keywords="withings api",
     zip_safe=True,
     classifiers=[
