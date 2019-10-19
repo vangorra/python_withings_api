@@ -7,6 +7,18 @@ from dateutil import tz
 
 import arrow
 from arrow import Arrow
+import requests
+
+from .const import (
+    STATUS_SUCCESS,
+    STATUS_INVALID_PARAMS,
+    STATUS_AUTH_FAILED,
+    STATUS_BAD_STATE,
+    STATUS_ERROR_OCCURRED,
+    STATUS_TIMEOUT,
+    STATUS_TOO_MANY_REQUESTS,
+    STATUS_UNAUTHORIZED,
+)
 
 
 class SleepModel(IntEnum):
@@ -341,12 +353,20 @@ NotifyGetResponse = NamedTuple(
 GenericType = TypeVar("GenericType")
 
 
+class UnexpectedTypeException(Exception):
+    """Thrown when encountering an unexpected type."""
+
+    def __init__(self, value: Any, expected: Type[GenericType]):
+        """Initialize."""
+        super().__init__(
+            'Expected of "%s" to be "%s" but it was not.' % (value, expected)
+        )
+
+
 def enforce_type(value: Any, expected: Type[GenericType]) -> GenericType:
     """Enforce a data type."""
     if not isinstance(value, expected):
-        raise Exception(
-            'Expected of "%s" to be "%s" but it was not.' % (value, expected)
-        )
+        raise UnexpectedTypeException(value, expected)
 
     return value
 
@@ -361,7 +381,7 @@ def enum_or_raise(value: Optional[Union[str, int]], enum: Type[Enum]) -> Enum:
 
 def str_or_raise(value: Any) -> str:
     """Return string or raise exception."""
-    return enforce_type(str_or_none(value), str)
+    return enforce_type(value, str)
 
 
 def str_or_none(value: Any) -> Optional[str]:
@@ -371,7 +391,7 @@ def str_or_none(value: Any) -> Optional[str]:
 
 def bool_or_raise(value: Any) -> bool:
     """Return bool or raise exception."""
-    return enforce_type(bool_or_none(value), bool)
+    return enforce_type(value, bool)
 
 
 def bool_or_none(value: Any) -> Optional[bool]:
@@ -381,7 +401,7 @@ def bool_or_none(value: Any) -> Optional[bool]:
 
 def int_or_raise(value: Any) -> int:
     """Return int or raise exception."""
-    return enforce_type(int_or_none(value), int)
+    return enforce_type(value, int)
 
 
 def int_or_none(value: Any) -> Optional[int]:
@@ -391,7 +411,7 @@ def int_or_none(value: Any) -> Optional[int]:
 
 def float_or_raise(value: Any) -> float:
     """Return float or raise exception."""
-    return enforce_type(float_or_none(value), float)
+    return enforce_type(value, float)
 
 
 def float_or_none(value: Any) -> Optional[float]:
@@ -411,7 +431,7 @@ def timezone_or_raise(value: Any) -> tzinfo:
 
 def dict_or_raise(value: Any) -> Dict[Any, Any]:
     """Return dict or raise exception."""
-    return enforce_type(dict_or_none(value), dict)
+    return enforce_type(value, dict)
 
 
 def dict_or_none(value: Any) -> Optional[Dict[Any, Any]]:
@@ -731,3 +751,67 @@ def get_measure_value(
             return float(measure.value * pow(10, measure.unit))
 
     return None
+
+
+class StatusException(requests.exceptions.RequestException):
+    """Status exception."""
+
+    def __init__(self, status: int, response: requests.Response):
+        """Create instance."""
+        super().__init__("Error code %s" % status, response=response)
+
+
+class AuthFailedException(StatusException):
+    """Withings status error code exception."""
+
+
+class InvalidParamsException(StatusException):
+    """Withings status error code exception."""
+
+
+class UnauthorizedException(StatusException):
+    """Withings status error code exception."""
+
+
+class ErrorOccurredException(StatusException):
+    """Withings status error code exception."""
+
+
+class TimeoutException(StatusException):
+    """Withings status error code exception."""
+
+
+class BadStateException(StatusException):
+    """Withings status error code exception."""
+
+
+class TooManyRequestsException(StatusException):
+    """Withings status error code exception."""
+
+
+class UnknownStatusException(StatusException):
+    """Unknown status code but it's still not successful."""
+
+
+def response_body_or_raise(response: requests.Response) -> Dict[str, Any]:
+    """Parse withings response or raise exception."""
+    parsed_response = dict_or_raise(response.json())
+    status = int_or_raise(parsed_response.get("status"))
+
+    if status in STATUS_SUCCESS:
+        return cast(Dict[str, Any], parsed_response.get("body"))
+    if status in STATUS_AUTH_FAILED:
+        raise AuthFailedException(status=status, response=response)
+    if status in STATUS_INVALID_PARAMS:
+        raise InvalidParamsException(status=status, response=response)
+    if status in STATUS_UNAUTHORIZED:
+        raise UnauthorizedException(status=status, response=response)
+    if status in STATUS_ERROR_OCCURRED:
+        raise ErrorOccurredException(status=status, response=response)
+    if status in STATUS_TIMEOUT:
+        raise TimeoutException(status=status, response=response)
+    if status in STATUS_BAD_STATE:
+        raise BadStateException(status=status, response=response)
+    if status in STATUS_TOO_MANY_REQUESTS:
+        raise TooManyRequestsException(status=status, response=response)
+    raise UnknownStatusException(status=status, response=response)

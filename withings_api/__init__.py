@@ -7,14 +7,12 @@ Withings Health API
 
 from __future__ import unicode_literals
 
-import json
 from typing import Callable, Union, Any, Iterable, Dict, Optional
 import datetime
 from types import LambdaType
 
 import arrow
 from oauthlib.oauth2 import WebApplicationClient
-import requests
 from requests_oauthlib import OAuth2Session
 
 from .common import (
@@ -43,6 +41,7 @@ from .common import (
     str_or_raise,
     int_or_raise,
     UserGetDeviceResponse,
+    response_body_or_raise,
 )
 
 DateType = Union[arrow.Arrow, datetime.date, datetime.datetime, int, str]
@@ -185,19 +184,13 @@ class WithingsApi:
         self, path: str, params: Dict[str, Any], method: str = "GET"
     ) -> Dict[str, Any]:
         """Request a specific service."""
-        params = (params or {}).copy()
-        params["userid"] = self._credentials.userid
-        response = self._client.request(
-            method=method,
-            url="%s/%s" % (self.URL.strip("/"), path.strip("/")),
-            params=params,
-        )
-        parsed_response = dict(json.loads(response.content.decode()))
-        if parsed_response["status"] != 0:
-            raise requests.exceptions.RequestException(
-                "Error code %s" % parsed_response["status"], response=response
+        return response_body_or_raise(
+            self._client.request(
+                method=method,
+                url="%s/%s" % (self.URL.strip("/"), path.strip("/")),
+                params={**params, **{"userid": self._credentials.userid}},
             )
-        return parsed_response.get("body", None)
+        )
 
     def user_get_device(self) -> UserGetDeviceResponse:
         """
