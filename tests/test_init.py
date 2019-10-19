@@ -7,7 +7,6 @@ from .common import TIMEZONE0, TIMEZONE_STR0, TIMEZONE1, TIMEZONE_STR1
 
 import arrow
 import pytest
-import requests
 import responses
 from withings_api import WithingsApi, WithingsAuth
 
@@ -115,19 +114,6 @@ def test_authorize() -> None:
         client_id=client_id,
         consumer_secret=consumer_secret,
     )
-
-
-@responses.activate
-def test_request_exception(withings_api: WithingsApi) -> None:
-    responses.add(
-        method=responses.GET,
-        url=re.compile("https://wbsapi.withings.net/.*"),
-        status=200,
-        json={"status": 100, "body": {}},
-    )
-
-    with pytest.raises(requests.exceptions.RequestException):
-        withings_api.measure_get_meas()
 
 
 @responses.activate

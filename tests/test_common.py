@@ -1,8 +1,11 @@
 """Tests for common code."""
+from typing import Any
+from unittest.mock import MagicMock
 
 from .common import TIMEZONE0
 import arrow
 import pytest
+import requests
 
 from withings_api.common import (
     MeasureGetMeasResponse,
@@ -18,6 +21,26 @@ from withings_api.common import (
     enforce_type,
     enum_or_raise,
     SleepModel,
+    UnexpectedTypeException,
+    AuthFailedException,
+    InvalidParamsException,
+    UnauthorizedException,
+    ErrorOccurredException,
+    TimeoutException,
+    BadStateException,
+    TooManyRequestsException,
+    UnknownStatusException,
+    response_body_or_raise,
+)
+from withings_api.const import (
+    STATUS_SUCCESS,
+    STATUS_INVALID_PARAMS,
+    STATUS_AUTH_FAILED,
+    STATUS_BAD_STATE,
+    STATUS_ERROR_OCCURRED,
+    STATUS_TIMEOUT,
+    STATUS_TOO_MANY_REQUESTS,
+    STATUS_UNAUTHORIZED,
 )
 
 
@@ -218,3 +241,55 @@ def test_get_measure_value() -> None:
     assert get_measure_value(response, MeasureType.BONE_MASS) == 0.2
     assert get_measure_value(response.measuregrps, MeasureType.BONE_MASS) == 0.2
     assert get_measure_value(response.measuregrps[0], MeasureType.BONE_MASS) == 0.2
+
+
+def response_status_factory(status: Any) -> MagicMock:
+    return response_factory({"status": status, "body": {}})
+
+
+def response_factory(json: Any) -> MagicMock:
+    response = MagicMock(spec=requests.Response)
+    response.json = MagicMock(return_value=json)
+    return response
+
+
+def test_response_body_or_raise() -> None:
+    with pytest.raises(UnexpectedTypeException):
+        response_body_or_raise(response_factory("hello"))
+
+    with pytest.raises(UnexpectedTypeException):
+        response_body_or_raise(response_status_factory("hello"))
+
+    for status in STATUS_SUCCESS:
+        response_body_or_raise(response_status_factory(status))
+
+    for status in STATUS_AUTH_FAILED:
+        with pytest.raises(AuthFailedException):
+            response_body_or_raise(response_status_factory(status))
+
+    for status in STATUS_INVALID_PARAMS:
+        with pytest.raises(InvalidParamsException):
+            response_body_or_raise(response_status_factory(status))
+
+    for status in STATUS_UNAUTHORIZED:
+        with pytest.raises(UnauthorizedException):
+            response_body_or_raise(response_status_factory(status))
+
+    for status in STATUS_ERROR_OCCURRED:
+        with pytest.raises(ErrorOccurredException):
+            response_body_or_raise(response_status_factory(status))
+
+    for status in STATUS_TIMEOUT:
+        with pytest.raises(TimeoutException):
+            response_body_or_raise(response_status_factory(status))
+
+    for status in STATUS_BAD_STATE:
+        with pytest.raises(BadStateException):
+            response_body_or_raise(response_status_factory(status))
+
+    for status in STATUS_TOO_MANY_REQUESTS:
+        with pytest.raises(TooManyRequestsException):
+            response_body_or_raise(response_status_factory(status))
+
+    with pytest.raises(UnknownStatusException):
+        response_body_or_raise(response_status_factory(100000))
