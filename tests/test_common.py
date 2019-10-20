@@ -65,7 +65,7 @@ def test_query_measure_groups() -> None:
                 created=arrow.get(10000200),
                 date=arrow.get(10000300),
                 deviceid="dev1",
-                grpid="1",
+                grpid=1,
                 measures=(
                     MeasureGetMeasMeasure(type=MeasureType.WEIGHT, unit=1, value=10),
                     MeasureGetMeasMeasure(
@@ -79,7 +79,7 @@ def test_query_measure_groups() -> None:
                 created=arrow.get(10000400),
                 date=arrow.get(10000500),
                 deviceid="dev2",
-                grpid="2",
+                grpid=2,
                 measures=(
                     MeasureGetMeasMeasure(
                         type=MeasureType.BONE_MASS, unit=21, value=210
@@ -101,7 +101,7 @@ def test_query_measure_groups() -> None:
                 created=arrow.get(10000200),
                 date=arrow.get(10000300),
                 deviceid="dev1",
-                grpid="1",
+                grpid=1,
                 measures=(),
             ),
             MeasureGetMeasGroup(
@@ -110,7 +110,7 @@ def test_query_measure_groups() -> None:
                 created=arrow.get(10000400),
                 date=arrow.get(10000500),
                 deviceid="dev2",
-                grpid="2",
+                grpid=2,
                 measures=(
                     MeasureGetMeasMeasure(
                         type=MeasureType.FAT_FREE_MASS, unit=-22, value=220
@@ -129,7 +129,7 @@ def test_query_measure_groups() -> None:
                 created=arrow.get(10000400),
                 date=arrow.get(10000500),
                 deviceid="dev2",
-                grpid="2",
+                grpid=2,
                 measures=(
                     MeasureGetMeasMeasure(
                         type=MeasureType.FAT_FREE_MASS, unit=-22, value=220
@@ -155,7 +155,7 @@ def test_query_measure_groups() -> None:
                 created=arrow.get(10000200),
                 date=arrow.get(10000300),
                 deviceid="dev1",
-                grpid="1",
+                grpid=1,
                 measures=(
                     MeasureGetMeasMeasure(
                         type=MeasureType.BONE_MASS, unit=-2, value=20
@@ -168,7 +168,7 @@ def test_query_measure_groups() -> None:
                 created=arrow.get(10000400),
                 date=arrow.get(10000500),
                 deviceid="dev2",
-                grpid="2",
+                grpid=2,
                 measures=(
                     MeasureGetMeasMeasure(
                         type=MeasureType.BONE_MASS, unit=21, value=210
@@ -213,7 +213,7 @@ def test_get_measure_value() -> None:
                 created=arrow.utcnow(),
                 date=arrow.utcnow(),
                 deviceid="dev1",
-                grpid="1",
+                grpid=1,
                 measures=(
                     MeasureGetMeasMeasure(type=MeasureType.WEIGHT, unit=1, value=10),
                     MeasureGetMeasMeasure(
