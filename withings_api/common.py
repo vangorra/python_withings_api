@@ -358,7 +358,7 @@ class UnexpectedTypeException(Exception):
     def __init__(self, value: Any, expected: Type[GenericType]):
         """Initialize."""
         super().__init__(
-            'Expected of "%s" to be "%s" but it was not.' % (value, expected)
+            'Expected of "%s" to be "%s" but was "%s."' % (value, expected, type(value))
         )
 
 
