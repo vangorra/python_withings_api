@@ -353,7 +353,7 @@ def responses_add_measure_get_meas() -> None:
                         "created": 1111111111,
                         "date": "2019-01-01",
                         "deviceid": "dev1",
-                        "grpid": "grp1",
+                        "grpid": 111,
                         "measures": [
                             {"type": MeasureType.HEIGHT, "unit": 110, "value": 110},
                             {"type": MeasureType.WEIGHT, "unit": 120, "value": 120},
@@ -365,7 +365,7 @@ def responses_add_measure_get_meas() -> None:
                         "created": 2222222222,
                         "date": "2019-01-02",
                         "deviceid": "dev2",
-                        "grpid": "grp2",
+                        "grpid": 222,
                         "measures": [
                             {
                                 "type": MeasureType.BODY_TEMPERATURE,
@@ -396,7 +396,7 @@ def test_measure_get_meas(withings_api: WithingsApi) -> None:
                 created=arrow.get(1111111111).replace(tzinfo=TIMEZONE0),
                 date=arrow.get("2019-01-01").replace(tzinfo=TIMEZONE0),
                 deviceid="dev1",
-                grpid="grp1",
+                grpid=111,
                 measures=(
                     MeasureGetMeasMeasure(type=MeasureType.HEIGHT, unit=110, value=110),
                     MeasureGetMeasMeasure(type=MeasureType.WEIGHT, unit=120, value=120),
@@ -408,7 +408,7 @@ def test_measure_get_meas(withings_api: WithingsApi) -> None:
                 created=arrow.get(2222222222).replace(tzinfo=TIMEZONE0),
                 date=arrow.get("2019-01-02").replace(tzinfo=TIMEZONE0),
                 deviceid="dev2",
-                grpid="grp2",
+                grpid=222,
                 measures=(
                     MeasureGetMeasMeasure(
                         type=MeasureType.BODY_TEMPERATURE, unit=210, value=210
