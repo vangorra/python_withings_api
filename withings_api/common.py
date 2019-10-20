@@ -49,6 +49,7 @@ def new_sleep_state(value: Optional[int]) -> SleepState:
 class MeasureGetMeasGroupAttrib(IntEnum):
     """Measure group attributions."""
 
+    UNKNOWN = -1
     DEVICE_ENTRY_FOR_USER = 0
     DEVICE_ENTRY_FOR_USER_AMBIGUOUS = 1
     MANUAL_USER_ENTRY = 2
@@ -358,7 +359,7 @@ class UnexpectedTypeException(Exception):
     def __init__(self, value: Any, expected: Type[GenericType]):
         """Initialize."""
         super().__init__(
-            'Expected of "%s" to be "%s" but it was not.' % (value, expected)
+            'Expected of "%s" to be "%s" but was "%s."' % (value, expected, type(value))
         )
 
 

@@ -66,9 +66,9 @@ successful builds.
 Note: after changing the source, you need to run build for the integration test to pickup the changes.
 
 ```bash
-./script/build.sh
+./scripts/build.sh
 source ./venv/bin/activate
-./script/integration_test.py --client-id <your client id> --consumer-secret <your consumer secret> --callback-uri <your clalback uri>
+./scripts/integration_test.py --client-id <your client id> --consumer-secret <your consumer secret> --callback-uri <your clalback uri>
 ```
 The integration test will cache the credentials in a `<project root>/.credentials` file between runs. If you get an error saying
 the access token expired, then remove that credentials file and try again.

@@ -318,7 +318,7 @@ class WithingsAuth:
         consumer_secret: str,
         callback_uri: str,
         scope: Iterable[AuthScope] = tuple(),
-        mode: str = "demo",
+        mode: Optional[str] = None,
     ):
         """Initialize new object."""
         self._client_id = client_id
