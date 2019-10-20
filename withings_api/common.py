@@ -261,7 +261,7 @@ MeasureGetMeasGroup = NamedTuple(
         ("created", Arrow),
         ("date", Arrow),
         ("deviceid", Optional[str]),
-        ("grpid", str),
+        ("grpid", int),
         ("measures", Tuple[MeasureGetMeasMeasure, ...]),
     ],
 )
@@ -585,7 +585,7 @@ def new_measure_get_meas_measure(data: dict) -> MeasureGetMeasMeasure:
 def new_measure_get_meas_group(data: dict, timezone: tzinfo) -> MeasureGetMeasGroup:
     """Create GetMeasGroup from json."""
     return MeasureGetMeasGroup(
-        grpid=str_or_raise(data.get("grpid")),
+        grpid=int_or_raise(data.get("grpid")),
         attrib=new_measure_group_attrib(data.get("attrib")),
         date=arrow_or_raise(data.get("date")).replace(tzinfo=timezone),
         created=arrow_or_raise(data.get("created")).replace(tzinfo=timezone),
