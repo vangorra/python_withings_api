@@ -1,11 +1,9 @@
 """Tests for common code."""
-from typing import Any
-from unittest.mock import MagicMock
+from typing import Any, Dict
 
 from .common import TIMEZONE0
 import arrow
 import pytest
-import requests
 
 from withings_api.common import (
     MeasureGetMeasResponse,
@@ -243,19 +241,13 @@ def test_get_measure_value() -> None:
     assert get_measure_value(response.measuregrps[0], MeasureType.BONE_MASS) == 0.2
 
 
-def response_status_factory(status: Any) -> MagicMock:
-    return response_factory({"status": status, "body": {}})
-
-
-def response_factory(json: Any) -> MagicMock:
-    response = MagicMock(spec=requests.Response)
-    response.json = MagicMock(return_value=json)
-    return response
+def response_status_factory(status: Any) -> Dict[str, Any]:
+    return {"status": status, "body": {}}
 
 
 def test_response_body_or_raise() -> None:
     with pytest.raises(UnexpectedTypeException):
-        response_body_or_raise(response_factory("hello"))
+        response_body_or_raise("hello")
 
     with pytest.raises(UnexpectedTypeException):
         response_body_or_raise(response_status_factory("hello"))
