@@ -323,7 +323,7 @@ Credentials = NamedTuple(
         ("token_expiry", int),
         ("token_type", str),
         ("refresh_token", str),
-        ("userid", str),
+        ("userid", int),
         ("client_id", str),
         ("consumer_secret", str),
     ],
@@ -448,7 +448,7 @@ def new_credentials(
         token_expiry=arrow.utcnow().timestamp + data.get("expires_in"),
         token_type=str_or_raise(data.get("token_type")),
         refresh_token=str_or_raise(data.get("refresh_token")),
-        userid=str_or_raise(data.get("userid")),
+        userid=int_or_raise(data.get("userid")),
         client_id=str_or_raise(client_id),
         consumer_secret=str_or_raise(consumer_secret),
     )

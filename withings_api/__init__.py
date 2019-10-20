@@ -353,7 +353,6 @@ class WithingsAuth:
             client_secret=self._consumer_secret,
             include_client_id=True,
         )
-
         return new_credentials(self._client_id, self._consumer_secret, response)
 
 
