@@ -4,7 +4,8 @@ Python library for the Withings Health API.
 Withings Health API
 <https://developer.health.withings.com/api>
 """
-from typing import Callable, Union, Any, Iterable, Dict, Optional
+from abc import abstractmethod
+from typing import Callable, Union, Any, Iterable, Dict, Optional, cast
 import datetime
 from types import LambdaType
 
@@ -57,136 +58,28 @@ def update_params(
         params[name] = new_value or current_value
 
 
-class WithingsAuth:
-    """Handles management of oauth2 authorization calls."""
-
-    URL = "https://account.withings.com"
-
-    def __init__(
-        self,
-        client_id: str,
-        consumer_secret: str,
-        callback_uri: str,
-        scope: Iterable[AuthScope] = tuple(),
-        mode: str = "demo",
-    ):
-        """Initialize new object."""
-        self._client_id = client_id
-        self._consumer_secret = consumer_secret
-        self._callback_uri = callback_uri
-        self._scope = scope
-        self._mode = mode
-        self._session = OAuth2Session(
-            self._client_id,
-            redirect_uri=self._callback_uri,
-            scope=",".join((scope.value for scope in self._scope)),
-        )
-
-    def get_authorize_url(self) -> str:
-        """Generate the authorize url."""
-        url = str(
-            self._session.authorization_url("%s/oauth2_user/authorize2" % self.URL)[0]
-        )
-
-        if self._mode:
-            url = url + "&mode=" + self._mode
-
-        return url
-
-    def get_credentials(self, code: str) -> Credentials:
-        """Get the oauth credentials."""
-        response = self._session.fetch_token(
-            "%s/oauth2/token" % self.URL,
-            code=code,
-            client_secret=self._consumer_secret,
-            include_client_id=True,
-        )
-
-        return new_credentials(self._client_id, self._consumer_secret, response)
-
-
-class WithingsApi:
-    """
-    Provides entrypoint for calling the withings api.
-
-    While withings-api takes care of automatically refreshing the OAuth2
-    token so you can seamlessly continue making API calls, it is important
-    that you persist the updated tokens somewhere associated with the user,
-    such as a database table. That way when your application restarts it will
-    have the updated tokens to start with. Pass a ``refresh_cb`` function to
-    the API constructor and we will call it with the updated token when it gets
-    refreshed.
-
-    class WithingsUser:
-        def refresh_cb(self, creds):
-            my_savefn(creds)
-
-    user = ...
-    creds = ...
-    api = WithingsApi(creds, refresh_cb=user.refresh_cb)
-    """
+class AbstractWithingsApi:
+    """Abstract class for customizing which requests module you want."""
 
     URL = "https://wbsapi.withings.net"
+    PATH_V2_USER = "v2/user"
+    PATH_V2_MEASURE = "v2/measure"
+    PATH_MEASURE = "measure"
+    PATH_V2_SLEEP = "v2/sleep"
+    PATH_NOTIFY = "notify"
 
-    def __init__(
-        self,
-        credentials: Credentials,
-        refresh_cb: Optional[Callable[[Credentials], None]] = None,
-    ):
-        """Initialize new object."""
-        self._credentials = credentials
-        self._refresh_cb = refresh_cb
-        token = {
-            "access_token": credentials.access_token,
-            "refresh_token": credentials.refresh_token,
-            "token_type": credentials.token_type,
-            "expires_in": str(int(credentials.token_expiry) - arrow.utcnow().timestamp),
-        }
-
-        self._client = OAuth2Session(
-            credentials.client_id,
-            token=token,
-            client=WebApplicationClient(
-                credentials.client_id, token=token, default_token_placement="query"
-            ),
-            auto_refresh_url="{}/oauth2/token".format(WithingsAuth.URL),
-            auto_refresh_kwargs={
-                "client_id": credentials.client_id,
-                "client_secret": credentials.consumer_secret,
-            },
-            token_updater=self._update_token,
-        )
-
-    def get_credentials(self) -> Credentials:
-        """Get the current oauth credentials."""
-        return self._credentials
-
-    def _update_token(self, token: Dict[str, Union[str, int]]) -> None:
-        """Set the oauth token."""
-        self._credentials = Credentials(
-            access_token=str_or_raise(token.get("access_token")),
-            token_expiry=arrow.utcnow().timestamp
-            + int_or_raise(token.get("expires_in")),
-            token_type=self._credentials.token_type,
-            refresh_token=str_or_raise(token.get("refresh_token")),
-            userid=self._credentials.userid,
-            client_id=self._credentials.client_id,
-            consumer_secret=self._credentials.consumer_secret,
-        )
-
-        if self._refresh_cb:
-            self._refresh_cb(self._credentials)
+    @abstractmethod
+    def _request(
+        self, path: str, params: Dict[str, Any], method: str = "GET"
+    ) -> Dict[str, Any]:
+        """Fetch data from the Withing API."""
 
     def request(
         self, path: str, params: Dict[str, Any], method: str = "GET"
     ) -> Dict[str, Any]:
         """Request a specific service."""
         return response_body_or_raise(
-            self._client.request(
-                method=method,
-                url="%s/%s" % (self.URL.strip("/"), path.strip("/")),
-                params={**params, **{"userid": self._credentials.userid}},
-            )
+            self._request(method=method, path=path, params=params)
         )
 
     def user_get_device(self) -> UserGetDeviceResponse:
@@ -196,7 +89,7 @@ class WithingsApi:
         Some data related to user profile are available through those services.
         """
         return new_user_get_device_response(
-            self.request(path="v2/user", params={"action": "getdevice"})
+            self.request(path=self.PATH_V2_USER, params={"action": "getdevice"})
         )
 
     def measure_get_activity(
@@ -235,7 +128,7 @@ class WithingsApi:
         update_params(params, "action", "getactivity")
 
         return new_measure_get_activity_response(
-            self.request(path="v2/measure", params=params)
+            self.request(path=self.PATH_V2_MEASURE, params=params)
         )
 
     def measure_get_meas(
@@ -263,7 +156,7 @@ class WithingsApi:
         update_params(params, "action", "getmeas")
 
         return new_measure_get_meas_response(
-            self.request(path="measure", params=params)
+            self.request(path=self.PATH_MEASURE, params=params)
         )
 
     def sleep_get(
@@ -287,7 +180,9 @@ class WithingsApi:
         )
         update_params(params, "action", "get")
 
-        return new_sleep_get_response(self.request(path="v2/sleep", params=params))
+        return new_sleep_get_response(
+            self.request(path=self.PATH_V2_SLEEP, params=params)
+        )
 
     def sleep_get_summary(
         self,
@@ -323,7 +218,7 @@ class WithingsApi:
         update_params(params, "action", "getsummary")
 
         return new_sleep_get_summary_response(
-            self.request(path="v2/sleep", params=params)
+            self.request(path=self.PATH_V2_SLEEP, params=params)
         )
 
     def notify_get(
@@ -341,7 +236,9 @@ class WithingsApi:
         update_params(params, "appli", appli, lambda appli: appli.value)
         update_params(params, "action", "get")
 
-        return new_notify_get_response(self.request(path="notify", params=params))
+        return new_notify_get_response(
+            self.request(path=self.PATH_NOTIFY, params=params)
+        )
 
     def notify_list(self, appli: Optional[NotifyAppli] = None) -> NotifyListResponse:
         """List notification configuration for this user."""
@@ -350,7 +247,9 @@ class WithingsApi:
         update_params(params, "appli", appli, lambda appli: appli.value)
         update_params(params, "action", "list")
 
-        return new_notify_list_response(self.request(path="notify", params=params))
+        return new_notify_list_response(
+            self.request(path=self.PATH_NOTIFY, params=params)
+        )
 
     def notify_revoke(
         self, callbackurl: Optional[str] = None, appli: Optional[NotifyAppli] = None
@@ -367,7 +266,7 @@ class WithingsApi:
         update_params(params, "appli", appli, lambda appli: appli.value)
         update_params(params, "action", "revoke")
 
-        self.request(path="notify", params=params)
+        self.request(path=self.PATH_NOTIFY, params=params)
 
     def notify_subscribe(
         self,
@@ -383,7 +282,7 @@ class WithingsApi:
         update_params(params, "comment", comment)
         update_params(params, "action", "subscribe")
 
-        self.request(path="notify", params=params)
+        self.request(path=self.PATH_NOTIFY, params=params)
 
     def notify_update(
         self,
@@ -403,4 +302,139 @@ class WithingsApi:
         update_params(params, "comment", comment)
         update_params(params, "action", "update")
 
-        self.request(path="notify", params=params)
+        self.request(path=self.PATH_NOTIFY, params=params)
+
+
+class WithingsAuth:
+    """Handles management of oauth2 authorization calls."""
+
+    URL = "https://account.withings.com"
+    PATH_AUTHORIZE = "oauth2_user/authorize2"
+    PATH_TOKEN = "oauth2/token"
+
+    def __init__(
+        self,
+        client_id: str,
+        consumer_secret: str,
+        callback_uri: str,
+        scope: Iterable[AuthScope] = tuple(),
+        mode: str = "demo",
+    ):
+        """Initialize new object."""
+        self._client_id = client_id
+        self._consumer_secret = consumer_secret
+        self._callback_uri = callback_uri
+        self._scope = scope
+        self._mode = mode
+        self._session = OAuth2Session(
+            self._client_id,
+            redirect_uri=self._callback_uri,
+            scope=",".join((scope.value for scope in self._scope)),
+        )
+
+    def get_authorize_url(self) -> str:
+        """Generate the authorize url."""
+        url = str(
+            self._session.authorization_url("%s/%s" % (self.URL, self.PATH_AUTHORIZE))[
+                0
+            ]
+        )
+
+        if self._mode:
+            url = url + "&mode=" + self._mode
+
+        return url
+
+    def get_credentials(self, code: str) -> Credentials:
+        """Get the oauth credentials."""
+        response = self._session.fetch_token(
+            "%s/oauth2/token" % self.URL,
+            code=code,
+            client_secret=self._consumer_secret,
+            include_client_id=True,
+        )
+
+        return new_credentials(self._client_id, self._consumer_secret, response)
+
+
+class WithingsApi(AbstractWithingsApi):
+    """
+    Provides entrypoint for calling the withings api.
+
+    While withings-api takes care of automatically refreshing the OAuth2
+    token so you can seamlessly continue making API calls, it is important
+    that you persist the updated tokens somewhere associated with the user,
+    such as a database table. That way when your application restarts it will
+    have the updated tokens to start with. Pass a ``refresh_cb`` function to
+    the API constructor and we will call it with the updated token when it gets
+    refreshed.
+
+    class WithingsUser:
+        def refresh_cb(self, creds):
+            my_savefn(creds)
+
+    user = ...
+    creds = ...
+    api = WithingsApi(creds, refresh_cb=user.refresh_cb)
+    """
+
+    def __init__(
+        self,
+        credentials: Credentials,
+        refresh_cb: Optional[Callable[[Credentials], None]] = None,
+    ):
+        """Initialize new object."""
+        self._credentials = credentials
+        self._refresh_cb = refresh_cb
+        token = {
+            "access_token": credentials.access_token,
+            "refresh_token": credentials.refresh_token,
+            "token_type": credentials.token_type,
+            "expires_in": str(int(credentials.token_expiry) - arrow.utcnow().timestamp),
+        }
+
+        self._client = OAuth2Session(
+            credentials.client_id,
+            token=token,
+            client=WebApplicationClient(
+                credentials.client_id, token=token, default_token_placement="query"
+            ),
+            auto_refresh_url="%s/%s" % (WithingsAuth.URL, WithingsAuth.PATH_TOKEN),
+            auto_refresh_kwargs={
+                "client_id": credentials.client_id,
+                "client_secret": credentials.consumer_secret,
+            },
+            token_updater=self._update_token,
+        )
+
+    def get_credentials(self) -> Credentials:
+        """Get the current oauth credentials."""
+        return self._credentials
+
+    def _update_token(self, token: Dict[str, Union[str, int]]) -> None:
+        """Set the oauth token."""
+        self._credentials = Credentials(
+            access_token=str_or_raise(token.get("access_token")),
+            token_expiry=arrow.utcnow().timestamp
+            + int_or_raise(token.get("expires_in")),
+            token_type=self._credentials.token_type,
+            refresh_token=str_or_raise(token.get("refresh_token")),
+            userid=self._credentials.userid,
+            client_id=self._credentials.client_id,
+            consumer_secret=self._credentials.consumer_secret,
+        )
+
+        if self._refresh_cb:
+            self._refresh_cb(self._credentials)
+
+    def _request(
+        self, path: str, params: Dict[str, Any], method: str = "GET"
+    ) -> Dict[str, Any]:
+        return cast(
+            Dict[str, Any],
+            self._client.request(
+                method=method,
+                url="%s/%s" % (self.URL.strip("/"), path.strip("/")),
+                params=params,
+            ).json(),
+        )

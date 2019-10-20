@@ -7,7 +7,6 @@ from dateutil import tz
 
 import arrow
 from arrow import Arrow
-import requests
 
 from .const import (
     STATUS_SUCCESS,
@@ -753,12 +752,12 @@ def get_measure_value(
     return None
 
 
-class StatusException(requests.exceptions.RequestException):
+class StatusException(Exception):
     """Status exception."""
 
-    def __init__(self, status: int, response: requests.Response):
+    def __init__(self, status: int):
         """Create instance."""
-        super().__init__("Error code %s" % status, response=response)
+        super().__init__("Error code %s" % status)
 
 
 class AuthFailedException(StatusException):
@@ -793,25 +792,25 @@ class UnknownStatusException(StatusException):
     """Unknown status code but it's still not successful."""
 
 
-def response_body_or_raise(response: requests.Response) -> Dict[str, Any]:
+def response_body_or_raise(data: Any) -> Dict[str, Any]:
     """Parse withings response or raise exception."""
-    parsed_response = dict_or_raise(response.json())
+    parsed_response = dict_or_raise(data)
     status = int_or_raise(parsed_response.get("status"))
 
     if status in STATUS_SUCCESS:
         return cast(Dict[str, Any], parsed_response.get("body"))
     if status in STATUS_AUTH_FAILED:
-        raise AuthFailedException(status=status, response=response)
+        raise AuthFailedException(status=status)
     if status in STATUS_INVALID_PARAMS:
-        raise InvalidParamsException(status=status, response=response)
+        raise InvalidParamsException(status=status)
     if status in STATUS_UNAUTHORIZED:
-        raise UnauthorizedException(status=status, response=response)
+        raise UnauthorizedException(status=status)
     if status in STATUS_ERROR_OCCURRED:
-        raise ErrorOccurredException(status=status, response=response)
+        raise ErrorOccurredException(status=status)
     if status in STATUS_TIMEOUT:
-        raise TimeoutException(status=status, response=response)
+        raise TimeoutException(status=status)
     if status in STATUS_BAD_STATE:
-        raise BadStateException(status=status, response=response)
+        raise BadStateException(status=status)
     if status in STATUS_TOO_MANY_REQUESTS:
-        raise TooManyRequestsException(status=status, response=response)
-    raise UnknownStatusException(status=status, response=response)
+        raise TooManyRequestsException(status=status)
+    raise UnknownStatusException(status=status)
