@@ -2,7 +2,18 @@
 
 from datetime import tzinfo
 from enum import Enum, IntEnum
-from typing import cast, NamedTuple, Optional, Tuple, Union, Any, Type, Dict, TypeVar
+from typing import (
+    cast,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Union,
+    Any,
+    Type,
+    Dict,
+    TypeVar,
+    Callable,
+)
 from dateutil import tz
 
 import arrow
@@ -371,6 +382,19 @@ def enforce_type(value: Any, expected: Type[GenericType]) -> GenericType:
     return value
 
 
+def value_or_none(
+    value: Any, convert_fn: Callable[[Any], GenericType]
+) -> Union[GenericType, None]:
+    """Convert a value given a specific conversion function."""
+    if value is None:
+        return None
+
+    try:
+        return convert_fn(value)
+    except Exception:  # pylint: disable=broad-except
+        return None
+
+
 def enum_or_raise(value: Optional[Union[str, int]], enum: Type[Enum]) -> Enum:
     """Return Enum or raise exception."""
     if value is None:
@@ -381,12 +405,12 @@ def enum_or_raise(value: Optional[Union[str, int]], enum: Type[Enum]) -> Enum:
 
 def str_or_raise(value: Any) -> str:
     """Return string or raise exception."""
-    return enforce_type(value, str)
+    return enforce_type(str_or_none(value), str)
 
 
 def str_or_none(value: Any) -> Optional[str]:
     """Return str or None."""
-    return None if value is None else str(value)
+    return value_or_none(value, str)
 
 
 def bool_or_raise(value: Any) -> bool:
@@ -396,27 +420,27 @@ def bool_or_raise(value: Any) -> bool:
 
 def bool_or_none(value: Any) -> Optional[bool]:
     """Return bool or None."""
-    return None if value is None else bool(value)
+    return value_or_none(value, bool)
 
 
 def int_or_raise(value: Any) -> int:
     """Return int or raise exception."""
-    return enforce_type(value, int)
+    return enforce_type(int_or_none(value), int)
 
 
 def int_or_none(value: Any) -> Optional[int]:
     """Return int or None."""
-    return None if value is None else int(value)
+    return value_or_none(value, int)
 
 
 def float_or_raise(value: Any) -> float:
     """Return float or raise exception."""
-    return enforce_type(value, float)
+    return enforce_type(float_or_none(value), float)
 
 
 def float_or_none(value: Any) -> Optional[float]:
     """Return float or None."""
-    return None if value is None else float(value)
+    return value_or_none(value, float)
 
 
 def arrow_or_raise(value: Any) -> Arrow:
@@ -436,7 +460,7 @@ def dict_or_raise(value: Any) -> Dict[Any, Any]:
 
 def dict_or_none(value: Any) -> Optional[Dict[Any, Any]]:
     """Return dict or None."""
-    return None if value is None else dict(value)
+    return value_or_none(value, dict)
 
 
 def new_credentials(
@@ -626,14 +650,14 @@ def new_measure_get_activity_activity(data: dict) -> MeasureGetActivityActivity:
         brand=int_or_raise(data.get("brand")),
         is_tracker=bool_or_raise(data.get("is_tracker")),
         steps=int_or_none(data.get("steps")),
-        distance=int_or_none(data.get("distance")),
-        elevation=int_or_none(data.get("elevation")),
+        distance=float_or_raise(data.get("distance")),
+        elevation=float_or_raise(data.get("elevation")),
         soft=int_or_none(data.get("soft")),
         moderate=int_or_none(data.get("moderate")),
         intense=int_or_none(data.get("intense")),
         active=int_or_none(data.get("active")),
-        calories=int_or_none(data.get("calories")),
-        totalcalories=int_or_raise(data.get("totalcalories")),
+        calories=float_or_raise(data.get("calories")),
+        totalcalories=float_or_raise(data.get("totalcalories")),
         hr_average=int_or_none(data.get("hr_average")),
         hr_min=int_or_none(data.get("hr_min")),
         hr_max=int_or_none(data.get("hr_max")),
@@ -756,9 +780,9 @@ def get_measure_value(
 class StatusException(Exception):
     """Status exception."""
 
-    def __init__(self, status: int):
+    def __init__(self, status: Any):
         """Create instance."""
-        super().__init__("Error code %s" % status)
+        super().__init__("Error code %s" % str(status))
 
 
 class AuthFailedException(StatusException):
@@ -796,8 +820,11 @@ class UnknownStatusException(StatusException):
 def response_body_or_raise(data: Any) -> Dict[str, Any]:
     """Parse withings response or raise exception."""
     parsed_response = dict_or_raise(data)
-    status = int_or_raise(parsed_response.get("status"))
+    status_any = parsed_response.get("status")
+    status = int_or_none(status_any)
 
+    if status is None:
+        raise UnknownStatusException(status=status)
     if status in STATUS_SUCCESS:
         return cast(Dict[str, Any], parsed_response.get("body"))
     if status in STATUS_AUTH_FAILED:

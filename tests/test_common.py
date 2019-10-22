@@ -249,7 +249,7 @@ def test_response_body_or_raise() -> None:
     with pytest.raises(UnexpectedTypeException):
         response_body_or_raise("hello")
 
-    with pytest.raises(UnexpectedTypeException):
+    with pytest.raises(UnknownStatusException):
         response_body_or_raise(response_status_factory("hello"))
 
     for status in STATUS_SUCCESS:
