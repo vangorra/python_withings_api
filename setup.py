@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
     LONG_DESCRIPTION = f.read()
 setup(
     name="withings_api",
-    version="2.1.2b1",
+    version="2.1.2b2",
     description="Library for the Withings API",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
