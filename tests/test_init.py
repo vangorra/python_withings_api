@@ -40,6 +40,15 @@ from withings_api.common import (
     UserGetDeviceDevice,
 )
 
+_USERID = 12345
+_FETCH_TOKEN_RESPONSE_BODY = {
+    "access_token": "my_access_token",
+    "expires_in": 11,
+    "token_type": "Bearer",
+    "refresh_token": "my_refresh_token",
+    "userid": _USERID,
+}
+
 
 @pytest.fixture()
 def withings_api() -> WithingsApi:
@@ -50,7 +59,7 @@ def withings_api() -> WithingsApi:
         token_expiry=arrow.utcnow().timestamp + 10000,
         token_type="Bearer",
         refresh_token="my_refresh_token",
-        userid="my_userid",
+        userid=_USERID,
         client_id=client_id,
         consumer_secret=consumer_secret,
     )
@@ -68,13 +77,7 @@ def test_authorize() -> None:
     responses.add(
         method=responses.POST,
         url="https://account.withings.com/oauth2/token",
-        json={
-            "access_token": "fake_access_token",
-            "expires_in": 11,
-            "token_type": "Bearer",
-            "refresh_token": "fake_refresh_token",
-            "userid": "fake_userid",
-        },
+        json=_FETCH_TOKEN_RESPONSE_BODY,
         status=200,
     )
 
@@ -106,11 +109,11 @@ def test_authorize() -> None:
     creds = auth.get_credentials("FAKE_CODE")
 
     assert creds == Credentials(
-        access_token="fake_access_token",
+        access_token="my_access_token",
         token_expiry=100000011,
         token_type="Bearer",
-        refresh_token="fake_refresh_token",
-        userid="fake_userid",
+        refresh_token="my_refresh_token",
+        userid=_USERID,
         client_id=client_id,
         consumer_secret=consumer_secret,
     )
@@ -126,7 +129,7 @@ def test_refresh_token() -> None:
         token_expiry=arrow.utcnow().timestamp - 1,
         token_type="Bearer",
         refresh_token="my_refresh_token_old",
-        userid="my_userid",
+        userid=_USERID,
         client_id=client_id,
         consumer_secret=consumer_secret,
     )
@@ -135,13 +138,7 @@ def test_refresh_token() -> None:
         method=responses.POST,
         url=re.compile("https://account.withings.com/oauth2/token.*"),
         status=200,
-        json={
-            "access_token": "my_access_token",
-            "expires_in": 11,
-            "token_type": "Bearer",
-            "refresh_token": "my_refresh_token",
-            "userid": "my_userid",
-        },
+        json=_FETCH_TOKEN_RESPONSE_BODY,
     )
 
     responses_add_measure_get_activity()
