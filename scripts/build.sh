@@ -33,7 +33,9 @@ fi
 
 if ! [[ $(env | grep VIRTUAL_ENV) ]]; then
   echo "Entering venv."
+  set +uf
   source "$VENV_DIR/bin/activate"
+  set -uf
 else
   echo Already in venv.
 fi

@@ -4,9 +4,6 @@ on: [push]
 
 jobs:
   build:
-    env:
-      LINT_PATHS: ./withings_api ./tests/ ./scripts/
-
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
