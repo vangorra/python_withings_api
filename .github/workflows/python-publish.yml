@@ -1,0 +1,13 @@
+name: Upload Python Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build and publish
+        run: |
+          ./scripts/build_and_publish.sh ${{ secrets.PYPI_PASSWORD }}

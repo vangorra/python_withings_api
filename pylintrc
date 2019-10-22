@@ -1,5 +1,6 @@
 [MASTER]
 ignore=tests
+jobs=4
 
 [BASIC]
 good-names=i,j,k,ex,Run,_,fp
