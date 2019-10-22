@@ -3,6 +3,7 @@
 .tox
 .coverage
 *.egg-info
+.venv
 venv
 dist
 build

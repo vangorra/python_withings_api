@@ -4,16 +4,15 @@ set -euf -o pipefail
 SELF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$SELF_DIR/.."
 
-VENV_DIR="venv"
+VENV_DIR=".venv"
 PYTHON_BIN="python3"
-FORMAT_PYTHON_VERSION="Python 3.7"
+LINT_PATHS="./withings_api ./tests/ ./scripts/"
 
-if ! [[ `which "$PYTHON_BIN"` ]]; then
+if ! [[ $(which "$PYTHON_BIN") ]]; then
   echo "Error: '$PYTHON_BIN' is not in your path."
   exit 1
 fi
 
-CODE_FORMATTING_ENABLED=$("$PYTHON_BIN" --version | grep -Ec "^$FORMAT_PYTHON_VERSION" || true)
 
 echo
 echo "===Settting up venv==="
@@ -32,7 +31,7 @@ else
   echo Using existing venv.
 fi
 
-if ! [[ `env | grep VIRTUAL_ENV` ]]; then
+if ! [[ $(env | grep VIRTUAL_ENV) ]]; then
   echo "Entering venv."
   source "$VENV_DIR/bin/activate"
 else
@@ -41,33 +40,52 @@ fi
 
 
 echo
-echo "===Installing dependencies==="
-python setup.py install
+echo "===Installing poetry==="
+pip install poetry
 
 
 echo
-echo "===Setting up black==="
-# This runs  reliably on python 3.7, haven't testest python 3.6 and black won't install on python 3.5. So we're
-# conditionally running these checks. Any bad formatting will be cause in the 3.7 build in CI.
-if [[ "$CODE_FORMATTING_ENABLED" > "0" ]]; then
-  # Run check only on ci builds. Format code on local builds.
-  BLACK_ARGS=""
-  if [[ -n "${CI:-}" ]]; then
-    BLACK_ARGS="--check"
-  fi
+echo "===Installing dependencies==="
+poetry install
 
-  echo "Installing black."
-  pip install setuptools-black==0.1.4
 
-  echo "Formatting code with args '$BLACK_ARGS'."
-  python setup.py format $BLACK_ARGS
+echo
+echo "===Updating poetry lock file==="
+poetry update --lock
+
+
+echo
+echo "===Formatting code==="
+if [[ `which black` ]]; then
+  black .
 else
-  echo "Skipping code format checks as black doesn't work well python versions less than $FORMAT_PYTHON_VERSION."
+  echo "Warning: Skipping code formatting. You should use python >= 3.6."
 fi
 
 
 echo
-echo "===Running tests==="
-python setup.py test
+echo "===Lint with flake8==="
+flake8
 
-echo "Build complete."
+
+echo
+echo "===Lint with mypy==="
+mypy .
+
+
+echo
+echo "===Lint with pylint==="
+pylint $LINT_PATHS
+
+
+echo
+echo "===Test with pytest==="
+pytest
+
+
+echo
+echo "===Building package==="
+poetry build
+
+
+echo "Build complete"

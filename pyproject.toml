@@ -1,3 +1,59 @@
+[tool.poetry]
+name = "withings_api"
+version = "2.1.2"
+description = "Library for the Withings API"
+
+license = "MIT"
+
+authors = [
+    "Robbie Van Gorkom <robbie.van.gorkom@protonmail.com>"
+]
+
+readme = 'README.md'
+
+repository = "https://github.com/vangorra/python_withings_api"
+homepage = "https://github.com/vangorra/python_withings_api"
+
+keywords = ['withings', 'api']
+
+[tool.poetry.dependencies]
+python = "^3.5 || ^3.6 || ^3.7"
+arrow = ">=0.15.2"
+requests-oauth = ">=0.4.1"
+requests-oauthlib = ">=1.2"
+
+[tool.poetry.dev-dependencies]
+black = {version = "==19.3b0", python = "^3.7"}
+coverage = "==4.5.4"
+flake8 = "==3.7.8"
+mypy = "==0.740"
+pydocstyle = "==4.0.1"
+pylint = "==2.4.3"
+pytest = "==5.2.1"
+pytest-cov = "==2.8.1"
+responses = "==0.10.6"
+wheel = "==0.33.6"  # Needed for successful compile of other modules.
+
+
 [tool.black]
-target-version = ["py36", "py37", "py38"]
-exclude = 'generated'
+target-version = ["py35", "py36", "py37", "py38"]
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | venv
+    | build
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
