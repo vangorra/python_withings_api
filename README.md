@@ -56,7 +56,7 @@ Dependencies:
 
 The build script will setup the venv, dependencies, test and lint and bundle the project.
 ```bash
-./script/build.sh
+./scripts/build.sh
 ```
 
 ## Integration Testing
