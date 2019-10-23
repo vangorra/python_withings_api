@@ -1,7 +1,5 @@
-# Python withings-api
+# Python withings-api [![Build status](https://github.com/vangorra/python_withings_api/workflows/Build/badge.svg?branch=master)](https://github.com/vangorra/python_withings_api/actions?workflow=Build)
 Python library for the Withings Health API
-
-![](https://github.com/vangorra/python_withings_api/workflows/workflows/.github/workflows/python-package.yml/badge.svg?branch=master)
 
 
 Withings Health API
