@@ -40,8 +40,8 @@ def main() -> None:
 
     if path.isfile(CREDENTIALS_FILE):
         print("Using credentials saved in:", CREDENTIALS_FILE)
-        with open(CREDENTIALS_FILE, "rb") as fp:
-            credentials = pickle.load(fp)
+        with open(CREDENTIALS_FILE, "rb") as file_handle:
+            credentials = pickle.load(file_handle)
     else:
         print("Attempting to get credentials...")
         auth = WithingsAuth(
@@ -71,8 +71,8 @@ def main() -> None:
 
         print("Getting credentials with auth code", auth_code)
         credentials = auth.get_credentials(auth_code)
-        with open(CREDENTIALS_FILE, "wb") as fp:
-            pickle.dump(credentials, fp)
+        with open(CREDENTIALS_FILE, "wb") as file_handle:
+            pickle.dump(credentials, file_handle)
 
     api = WithingsApi(credentials)
 

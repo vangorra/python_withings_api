@@ -1,7 +1,6 @@
 """Tests for common code."""
 from typing import Any, Dict
 
-from .common import TIMEZONE0
 import arrow
 import pytest
 
@@ -41,18 +40,23 @@ from withings_api.const import (
     STATUS_UNAUTHORIZED,
 )
 
+from .common import TIMEZONE0
+
 
 def test_enforce_type_exception() -> None:
+    """Test function."""
     with pytest.raises(Exception):
         enforce_type("blah", int)
 
 
 def test_enum_or_raise() -> None:
+    """Test function."""
     with pytest.raises(Exception):
         enum_or_raise(None, SleepModel)
 
 
 def test_query_measure_groups() -> None:
+    """Test function."""
     response = MeasureGetMeasResponse(
         offset=0,
         more=False,
@@ -201,6 +205,7 @@ def test_query_measure_groups() -> None:
 
 
 def test_get_measure_value() -> None:
+    """Test function."""
     response = MeasureGetMeasResponse(
         offset=0,
         more=False,
@@ -242,10 +247,12 @@ def test_get_measure_value() -> None:
 
 
 def response_status_factory(status: Any) -> Dict[str, Any]:
+    """Return mock response."""
     return {"status": status, "body": {}}
 
 
 def test_response_body_or_raise() -> None:
+    """Test function."""
     with pytest.raises(UnexpectedTypeException):
         response_body_or_raise("hello")
 

@@ -1,15 +1,13 @@
-from unittest.mock import MagicMock
+"""Tets for main API."""
 import datetime
 import re
+from unittest.mock import MagicMock
 from urllib import parse
-
-from .common import TIMEZONE0, TIMEZONE_STR0, TIMEZONE1, TIMEZONE_STR1
 
 import arrow
 import pytest
 import responses
 from withings_api import WithingsApi, WithingsAuth
-
 from withings_api.common import (
     SleepState,
     SleepModel,
@@ -40,6 +38,8 @@ from withings_api.common import (
     UserGetDeviceDevice,
 )
 
+from .common import TIMEZONE0, TIMEZONE_STR0, TIMEZONE1, TIMEZONE_STR1
+
 _USERID = 12345
 _FETCH_TOKEN_RESPONSE_BODY = {
     "access_token": "my_access_token",
@@ -50,8 +50,9 @@ _FETCH_TOKEN_RESPONSE_BODY = {
 }
 
 
-@pytest.fixture()
-def withings_api() -> WithingsApi:
+@pytest.fixture(name="withings_api")
+def withings_api_instance() -> WithingsApi:
+    """Test function."""
     client_id = "my_client_id"
     consumer_secret = "my_consumer_secret"
     credentials = Credentials(
@@ -69,6 +70,7 @@ def withings_api() -> WithingsApi:
 
 @responses.activate
 def test_authorize() -> None:
+    """Test function."""
     client_id = "fake_client_id"
     consumer_secret = "fake_consumer_secret"
     callback_uri = "http://127.0.0.1:8080"
@@ -92,7 +94,7 @@ def test_authorize() -> None:
 
     assert url.startswith("https://account.withings.com/oauth2_user/authorize2")
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         url,
         {
             "response_type": "code",
@@ -121,6 +123,7 @@ def test_authorize() -> None:
 
 @responses.activate
 def test_refresh_token() -> None:
+    """Test function."""
     client_id = "my_client_id"
     consumer_secret = "my_consumer_secret"
 
@@ -155,6 +158,7 @@ def test_refresh_token() -> None:
 
 
 def responses_add_user_get_device() -> None:
+    """Setup request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/v2/user?.*action=getdevice(&.*)?"),
@@ -185,6 +189,7 @@ def responses_add_user_get_device() -> None:
 
 @responses.activate
 def test_user_get_device(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_user_get_device()
     assert withings_api.user_get_device() == UserGetDeviceResponse(
         devices=(
@@ -206,10 +211,11 @@ def test_user_get_device(withings_api: WithingsApi) -> None:
     )
 
     assert_url_path(responses.calls[0].request.url, "/v2/user")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "getdevice"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "getdevice"})
 
 
 def responses_add_measure_get_activity() -> None:
+    """Setup request response."""
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -276,6 +282,7 @@ def responses_add_measure_get_activity() -> None:
 
 @responses.activate
 def test_measure_get_activity(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_measure_get_activity()
     assert withings_api.measure_get_activity() == MeasureGetActivityResponse(
         more=False,
@@ -332,6 +339,7 @@ def test_measure_get_activity(withings_api: WithingsApi) -> None:
 
 
 def responses_add_measure_get_meas() -> None:
+    """Setup request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/measure?.*action=getmeas(&.*)?"),
@@ -380,6 +388,7 @@ def responses_add_measure_get_meas() -> None:
 
 @responses.activate
 def test_measure_get_meas(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_measure_get_meas()
     assert withings_api.measure_get_meas() == MeasureGetMeasResponse(
         more=False,
@@ -420,6 +429,7 @@ def test_measure_get_meas(withings_api: WithingsApi) -> None:
 
 
 def responses_add_sleep_get() -> None:
+    """Setup request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/v2/sleep?.*action=get(&.+)?"),
@@ -449,6 +459,7 @@ def responses_add_sleep_get() -> None:
 
 @responses.activate
 def test_sleep_get(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_sleep_get()
     assert withings_api.sleep_get() == SleepGetResponse(
         model=SleepModel.TRACKER,
@@ -472,6 +483,7 @@ def test_sleep_get(withings_api: WithingsApi) -> None:
 
 
 def responses_add_sleep_get_summary() -> None:
+    """Setup request response."""
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -540,6 +552,7 @@ def responses_add_sleep_get_summary() -> None:
 
 @responses.activate
 def test_sleep_get_summary(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_sleep_get_summary()
     assert withings_api.sleep_get_summary() == SleepGetSummaryResponse(
         more=False,
@@ -596,6 +609,7 @@ def test_sleep_get_summary(withings_api: WithingsApi) -> None:
 
 
 def responses_add_notify_get() -> None:
+    """Setup request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/notify?.*action=get(&.*)?"),
@@ -613,6 +627,7 @@ def responses_add_notify_get() -> None:
 
 @responses.activate
 def test_notify_get(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_notify_get()
 
     response = withings_api.notify_get(callbackurl="http://localhost/callback")
@@ -624,6 +639,7 @@ def test_notify_get(withings_api: WithingsApi) -> None:
 
 
 def responses_add_notify_list() -> None:
+    """Setup request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/notify?.*action=list(&.*)?"),
@@ -652,6 +668,7 @@ def responses_add_notify_list() -> None:
 
 @responses.activate
 def test_notify_list(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_notify_list()
 
     assert withings_api.notify_list() == NotifyListResponse(
@@ -672,17 +689,18 @@ def test_notify_list(withings_api: WithingsApi) -> None:
     )
 
     assert_url_path(responses.calls[0].request.url, "/notify")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "list"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "list"})
 
 
 @responses.activate
 def test_notify_get_params(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_notify_get()
     withings_api.notify_get(
         callbackurl="http://localhost/callback2", appli=NotifyAppli.CIRCULATORY
     )
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         responses.calls[0].request.url,
         {
             "callbackurl": "http://localhost/callback2",
@@ -691,23 +709,25 @@ def test_notify_get_params(withings_api: WithingsApi) -> None:
     )
 
     assert_url_path(responses.calls[0].request.url, "/notify")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "get"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "get"})
 
 
 @responses.activate
 def test_notify_list_params(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_notify_list()
     withings_api.notify_list(appli=NotifyAppli.CIRCULATORY)
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         responses.calls[0].request.url, {"appli": str(NotifyAppli.CIRCULATORY.real)}
     )
 
     assert_url_path(responses.calls[0].request.url, "/notify")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "list"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "list"})
 
 
 def responses_add_notify_revoke() -> None:
+    """Test function."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/notify?.*action=revoke(&.*)?"),
@@ -718,18 +738,20 @@ def responses_add_notify_revoke() -> None:
 
 @responses.activate
 def test_notify_revoke_params(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_notify_revoke()
     withings_api.notify_revoke(appli=NotifyAppli.CIRCULATORY)
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         responses.calls[0].request.url, {"appli": str(NotifyAppli.CIRCULATORY.real)}
     )
 
     assert_url_path(responses.calls[0].request.url, "/notify")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "revoke"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "revoke"})
 
 
 def responses_add_notify_subscribe() -> None:
+    """Test function."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/notify?.*action=subscribe(&.*)?"),
@@ -740,6 +762,7 @@ def responses_add_notify_subscribe() -> None:
 
 @responses.activate
 def test_notify_subscribe_params(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_notify_subscribe()
     withings_api.notify_subscribe(
         callbackurl="http://localhost/callback2",
@@ -747,7 +770,7 @@ def test_notify_subscribe_params(withings_api: WithingsApi) -> None:
         comment="comment2",
     )
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         responses.calls[0].request.url,
         {
             "callbackurl": "http://localhost/callback2",
@@ -757,10 +780,11 @@ def test_notify_subscribe_params(withings_api: WithingsApi) -> None:
     )
 
     assert_url_path(responses.calls[0].request.url, "/notify")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "subscribe"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "subscribe"})
 
 
 def responses_add_notify_update() -> None:
+    """Test function."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/notify?.*action=update(&.*)?"),
@@ -771,6 +795,7 @@ def responses_add_notify_update() -> None:
 
 @responses.activate
 def test_notify_update_params(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_notify_update()
     withings_api.notify_update(
         callbackurl="http://localhost/callback2",
@@ -780,7 +805,7 @@ def test_notify_update_params(withings_api: WithingsApi) -> None:
         comment="comment3",
     )
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         responses.calls[0].request.url,
         {
             "callbackurl": "http://localhost/callback2",
@@ -792,11 +817,12 @@ def test_notify_update_params(withings_api: WithingsApi) -> None:
     )
 
     assert_url_path(responses.calls[0].request.url, "/notify")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "update"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "update"})
 
 
 @responses.activate
 def test_measure_get_meas_params(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_measure_get_meas()
     withings_api.measure_get_meas(
         meastype=MeasureType.BONE_MASS,
@@ -807,7 +833,7 @@ def test_measure_get_meas_params(withings_api: WithingsApi) -> None:
         lastupdate=datetime.date(2019, 1, 2),
     )
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         responses.calls[0].request.url,
         {
             "meastype": "88",
@@ -820,11 +846,12 @@ def test_measure_get_meas_params(withings_api: WithingsApi) -> None:
     )
 
     assert_url_path(responses.calls[0].request.url, "/measure")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "getmeas"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "getmeas"})
 
 
 @responses.activate
 def test_measure_get_activity_params(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_measure_get_activity()
     withings_api.measure_get_activity(
         startdateymd="2019-01-01",
@@ -838,7 +865,7 @@ def test_measure_get_activity_params(withings_api: WithingsApi) -> None:
         lastupdate=10000000,
     )
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         responses.calls[0].request.url,
         {
             "startdateymd": "2019-01-01",
@@ -850,11 +877,12 @@ def test_measure_get_activity_params(withings_api: WithingsApi) -> None:
     )
 
     assert_url_path(responses.calls[0].request.url, "/v2/measure")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "getactivity"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "getactivity"})
 
 
 @responses.activate
 def test_get_sleep_params(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_sleep_get()
     withings_api.sleep_get(
         startdate="2019-01-01",
@@ -862,17 +890,18 @@ def test_get_sleep_params(withings_api: WithingsApi) -> None:
         data_fields=(GetSleepField.HR, GetSleepField.HR),
     )
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         responses.calls[0].request.url,
         {"startdate": "1546300800", "enddate": "1546387200", "data_fields": "hr,hr"},
     )
 
     assert_url_path(responses.calls[0].request.url, "/v2/sleep")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "get"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "get"})
 
 
 @responses.activate
 def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
+    """Test function."""
     responses_add_sleep_get_summary()
     withings_api.sleep_get_summary(
         startdateymd="2019-01-01",
@@ -884,7 +913,7 @@ def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
         lastupdate=10000000,
     )
 
-    assert_url_query_contains(
+    assert_url_query_equals(
         responses.calls[0].request.url,
         {
             "startdateymd": "2019-01-01",
@@ -895,16 +924,18 @@ def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
     )
 
     assert_url_path(responses.calls[0].request.url, "/v2/sleep")
-    assert_url_query_contains(responses.calls[0].request.url, {"action": "getsummary"})
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "getsummary"})
 
 
-def assert_url_query_contains(url: str, expected: dict) -> None:
+def assert_url_query_equals(url: str, expected: dict) -> None:
+    """Assert a url query contains specific params."""
     params = dict(parse.parse_qsl(parse.urlsplit(url).query))
 
-    for key, value in expected.items():
+    for key in expected:
         assert key in params
         assert params[key] == expected[key]
 
 
 def assert_url_path(url: str, path: str) -> None:
+    """Assert the path of a url."""
     assert parse.urlsplit(url).path == path
