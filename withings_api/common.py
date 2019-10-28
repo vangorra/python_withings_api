@@ -443,14 +443,30 @@ def float_or_none(value: Any) -> Optional[float]:
     return value_or_none(value, float)
 
 
+def arrow_or_none(value: Any) -> Optional[Arrow]:
+    """Returns Arrow or None."""
+    if value is None:
+        return None
+
+    return arrow.get(value)
+
+
+def timezone_or_none(value: Any) -> Optional[tzinfo]:
+    """Returns tzinfo or None."""
+    if value is None:
+        return None
+
+    return tz.gettz(value)
+
+
 def arrow_or_raise(value: Any) -> Arrow:
     """Return Arrow or raise exception."""
-    return enforce_type(value, Arrow)
+    return enforce_type(arrow_or_none(value), Arrow)
 
 
 def timezone_or_raise(value: Any) -> tzinfo:
     """Return tzinfo or raise exception."""
-    return enforce_type(value, tzinfo)
+    return enforce_type(timezone_or_none(value), tzinfo)
 
 
 def dict_or_raise(value: Any) -> Dict[Any, Any]:
