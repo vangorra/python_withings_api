@@ -445,7 +445,7 @@ def float_or_none(value: Any) -> Optional[float]:
 
 def arrow_or_raise(value: Any) -> Arrow:
     """Return Arrow or raise exception."""
-    return enforce_type(value is not None and arrow.get(value), Arrow)
+    return enforce_type(value, Arrow)
 
 
 def timezone_or_raise(value: Any) -> tzinfo:
