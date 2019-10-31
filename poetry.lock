@@ -422,7 +422,6 @@ version = "2.0.0"
 [[package]]
 category = "dev"
 description = "Python Library for Tom's Obvious, Minimal Language"
-marker = "python_version >= \"3.7\" and python_version < \"4.0\""
 name = "toml"
 optional = false
 python-versions = "*"
@@ -489,7 +488,7 @@ version = "0.6.0"
 more-itertools = "*"
 
 [metadata]
-content-hash = "edd12e969ff4e72ac86f59b1274b080b2295168f78acf8aa9a055377b62a5a2a"
+content-hash = "e0287319d61a2fae8cd85432a3b4868213c8ba419a0cce9ea7b9c369b16daf12"
 python-versions = "^3.5 || ^3.6 || ^3.7"
 
 [metadata.hashes]

@@ -33,6 +33,7 @@ pylint = "==2.4.3"
 pytest = "==5.2.1"
 pytest-cov = "==2.8.1"
 responses = "==0.10.6"
+toml = "==0.10.0"  # Needed by isort and others.
 wheel = "==0.33.6"  # Needed for successful compile of other modules.
 
 
