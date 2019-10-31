@@ -21,3 +21,4 @@ jobs:
           ./scripts/build.sh
         env:
           CI: 1
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
