@@ -1,6 +1,7 @@
 """Common test code."""
 from datetime import tzinfo
 from typing import cast
+
 from dateutil import tz
 
 TIMEZONE_STR0 = "Europe/London"

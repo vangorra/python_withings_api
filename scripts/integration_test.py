@@ -6,8 +6,7 @@ import pickle
 from urllib import parse
 
 import arrow
-from withings_api import WithingsAuth, WithingsApi, AuthScope
-
+from withings_api import AuthScope, WithingsApi, WithingsAuth
 
 CREDENTIALS_FILE = path.abspath(
     path.join(path.dirname(path.abspath(__file__)), "../.credentials")

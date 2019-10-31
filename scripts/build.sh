@@ -30,6 +30,16 @@ poetry update --lock
 
 
 echo
+echo "===Sorting imports==="
+ISORT_ARGS="--apply"
+if [[ "${CI:-}" = "1" ]]; then
+  ISORT_ARGS="--check-only"
+fi
+
+isort $ISORT_ARGS
+
+
+echo
 echo "===Formatting code==="
 if [[ `which black` ]]; then
   BLACK_ARGS=""
@@ -68,4 +78,14 @@ echo "===Building package==="
 poetry build
 
 
+echo
+echo "===Uploading code coverage==="
+if [[ "${CI:-}" = "1" ]]; then
+  curl -s https://codecov.io/bash | bash
+else
+  echo "Skipping. Will only run during continuous integration build."
+fi
+
+
+echo
 echo "Build complete"
