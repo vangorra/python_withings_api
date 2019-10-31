@@ -5,41 +5,41 @@ Withings Health API
 <https://developer.health.withings.com/api>
 """
 from abc import abstractmethod
-from typing import Callable, Union, Any, Iterable, Dict, Optional, cast
 import datetime
 from types import LambdaType
+from typing import Any, Callable, Dict, Iterable, Optional, Union, cast
 
 import arrow
 from oauthlib.oauth2 import WebApplicationClient
 from requests_oauthlib import OAuth2Session
 
 from .common import (
-    new_measure_get_activity_response,
-    new_sleep_get_response,
-    new_sleep_get_summary_response,
-    new_measure_get_meas_response,
-    new_notify_list_response,
-    new_notify_get_response,
-    new_user_get_device_response,
-    new_credentials,
-    MeasureGetActivityResponse,
-    SleepGetResponse,
-    SleepGetSummaryResponse,
-    MeasureGetMeasResponse,
-    MeasureType,
-    MeasureGetMeasGroupCategory,
-    NotifyListResponse,
-    NotifyGetResponse,
+    AuthScope,
     Credentials,
     GetActivityField,
     GetSleepField,
     GetSleepSummaryField,
-    AuthScope,
+    MeasureGetActivityResponse,
+    MeasureGetMeasGroupCategory,
+    MeasureGetMeasResponse,
+    MeasureType,
     NotifyAppli,
-    str_or_raise,
-    int_or_raise,
+    NotifyGetResponse,
+    NotifyListResponse,
+    SleepGetResponse,
+    SleepGetSummaryResponse,
     UserGetDeviceResponse,
+    int_or_raise,
+    new_credentials,
+    new_measure_get_activity_response,
+    new_measure_get_meas_response,
+    new_notify_get_response,
+    new_notify_list_response,
+    new_sleep_get_response,
+    new_sleep_get_summary_response,
+    new_user_get_device_response,
     response_body_or_raise,
+    str_or_raise,
 )
 
 DateType = Union[arrow.Arrow, datetime.date, datetime.datetime, int, str]
