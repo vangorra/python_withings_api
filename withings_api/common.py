@@ -519,7 +519,7 @@ def new_notify_list_profile(data: dict) -> NotifyListProfile:
     return NotifyListProfile(
         appli=new_notify_appli(data.get("appli")),
         callbackurl=str_or_raise(data.get("callbackurl")),
-        expires=arrow_or_raise(data.get("expires")),
+        expires=arrow_or_none(data.get("expires")),
         comment=str_or_none(data.get("comment")),
     )
 
