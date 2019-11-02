@@ -652,7 +652,7 @@ def responses_add_notify_list() -> None:
                         "appli": NotifyAppli.WEIGHT.real,
                         "callbackurl": "http://localhost/callback",
                         "comment": "fake_comment1",
-                        "expires": "2019-09-01",
+                        "expires": None,
                     },
                     {
                         "appli": NotifyAppli.CIRCULATORY.real,
@@ -677,7 +677,7 @@ def test_notify_list(withings_api: WithingsApi) -> None:
                 appli=NotifyAppli.WEIGHT,
                 callbackurl="http://localhost/callback",
                 comment="fake_comment1",
-                expires=arrow.get("2019-09-01"),
+                expires=None,
             ),
             NotifyListProfile(
                 appli=NotifyAppli.CIRCULATORY,
