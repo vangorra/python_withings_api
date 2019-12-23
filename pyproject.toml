@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "withings_api"
-version = "2.1.4b0"
+version = "2.1.4"
 description = "Library for the Withings API"
 
 license = "MIT"
