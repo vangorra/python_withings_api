@@ -25,11 +25,6 @@ poetry install
 
 
 echo
-echo "===Updating poetry lock file==="
-poetry update --lock
-
-
-echo
 echo "===Sorting imports==="
 ISORT_ARGS="--apply"
 if [[ "${CI:-}" = "1" ]]; then

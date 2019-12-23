@@ -143,6 +143,18 @@ def test_refresh_token() -> None:
         status=200,
         json=_FETCH_TOKEN_RESPONSE_BODY,
     )
+    responses.add(
+        method=responses.POST,
+        url=re.compile("https://account.withings.com/oauth2/token.*"),
+        status=200,
+        json={
+            "access_token": "my_access_token_refreshed",
+            "expires_in": 11,
+            "token_type": "Bearer",
+            "refresh_token": "my_refresh_token_refreshed",
+            "userid": _USERID,
+        },
+    )
 
     responses_add_measure_get_activity()
 
@@ -154,6 +166,14 @@ def test_refresh_token() -> None:
     new_credentials = api.get_credentials()
     assert new_credentials.access_token == "my_access_token"
     assert new_credentials.refresh_token == "my_refresh_token"
+    assert new_credentials.token_expiry > credentials.token_expiry
+    refresh_callback.reset_mock()
+
+    api.refresh_token()
+    refresh_callback.assert_called_with(api.get_credentials())
+    new_credentials = api.get_credentials()
+    assert new_credentials.access_token == "my_access_token_refreshed"
+    assert new_credentials.refresh_token == "my_refresh_token_refreshed"
     assert new_credentials.token_expiry > credentials.token_expiry
 
 

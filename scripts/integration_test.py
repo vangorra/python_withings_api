@@ -3,6 +3,7 @@
 import argparse
 from os import path
 import pickle
+from unittest.mock import MagicMock
 from urllib import parse
 
 import arrow
@@ -73,10 +74,16 @@ def main() -> None:
         with open(CREDENTIALS_FILE, "wb") as file_handle:
             pickle.dump(credentials, file_handle)
 
-    api = WithingsApi(credentials)
+    refresh_cb = MagicMock()
+    api = WithingsApi(credentials, refresh_cb=refresh_cb)
 
     print("Getting devices...")
     assert api.measure_get_meas() is not None
+
+    print("Refreshing token...")
+    refresh_cb.reset_mock()
+    api.refresh_token()
+    refresh_cb.assert_called_once()
 
     print("Getting measures...")
     assert (

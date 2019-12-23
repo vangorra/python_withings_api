@@ -410,6 +410,11 @@ class WithingsApi(AbstractWithingsApi):
         """Get the current oauth credentials."""
         return self._credentials
 
+    def refresh_token(self) -> None:
+        """Manually refresh the token."""
+        token_dict = self._client.refresh_token(token_url=self._client.auto_refresh_url)
+        self._update_token(token=token_dict)
+
     def _update_token(self, token: Dict[str, Union[str, int]]) -> None:
         """Set the oauth token."""
         self._credentials = Credentials(
