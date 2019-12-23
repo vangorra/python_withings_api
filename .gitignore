@@ -12,3 +12,5 @@ build
 .credentials
 .mypy_cache
 .pytest_cache
+
+.vscode
