@@ -191,18 +191,18 @@ class AuthScope(Enum):
 
 UserGetDeviceDevice = NamedTuple(
     "UserGetDeviceDevice",
-    [
+    (
         ("type", str),
         ("model", str),
         ("battery", str),
         ("deviceid", str),
         ("timezone", tzinfo),
-    ],
+    ),
 )
 
 
 UserGetDeviceResponse = NamedTuple(
-    "GetDeviceResponse", [("devices", Tuple[UserGetDeviceDevice, ...])]
+    "GetDeviceResponse", (("devices", Tuple[UserGetDeviceDevice, ...]),)
 )
 
 
@@ -210,22 +210,22 @@ SleepGetTimestamp = NamedTuple("SleepGetTimestamp", [("timestamp", Arrow)])
 
 SleepGetSerie = NamedTuple(
     "SleepGetSerie",
-    [
+    (
         ("enddate", Arrow),
         ("startdate", Arrow),
         ("state", SleepState),
         ("hr", Optional[SleepGetTimestamp]),
         ("rr", Optional[SleepGetTimestamp]),
-    ],
+    ),
 )
 
 SleepGetResponse = NamedTuple(
-    "GetSleepResponse", [("model", SleepModel), ("series", Tuple[SleepGetSerie, ...])]
+    "GetSleepResponse", (("model", SleepModel), ("series", Tuple[SleepGetSerie, ...]))
 )
 
 GetSleepSummaryData = NamedTuple(
     "GetSleepSummaryData",
-    [
+    (
         ("remsleepduration", Optional[int]),
         ("wakeupduration", Optional[int]),
         ("lightsleepduration", Optional[int]),
@@ -239,12 +239,12 @@ GetSleepSummaryData = NamedTuple(
         ("rr_average", Optional[int]),
         ("rr_min", Optional[int]),
         ("rr_max", Optional[int]),
-    ],
+    ),
 )
 
 GetSleepSummarySerie = NamedTuple(
     "GetSleepSummarySerie",
-    [
+    (
         ("timezone", tzinfo),
         ("model", SleepModel),
         ("startdate", Arrow),
@@ -252,22 +252,22 @@ GetSleepSummarySerie = NamedTuple(
         ("date", Arrow),
         ("modified", Arrow),
         ("data", GetSleepSummaryData),
-    ],
+    ),
 )
 
 SleepGetSummaryResponse = NamedTuple(
     "GetSleepSummaryResponse",
-    [("more", bool), ("offset", int), ("series", Tuple[GetSleepSummarySerie, ...])],
+    (("more", bool), ("offset", int), ("series", Tuple[GetSleepSummarySerie, ...])),
 )
 
 MeasureGetMeasMeasure = NamedTuple(
-    "MeasureGetMeasMeasure", [("type", MeasureType), ("unit", int), ("value", int)]
+    "MeasureGetMeasMeasure", (("type", MeasureType), ("unit", int), ("value", int))
 )
 
 
 MeasureGetMeasGroup = NamedTuple(
     "MeasureGetMeasGroup",
-    [
+    (
         ("attrib", MeasureGetMeasGroupAttrib),
         ("category", MeasureGetMeasGroupCategory),
         ("created", Arrow),
@@ -275,25 +275,25 @@ MeasureGetMeasGroup = NamedTuple(
         ("deviceid", Optional[str]),
         ("grpid", int),
         ("measures", Tuple[MeasureGetMeasMeasure, ...]),
-    ],
+    ),
 )
 
 
 MeasureGetMeasResponse = NamedTuple(
     "GetMeasResponse",
-    [
+    (
         ("measuregrps", Tuple[MeasureGetMeasGroup, ...]),
         ("more", Optional[bool]),
         ("offset", Optional[int]),
         ("timezone", tzinfo),
         ("updatetime", Arrow),
-    ],
+    ),
 )
 
 
 MeasureGetActivityActivity = NamedTuple(
     "MeasureGetActivityActivity",
-    [
+    (
         ("date", Arrow),
         ("timezone", tzinfo),
         ("deviceid", Optional[str]),
@@ -315,21 +315,21 @@ MeasureGetActivityActivity = NamedTuple(
         ("hr_zone_1", Optional[int]),
         ("hr_zone_2", Optional[int]),
         ("hr_zone_3", Optional[int]),
-    ],
+    ),
 )
 
 MeasureGetActivityResponse = NamedTuple(
     "GetActivityResponse",
-    [
+    (
         ("activities", Tuple[MeasureGetActivityActivity, ...]),
         ("more", bool),
         ("offset", int),
-    ],
+    ),
 )
 
 Credentials = NamedTuple(
     "Credentials",
-    [
+    (
         ("access_token", str),
         ("token_expiry", int),
         ("token_type", str),
@@ -337,27 +337,27 @@ Credentials = NamedTuple(
         ("userid", int),
         ("client_id", str),
         ("consumer_secret", str),
-    ],
+    ),
 )
 
 
 NotifyListProfile = NamedTuple(
     "NotifyListProfile",
-    [
+    (
         ("appli", NotifyAppli),
         ("callbackurl", str),
         ("expires", Arrow),
         ("comment", Optional[str]),
-    ],
+    ),
 )
 
 NotifyListResponse = NamedTuple(
-    "NotifyListResponse", [("profiles", Tuple[NotifyListProfile, ...])]
+    "NotifyListResponse", (("profiles", Tuple[NotifyListProfile, ...]),)
 )
 
 NotifyGetResponse = NamedTuple(
     "NotifyGetResponse",
-    [("appli", NotifyAppli), ("callbackurl", str), ("comment", Optional[str])],
+    (("appli", NotifyAppli), ("callbackurl", str), ("comment", Optional[str])),
 )
 
 
