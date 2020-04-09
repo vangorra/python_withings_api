@@ -310,7 +310,7 @@ class WithingsAuth:
 
     URL = "https://account.withings.com"
     PATH_AUTHORIZE = "oauth2_user/authorize2"
-    PATH_TOKEN = "oauth2/token"
+    PATH_TOKEN = "oauth2/token"  # nosec
 
     def __init__(
         self,
@@ -395,7 +395,7 @@ class WithingsApi(AbstractWithingsApi):
         self._client = OAuth2Session(
             credentials.client_id,
             token=token,
-            client=WebApplicationClient(
+            client=WebApplicationClient(  # nosec
                 credentials.client_id, token=token, default_token_placement="query"
             ),
             auto_refresh_url="%s/%s" % (WithingsAuth.URL, WithingsAuth.PATH_TOKEN),

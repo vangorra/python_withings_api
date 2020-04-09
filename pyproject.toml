@@ -23,6 +23,7 @@ requests-oauth = ">=0.4.1"
 requests-oauthlib = ">=1.2"
 
 [tool.poetry.dev-dependencies]
+bandit = "==1.6.2"
 black = "==19.3b0"
 codespell = "==1.16.0"
 coverage = "==4.5.4"

@@ -45,12 +45,21 @@ black $BLACK_ARGS .
 
 
 echo
+echo "===Lint with bandit==="
+bandit \
+  --recursive \
+  --exclude '**/__pycache__/*' \
+  ./withings_api
+
+
+echo
 echo "===Lint with codespell==="
 codespell \
   --check-filenames \
   --ignore-words ./.codespell-ignore \
   --skip "*/__pycache__/*" \
   ./withings_api ./test ./scripts
+
 
 echo
 echo "===Lint with flake8==="
