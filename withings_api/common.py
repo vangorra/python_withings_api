@@ -193,7 +193,7 @@ class AuthScope(Enum):
 
 
 class UserGetDeviceDevice(NamedTuple):
-    """UserGetDeviceDevice"""
+    """UserGetDeviceDevice."""
 
     type: str
     model: str
@@ -203,19 +203,19 @@ class UserGetDeviceDevice(NamedTuple):
 
 
 class UserGetDeviceResponse(NamedTuple):
-    """UserGetDeviceResponse"""
+    """UserGetDeviceResponse."""
 
     devices: Tuple[UserGetDeviceDevice, ...]
 
 
 class SleepGetTimestamp(NamedTuple):
-    """SleepGetTimestamp"""
+    """SleepGetTimestamp."""
 
     timestamp: Arrow
 
 
 class SleepGetSerie(NamedTuple):
-    """SleepGetSerie"""
+    """SleepGetSerie."""
 
     enddate: Arrow
     startdate: Arrow
@@ -225,14 +225,14 @@ class SleepGetSerie(NamedTuple):
 
 
 class SleepGetResponse(NamedTuple):
-    """SleepGetResponse"""
+    """SleepGetResponse."""
 
     model: SleepModel
     series: Tuple[SleepGetSerie, ...]
 
 
 class GetSleepSummaryData(NamedTuple):
-    """GetSleepSummaryData"""
+    """GetSleepSummaryData."""
 
     remsleepduration: Optional[int]
     wakeupduration: Optional[int]
@@ -248,8 +248,9 @@ class GetSleepSummaryData(NamedTuple):
     rr_min: Optional[int]
     rr_max: Optional[int]
 
+
 class GetSleepSummarySerie(NamedTuple):
-    """GetSleepSummarySerie"""
+    """GetSleepSummarySerie."""
 
     timezone: tzinfo
     model: SleepModel
@@ -261,15 +262,15 @@ class GetSleepSummarySerie(NamedTuple):
 
 
 class SleepGetSummaryResponse(NamedTuple):
-    """SleepGetSummaryResponse"""
+    """SleepGetSummaryResponse."""
 
-    more: bool 
+    more: bool
     offset: int
     series: Tuple[GetSleepSummarySerie, ...]
 
 
 class MeasureGetMeasMeasure(NamedTuple):
-    """MeasureGetMeasMeasure"""
+    """MeasureGetMeasMeasure."""
 
     type: MeasureType
     unit: int
@@ -277,7 +278,7 @@ class MeasureGetMeasMeasure(NamedTuple):
 
 
 class MeasureGetMeasGroup(NamedTuple):
-    """MeasureGetMeasGroup"""
+    """MeasureGetMeasGroup."""
 
     attrib: MeasureGetMeasGroupAttrib
     category: MeasureGetMeasGroupCategory
@@ -289,7 +290,7 @@ class MeasureGetMeasGroup(NamedTuple):
 
 
 class MeasureGetMeasResponse(NamedTuple):
-    """MeasureGetMeasResponse"""
+    """MeasureGetMeasResponse."""
 
     measuregrps: Tuple[MeasureGetMeasGroup, ...]
     more: Optional[bool]
@@ -299,7 +300,7 @@ class MeasureGetMeasResponse(NamedTuple):
 
 
 class MeasureGetActivityActivity(NamedTuple):
-    """MeasureGetActivityActivity"""
+    """MeasureGetActivityActivity."""
 
     date: Arrow
     timezone: tzinfo
@@ -325,7 +326,7 @@ class MeasureGetActivityActivity(NamedTuple):
 
 
 class MeasureGetActivityResponse(NamedTuple):
-    """MeasureGetActivityResponse"""
+    """MeasureGetActivityResponse."""
 
     activities: Tuple[MeasureGetActivityActivity, ...]
     more: bool
@@ -333,7 +334,7 @@ class MeasureGetActivityResponse(NamedTuple):
 
 
 class Credentials(NamedTuple):
-    """Credentials"""
+    """Credentials."""
 
     access_token: str
     token_expiry: int
@@ -345,7 +346,7 @@ class Credentials(NamedTuple):
 
 
 class NotifyListProfile(NamedTuple):
-    """NotifyListProfile"""
+    """NotifyListProfile."""
 
     appli: NotifyAppli
     callbackurl: str
@@ -354,13 +355,13 @@ class NotifyListProfile(NamedTuple):
 
 
 class NotifyListResponse(NamedTuple):
-    """NotifyListResponse"""
+    """NotifyListResponse."""
 
     profiles: Tuple[NotifyListProfile, ...]
 
 
 class NotifyGetResponse(NamedTuple):
-    """NotifyGetResponse"""
+    """NotifyGetResponse."""
 
     appli: NotifyAppli
     callbackurl: str
