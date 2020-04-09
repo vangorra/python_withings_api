@@ -2,10 +2,13 @@
 
 from datetime import tzinfo
 from enum import Enum, IntEnum
+import traceback
 from typing import (
     Any,
     Callable,
     Dict,
+    Iterable,
+    List,
     NamedTuple,
     Optional,
     Tuple,
@@ -444,7 +447,7 @@ def float_or_none(value: Any) -> Optional[float]:
 
 
 def arrow_or_none(value: Any) -> Optional[Arrow]:
-    """Returns Arrow or None."""
+    """Return Arrow or None."""
     if value is None:
         return None
 
@@ -452,7 +455,7 @@ def arrow_or_none(value: Any) -> Optional[Arrow]:
 
 
 def timezone_or_none(value: Any) -> Optional[tzinfo]:
-    """Returns tzinfo or None."""
+    """Return tzinfo or None."""
     if value is None:
         return None
 
@@ -508,9 +511,7 @@ def new_user_get_device_device(data: dict) -> UserGetDeviceDevice:
 def new_user_get_device_response(data: dict) -> UserGetDeviceResponse:
     """Create GetDeviceResponse from json."""
     return UserGetDeviceResponse(
-        devices=tuple(
-            new_user_get_device_device(device) for device in data.get("devices", ())
-        )
+        devices=_flexible_tuple_of(data.get("devices", ()), new_user_get_device_device)
     )
 
 
@@ -527,9 +528,7 @@ def new_notify_list_profile(data: dict) -> NotifyListProfile:
 def new_notify_list_response(data: dict) -> NotifyListResponse:
     """Create NotifyListResponse from json."""
     return NotifyListResponse(
-        profiles=tuple(
-            new_notify_list_profile(profile) for profile in data.get("profiles", ())
-        )
+        profiles=_flexible_tuple_of(data.get("profiles", ()), new_notify_list_profile)
     )
 
 
@@ -565,7 +564,7 @@ def new_sleep_get_response(data: dict) -> SleepGetResponse:
     """Create GetSleepResponse from json."""
     return SleepGetResponse(
         model=new_sleep_model(data.get("model")),
-        series=tuple(new_sleep_get_serie(serie) for serie in data.get("series", ())),
+        series=_flexible_tuple_of(data.get("series", ()), new_sleep_get_serie),
     )
 
 
@@ -608,9 +607,7 @@ def new_sleep_get_summary_response(data: dict) -> SleepGetSummaryResponse:
     return SleepGetSummaryResponse(
         more=bool_or_raise(data.get("more")),
         offset=int_or_raise(data.get("offset")),
-        series=tuple(
-            new_get_sleep_summary_serie(serie) for serie in data.get("series", ())
-        ),
+        series=_flexible_tuple_of(data.get("series", ()), new_get_sleep_summary_serie),
     )
 
 
@@ -632,11 +629,30 @@ def new_measure_get_meas_group(data: dict, timezone: tzinfo) -> MeasureGetMeasGr
         created=arrow_or_raise(data.get("created")).replace(tzinfo=timezone),
         category=new_measure_category(data.get("category")),
         deviceid=data.get("deviceid"),
-        measures=tuple(
-            new_measure_get_meas_measure(measure)
-            for measure in data.get("measures", ())
+        measures=_flexible_tuple_of(
+            data.get("measures", ()), new_measure_get_meas_measure
         ),
     )
+
+
+def _flexible_tuple_of(
+    items: Iterable[Any], fun: Callable[[Any], GenericType]
+) -> Tuple[GenericType, ...]:
+    """Create a tuple of objects resolved through lambda.
+
+    If the lambda throws an expcetion, the resuling item will be ignored.
+    """
+    new_items: List[GenericType] = []
+    for item in items:
+        try:
+            new_items.append(fun(item))
+        except Exception:  # pylint:disable=broad-except
+            print(
+                "Warning: Failed to convert object. See exception for details.",
+                traceback.format_exc(),
+            )
+
+    return tuple(new_items)
 
 
 def new_measure_get_meas_response(data: dict) -> MeasureGetMeasResponse:
@@ -644,9 +660,9 @@ def new_measure_get_meas_response(data: dict) -> MeasureGetMeasResponse:
     timezone = timezone_or_raise(data.get("timezone"))
 
     return MeasureGetMeasResponse(
-        measuregrps=tuple(
-            new_measure_get_meas_group(group, timezone)
-            for group in data.get("measuregrps", ())
+        measuregrps=_flexible_tuple_of(
+            data.get("measuregrps", ()),
+            lambda group: new_measure_get_meas_group(group, timezone),
         ),
         more=data.get("more"),
         offset=data.get("offset"),
@@ -687,9 +703,8 @@ def new_measure_get_activity_activity(data: dict) -> MeasureGetActivityActivity:
 def new_measure_get_activity_response(data: dict) -> MeasureGetActivityResponse:
     """Create GetActivityResponse from json."""
     return MeasureGetActivityResponse(
-        activities=tuple(
-            new_measure_get_activity_activity(activity)
-            for activity in data.get("activities", ())
+        activities=_flexible_tuple_of(
+            data.get("activities", ()), new_measure_get_activity_activity
         ),
         more=bool_or_raise(data.get("more")),
         offset=int_or_raise(data.get("offset")),
