@@ -10,7 +10,7 @@ assertPython
 
 
 echo
-echo "===Settting up venv==="
+echo "===Setting up venv==="
 enterVenv
 
 
@@ -43,6 +43,14 @@ fi
 
 black $BLACK_ARGS .
 
+
+echo
+echo "===Lint with codespell==="
+codespell \
+  --check-filenames \
+  --ignore-words ./.codespell-ignore \
+  --skip "*/__pycache__/*" \
+  ./withings_api ./test ./scripts
 
 echo
 echo "===Lint with flake8==="

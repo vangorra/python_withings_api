@@ -10,7 +10,7 @@ assertPython
 
 
 echo
-echo "===Settting up venv==="
+echo "===Setting up venv==="
 enterVenv
 
 

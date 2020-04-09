@@ -72,7 +72,7 @@ class AbstractWithingsApi:
     def _request(
         self, path: str, params: Dict[str, Any], method: str = "GET"
     ) -> Dict[str, Any]:
-        """Fetch data from the Withing API."""
+        """Fetch data from the Withings API."""
 
     def request(
         self, path: str, params: Dict[str, Any], method: str = "GET"
