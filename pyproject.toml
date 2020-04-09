@@ -24,13 +24,12 @@ requests-oauthlib = ">=1.2"
 
 [tool.poetry.dev-dependencies]
 bandit = "==1.6.2"
-black = "==19.3b0"
+black = "==19.10b0"
 codespell = "==1.16.0"
-coverage = "==4.5.4"
+coverage = "==5.0.4"
 flake8 = "==3.7.8"
 isort = "==4.3.21"
 mypy = "==0.740"
-pydocstyle = "==4.0.1"
 pylint = "==2.4.3"
 pytest = "==5.2.1"
 pytest-cov = "==2.8.1"
@@ -40,7 +39,7 @@ wheel = "==0.33.6"  # Needed for successful compile of other modules.
 
 
 [tool.black]
-target-version = ["py35", "py36", "py37", "py38"]
+target-version = ["py36", "py37", "py38"]
 exclude = '''
 (
   /(
@@ -81,3 +80,10 @@ default_section = "THIRDPARTY"
 known_first_party = "homeassistant,tests"
 forced_separate = "tests"
 combine_as_imports = true
+
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+fail_under = 97.0
