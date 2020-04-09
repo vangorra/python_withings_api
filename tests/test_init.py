@@ -178,7 +178,7 @@ def test_refresh_token() -> None:
 
 
 def responses_add_user_get_device() -> None:
-    """Setup request response."""
+    """Set up request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/v2/user?.*action=getdevice(&.*)?"),
@@ -235,7 +235,7 @@ def test_user_get_device(withings_api: WithingsApi) -> None:
 
 
 def responses_add_measure_get_activity() -> None:
-    """Setup request response."""
+    """Set up request response."""
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -359,7 +359,7 @@ def test_measure_get_activity(withings_api: WithingsApi) -> None:
 
 
 def responses_add_measure_get_meas() -> None:
-    """Setup request response."""
+    """Set up request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/measure?.*action=getmeas(&.*)?"),
@@ -398,6 +398,8 @@ def responses_add_measure_get_meas() -> None:
                                 "value": 210,
                             },
                             {"type": MeasureType.BONE_MASS, "unit": 220, "value": 220},
+                            #  This one will be ignored because 12345 is an invalid measure type.
+                            {"type": 12345, "unit": 220, "value": 220},
                         ],
                     },
                 ],
@@ -449,7 +451,7 @@ def test_measure_get_meas(withings_api: WithingsApi) -> None:
 
 
 def responses_add_sleep_get() -> None:
-    """Setup request response."""
+    """Set up request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/v2/sleep?.*action=get(&.+)?"),
@@ -503,7 +505,7 @@ def test_sleep_get(withings_api: WithingsApi) -> None:
 
 
 def responses_add_sleep_get_summary() -> None:
-    """Setup request response."""
+    """Set up request response."""
     responses.add(
         method=responses.GET,
         url=re.compile(
@@ -629,7 +631,7 @@ def test_sleep_get_summary(withings_api: WithingsApi) -> None:
 
 
 def responses_add_notify_get() -> None:
-    """Setup request response."""
+    """Set up request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/notify?.*action=get(&.*)?"),
@@ -659,7 +661,7 @@ def test_notify_get(withings_api: WithingsApi) -> None:
 
 
 def responses_add_notify_list() -> None:
-    """Setup request response."""
+    """Set up request response."""
     responses.add(
         method=responses.GET,
         url=re.compile("https://wbsapi.withings.net/notify?.*action=list(&.*)?"),
