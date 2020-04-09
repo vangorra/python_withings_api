@@ -644,7 +644,7 @@ def _flexible_tuple_of(
 ) -> Tuple[GenericType, ...]:
     """Create a tuple of objects resolved through lambda.
 
-    If the lambda throws an expcetion, the resuling item will be ignored.
+    If the lambda throws an exception, the resulting item will be ignored.
     """
     new_items: List[GenericType] = []
     for item in items:

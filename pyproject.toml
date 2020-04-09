@@ -24,6 +24,7 @@ requests-oauthlib = ">=1.2"
 
 [tool.poetry.dev-dependencies]
 black = "==19.3b0"
+codespell = "==1.16.0"
 coverage = "==4.5.4"
 flake8 = "==3.7.8"
 isort = "==4.3.21"

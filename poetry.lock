@@ -99,6 +99,14 @@ version = "7.1.1"
 
 [[package]]
 category = "dev"
+description = "Codespell"
+name = "codespell"
+optional = false
+python-versions = "*"
+version = "1.16.0"
+
+[[package]]
+category = "dev"
 description = "Cross-platform colored terminal text."
 marker = "sys_platform == \"win32\""
 name = "colorama"
@@ -524,7 +532,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "93914df7f9989845db942df26e35e81c687ee583ee7313e98a664aa88312b3d8"
+content-hash = "b43c9f9600facb289c35b9427f4b9b2c9f6d5120e574d4d0fc5e3fb089a5ec60"
 python-versions = "^3.6 || ^3.7"
 
 [metadata.files]
@@ -563,6 +571,10 @@ chardet = [
 click = [
     {file = "click-7.1.1-py2.py3-none-any.whl", hash = "sha256:e345d143d80bf5ee7534056164e5e112ea5e22716bbb1ce727941f4c8b471b9a"},
     {file = "click-7.1.1.tar.gz", hash = "sha256:8a18b4ea89d8820c5d0c7da8a64b2c324b4dabb695804dbfea19b9be9d88c0cc"},
+]
+codespell = [
+    {file = "codespell-1.16.0-py3-none-any.whl", hash = "sha256:a81780122f955002d032a9a9c55e2305c6f252a530d8682ed5c3d0580f93d9b8"},
+    {file = "codespell-1.16.0.tar.gz", hash = "sha256:bf3b7c83327aefd26fe718527baa9bd61016e86db91a8123c0ef9c150fa02de9"},
 ]
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
