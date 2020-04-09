@@ -189,176 +189,179 @@ class AuthScope(Enum):
     USER_SLEEP_EVENTS = "user.sleepevents"
 
 
-UserGetDeviceDevice = NamedTuple(
-    "UserGetDeviceDevice",
-    (
-        ("type", str),
-        ("model", str),
-        ("battery", str),
-        ("deviceid", str),
-        ("timezone", tzinfo),
-    ),
-)
+class UserGetDeviceDevice(NamedTuple):
+    """UserGetDeviceDevice"""
+
+    type: str
+    model: str
+    battery: str
+    deviceid: str
+    timezone: tzinfo
 
 
-UserGetDeviceResponse = NamedTuple(
-    "GetDeviceResponse", (("devices", Tuple[UserGetDeviceDevice, ...]),)
-)
+class UserGetDeviceResponse(NamedTuple):
+    """UserGetDeviceResponse"""
+
+    devices: Tuple[UserGetDeviceDevice, ...]
 
 
-SleepGetTimestamp = NamedTuple("SleepGetTimestamp", [("timestamp", Arrow)])
+class SleepGetTimestamp(NamedTuple):
+    """SleepGetTimestamp"""
 
-SleepGetSerie = NamedTuple(
-    "SleepGetSerie",
-    (
-        ("enddate", Arrow),
-        ("startdate", Arrow),
-        ("state", SleepState),
-        ("hr", Optional[SleepGetTimestamp]),
-        ("rr", Optional[SleepGetTimestamp]),
-    ),
-)
-
-SleepGetResponse = NamedTuple(
-    "GetSleepResponse", (("model", SleepModel), ("series", Tuple[SleepGetSerie, ...]))
-)
-
-GetSleepSummaryData = NamedTuple(
-    "GetSleepSummaryData",
-    (
-        ("remsleepduration", Optional[int]),
-        ("wakeupduration", Optional[int]),
-        ("lightsleepduration", Optional[int]),
-        ("deepsleepduration", Optional[int]),
-        ("wakeupcount", Optional[int]),
-        ("durationtosleep", Optional[int]),
-        ("durationtowakeup", Optional[int]),
-        ("hr_average", Optional[int]),
-        ("hr_min", Optional[int]),
-        ("hr_max", Optional[int]),
-        ("rr_average", Optional[int]),
-        ("rr_min", Optional[int]),
-        ("rr_max", Optional[int]),
-    ),
-)
-
-GetSleepSummarySerie = NamedTuple(
-    "GetSleepSummarySerie",
-    (
-        ("timezone", tzinfo),
-        ("model", SleepModel),
-        ("startdate", Arrow),
-        ("enddate", Arrow),
-        ("date", Arrow),
-        ("modified", Arrow),
-        ("data", GetSleepSummaryData),
-    ),
-)
-
-SleepGetSummaryResponse = NamedTuple(
-    "GetSleepSummaryResponse",
-    (("more", bool), ("offset", int), ("series", Tuple[GetSleepSummarySerie, ...])),
-)
-
-MeasureGetMeasMeasure = NamedTuple(
-    "MeasureGetMeasMeasure", (("type", MeasureType), ("unit", int), ("value", int))
-)
+    timestamp: Arrow
 
 
-MeasureGetMeasGroup = NamedTuple(
-    "MeasureGetMeasGroup",
-    (
-        ("attrib", MeasureGetMeasGroupAttrib),
-        ("category", MeasureGetMeasGroupCategory),
-        ("created", Arrow),
-        ("date", Arrow),
-        ("deviceid", Optional[str]),
-        ("grpid", int),
-        ("measures", Tuple[MeasureGetMeasMeasure, ...]),
-    ),
-)
+class SleepGetSerie(NamedTuple):
+    """SleepGetSerie"""
+
+    enddate: Arrow
+    startdate: Arrow
+    state: SleepState
+    hr: Optional[SleepGetTimestamp]
+    rr: Optional[SleepGetTimestamp]
 
 
-MeasureGetMeasResponse = NamedTuple(
-    "GetMeasResponse",
-    (
-        ("measuregrps", Tuple[MeasureGetMeasGroup, ...]),
-        ("more", Optional[bool]),
-        ("offset", Optional[int]),
-        ("timezone", tzinfo),
-        ("updatetime", Arrow),
-    ),
-)
+class SleepGetResponse(NamedTuple):
+    """SleepGetResponse"""
+
+    model: SleepModel
+    series: Tuple[SleepGetSerie, ...]
 
 
-MeasureGetActivityActivity = NamedTuple(
-    "MeasureGetActivityActivity",
-    (
-        ("date", Arrow),
-        ("timezone", tzinfo),
-        ("deviceid", Optional[str]),
-        ("brand", int),
-        ("is_tracker", bool),
-        ("steps", Optional[int]),
-        ("distance", Optional[float]),
-        ("elevation", Optional[float]),
-        ("soft", Optional[int]),
-        ("moderate", Optional[int]),
-        ("intense", Optional[int]),
-        ("active", Optional[int]),
-        ("calories", Optional[float]),
-        ("totalcalories", float),
-        ("hr_average", Optional[int]),
-        ("hr_min", Optional[int]),
-        ("hr_max", Optional[int]),
-        ("hr_zone_0", Optional[int]),
-        ("hr_zone_1", Optional[int]),
-        ("hr_zone_2", Optional[int]),
-        ("hr_zone_3", Optional[int]),
-    ),
-)
+class GetSleepSummaryData(NamedTuple):
+    """GetSleepSummaryData"""
 
-MeasureGetActivityResponse = NamedTuple(
-    "GetActivityResponse",
-    (
-        ("activities", Tuple[MeasureGetActivityActivity, ...]),
-        ("more", bool),
-        ("offset", int),
-    ),
-)
+    remsleepduration: Optional[int]
+    wakeupduration: Optional[int]
+    lightsleepduration: Optional[int]
+    deepsleepduration: Optional[int]
+    wakeupcount: Optional[int]
+    durationtosleep: Optional[int]
+    durationtowakeup: Optional[int]
+    hr_average: Optional[int]
+    hr_min: Optional[int]
+    hr_max: Optional[int]
+    rr_average: Optional[int]
+    rr_min: Optional[int]
+    rr_max: Optional[int]
 
-Credentials = NamedTuple(
-    "Credentials",
-    (
-        ("access_token", str),
-        ("token_expiry", int),
-        ("token_type", str),
-        ("refresh_token", str),
-        ("userid", int),
-        ("client_id", str),
-        ("consumer_secret", str),
-    ),
-)
+class GetSleepSummarySerie(NamedTuple):
+    """GetSleepSummarySerie"""
+
+    timezone: tzinfo
+    model: SleepModel
+    startdate: Arrow
+    enddate: Arrow
+    date: Arrow
+    modified: Arrow
+    data: GetSleepSummaryData
 
 
-NotifyListProfile = NamedTuple(
-    "NotifyListProfile",
-    (
-        ("appli", NotifyAppli),
-        ("callbackurl", str),
-        ("expires", Arrow),
-        ("comment", Optional[str]),
-    ),
-)
+class SleepGetSummaryResponse(NamedTuple):
+    """SleepGetSummaryResponse"""
 
-NotifyListResponse = NamedTuple(
-    "NotifyListResponse", (("profiles", Tuple[NotifyListProfile, ...]),)
-)
+    more: bool 
+    offset: int
+    series: Tuple[GetSleepSummarySerie, ...]
 
-NotifyGetResponse = NamedTuple(
-    "NotifyGetResponse",
-    (("appli", NotifyAppli), ("callbackurl", str), ("comment", Optional[str])),
-)
+
+class MeasureGetMeasMeasure(NamedTuple):
+    """MeasureGetMeasMeasure"""
+
+    type: MeasureType
+    unit: int
+    value: int
+
+
+class MeasureGetMeasGroup(NamedTuple):
+    """MeasureGetMeasGroup"""
+
+    attrib: MeasureGetMeasGroupAttrib
+    category: MeasureGetMeasGroupCategory
+    created: Arrow
+    date: Arrow
+    deviceid: Optional[str]
+    grpid: int
+    measures: Tuple[MeasureGetMeasMeasure, ...]
+
+
+class MeasureGetMeasResponse(NamedTuple):
+    """MeasureGetMeasResponse"""
+
+    measuregrps: Tuple[MeasureGetMeasGroup, ...]
+    more: Optional[bool]
+    offset: Optional[int]
+    timezone: tzinfo
+    updatetime: Arrow
+
+
+class MeasureGetActivityActivity(NamedTuple):
+    """MeasureGetActivityActivity"""
+
+    date: Arrow
+    timezone: tzinfo
+    deviceid: Optional[str]
+    brand: int
+    is_tracker: bool
+    steps: Optional[int]
+    distance: Optional[float]
+    elevation: Optional[float]
+    soft: Optional[int]
+    moderate: Optional[int]
+    intense: Optional[int]
+    active: Optional[int]
+    calories: Optional[float]
+    totalcalories: float
+    hr_average: Optional[int]
+    hr_min: Optional[int]
+    hr_max: Optional[int]
+    hr_zone_0: Optional[int]
+    hr_zone_1: Optional[int]
+    hr_zone_2: Optional[int]
+    hr_zone_3: Optional[int]
+
+
+class MeasureGetActivityResponse(NamedTuple):
+    """MeasureGetActivityResponse"""
+
+    activities: Tuple[MeasureGetActivityActivity, ...]
+    more: bool
+    offset: int
+
+
+class Credentials(NamedTuple):
+    """Credentials"""
+
+    access_token: str
+    token_expiry: int
+    token_type: str
+    refresh_token: str
+    userid: int
+    client_id: str
+    consumer_secret: str
+
+
+class NotifyListProfile(NamedTuple):
+    """NotifyListProfile"""
+
+    appli: NotifyAppli
+    callbackurl: str
+    expires: Arrow
+    comment: Optional[str]
+
+
+class NotifyListResponse(NamedTuple):
+    """NotifyListResponse"""
+
+    profiles: Tuple[NotifyListProfile, ...]
+
+
+class NotifyGetResponse(NamedTuple):
+    """NotifyGetResponse"""
+
+    appli: NotifyAppli
+    callbackurl: str
+    comment: Optional[str]
 
 
 GenericType = TypeVar("GenericType")
