@@ -350,7 +350,7 @@ class NotifyListProfile(NamedTuple):
 
     appli: NotifyAppli
     callbackurl: str
-    expires: Arrow
+    expires: Optional[Arrow]
     comment: Optional[str]
 
 
