@@ -3,15 +3,20 @@
 import argparse
 from os import path
 import pickle
-from unittest.mock import MagicMock
 from urllib import parse
 
 import arrow
-from withings_api import AuthScope, WithingsApi, WithingsAuth
+from withings_api import AuthScope, Credentials, WithingsApi, WithingsAuth
 
 CREDENTIALS_FILE = path.abspath(
     path.join(path.dirname(path.abspath(__file__)), "../.credentials")
 )
+
+
+def save_credentials(credentials: Credentials) -> None:
+    """Save credentials to a file."""
+    with open(CREDENTIALS_FILE, "wb") as file_handle:
+        pickle.dump(credentials, file_handle)
 
 
 def main() -> None:
@@ -35,6 +40,12 @@ def main() -> None:
         help="Callback URI configured for withings application.",
         required=True,
     )
+    parser.add_argument(
+        "--live-data",
+        dest="live_data",
+        action="store_true",
+        help="Should we run against live data? (Removal of .credentials file is required before running)",
+    )
 
     args = parser.parse_args()
 
@@ -48,7 +59,7 @@ def main() -> None:
             client_id=args.client_id,
             consumer_secret=args.consumer_secret,
             callback_uri=args.callback_uri,
-            mode="demo",
+            mode=None if args.live_data else "demo",
             scope=(
                 AuthScope.USER_ACTIVITY,
                 AuthScope.USER_METRICS,
@@ -71,19 +82,12 @@ def main() -> None:
 
         print("Getting credentials with auth code", auth_code)
         credentials = auth.get_credentials(auth_code)
-        with open(CREDENTIALS_FILE, "wb") as file_handle:
-            pickle.dump(credentials, file_handle)
+        save_credentials(credentials)
 
-    refresh_cb = MagicMock()
-    api = WithingsApi(credentials, refresh_cb=refresh_cb)
+    api = WithingsApi(credentials, refresh_cb=save_credentials)
 
     print("Getting devices...")
     assert api.measure_get_meas() is not None
-
-    print("Refreshing token...")
-    refresh_cb.reset_mock()
-    api.refresh_token()
-    refresh_cb.assert_called_once()
 
     print("Getting measures...")
     assert (

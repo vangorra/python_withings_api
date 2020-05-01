@@ -234,19 +234,23 @@ class SleepGetResponse(NamedTuple):
 class GetSleepSummaryData(NamedTuple):
     """GetSleepSummaryData."""
 
-    remsleepduration: Optional[int]
-    wakeupduration: Optional[int]
-    lightsleepduration: Optional[int]
+    breathing_disturbances_intensity: Optional[int]
     deepsleepduration: Optional[int]
-    wakeupcount: Optional[int]
     durationtosleep: Optional[int]
     durationtowakeup: Optional[int]
     hr_average: Optional[int]
-    hr_min: Optional[int]
     hr_max: Optional[int]
+    hr_min: Optional[int]
+    lightsleepduration: Optional[int]
+    remsleepduration: Optional[int]
     rr_average: Optional[int]
-    rr_min: Optional[int]
     rr_max: Optional[int]
+    rr_min: Optional[int]
+    sleep_score: Optional[int]
+    snoring: Optional[int]
+    snoringepisodecount: Optional[int]
+    wakeupcount: Optional[int]
+    wakeupduration: Optional[int]
 
 
 class GetSleepSummarySerie(NamedTuple):
@@ -575,19 +579,25 @@ def new_sleep_get_response(data: dict) -> SleepGetResponse:
 def new_get_sleep_summary_data(data: dict) -> GetSleepSummaryData:
     """Create GetSleepSummarySerie from json."""
     return GetSleepSummaryData(
-        remsleepduration=int_or_none(data.get("remsleepduration")),
-        wakeupduration=int_or_none(data.get("wakeupduration")),
-        lightsleepduration=int_or_none(data.get("lightsleepduration")),
+        breathing_disturbances_intensity=int_or_none(
+            data.get("breathing_disturbances_intensity")
+        ),
         deepsleepduration=int_or_none(data.get("deepsleepduration")),
-        wakeupcount=int_or_none(data.get("wakeupcount")),
         durationtosleep=int_or_none(data.get("durationtosleep")),
         durationtowakeup=int_or_none(data.get("durationtowakeup")),
         hr_average=int_or_none(data.get("hr_average")),
-        hr_min=int_or_none(data.get("hr_min")),
         hr_max=int_or_none(data.get("hr_max")),
+        hr_min=int_or_none(data.get("hr_min")),
+        lightsleepduration=int_or_none(data.get("lightsleepduration")),
+        remsleepduration=int_or_none(data.get("remsleepduration")),
         rr_average=int_or_none(data.get("rr_average")),
-        rr_min=int_or_none(data.get("rr_min")),
         rr_max=int_or_none(data.get("rr_max")),
+        rr_min=int_or_none(data.get("rr_min")),
+        sleep_score=int_or_none(data.get("sleep_score")),
+        snoring=int_or_none(data.get("snoring")),
+        snoringepisodecount=int_or_none(data.get("snoringepisodecount")),
+        wakeupcount=int_or_none(data.get("wakeupcount")),
+        wakeupduration=int_or_none(data.get("wakeupduration")),
     )
 
 
