@@ -168,19 +168,23 @@ class GetSleepField(Enum):
 class GetSleepSummaryField(Enum):
     """Fields for get sleep summary api call."""
 
-    REM_SLEEP_DURATION = "remsleepduration"
-    WAKEUP_DURATION = "wakeupduration"
-    LIGHT_SLEEP_DURATION = "lightsleepduration"
+    BREATHING_DISTURBANCES_INTENSITY = "breathing_disturbances_intensity"
     DEEP_SLEEP_DURATION = "deepsleepduration"
-    WAKEUP_COUNT = "wakeupcount"
     DURATION_TO_SLEEP = "durationtosleep"
     DURATION_TO_WAKEUP = "durationtowakeup"
     HR_AVERAGE = "hr_average"
-    HR_MIN = "hr_min"
     HR_MAX = "hr_max"
+    HR_MIN = "hr_min"
+    LIGHT_SLEEP_DURATION = "lightsleepduration"
+    REM_SLEEP_DURATION = "remsleepduration"
     RR_AVERAGE = "rr_average"
-    RR_MIN = "rr_min"
     RR_MAX = "rr_max"
+    RR_MIN = "rr_min"
+    SLEEP_SCORE = "sleep_score"
+    SNORING = "snoring"
+    SNORING_EPISODE_COUNT = "snoringepisodecount"
+    WAKEUP_COUNT = "wakeupcount"
+    WAKEUP_DURATION = "wakeupduration"
 
 
 class AuthScope(Enum):
@@ -563,8 +567,8 @@ def new_sleep_get_serie(data: dict) -> SleepGetSerie:
         enddate=arrow_or_raise(data.get("enddate")),
         startdate=arrow_or_raise(data.get("startdate")),
         state=new_sleep_state(data.get("state")),
-        hr=new_sleep_timestamp(dict_or_none(data.get("hr"))),
-        rr=new_sleep_timestamp(dict_or_none(data.get("rr"))),
+        hr=new_sleep_timestamp(dict_or_none(data.get(GetSleepField.HR.value))),
+        rr=new_sleep_timestamp(dict_or_none(data.get(GetSleepField.RR.value))),
     )
 
 
@@ -580,24 +584,38 @@ def new_get_sleep_summary_data(data: dict) -> GetSleepSummaryData:
     """Create GetSleepSummarySerie from json."""
     return GetSleepSummaryData(
         breathing_disturbances_intensity=int_or_none(
-            data.get("breathing_disturbances_intensity")
+            data.get(GetSleepSummaryField.BREATHING_DISTURBANCES_INTENSITY.value)
         ),
-        deepsleepduration=int_or_none(data.get("deepsleepduration")),
-        durationtosleep=int_or_none(data.get("durationtosleep")),
-        durationtowakeup=int_or_none(data.get("durationtowakeup")),
-        hr_average=int_or_none(data.get("hr_average")),
-        hr_max=int_or_none(data.get("hr_max")),
-        hr_min=int_or_none(data.get("hr_min")),
-        lightsleepduration=int_or_none(data.get("lightsleepduration")),
-        remsleepduration=int_or_none(data.get("remsleepduration")),
-        rr_average=int_or_none(data.get("rr_average")),
-        rr_max=int_or_none(data.get("rr_max")),
-        rr_min=int_or_none(data.get("rr_min")),
-        sleep_score=int_or_none(data.get("sleep_score")),
-        snoring=int_or_none(data.get("snoring")),
-        snoringepisodecount=int_or_none(data.get("snoringepisodecount")),
-        wakeupcount=int_or_none(data.get("wakeupcount")),
-        wakeupduration=int_or_none(data.get("wakeupduration")),
+        deepsleepduration=int_or_none(
+            data.get(GetSleepSummaryField.DEEP_SLEEP_DURATION.value)
+        ),
+        durationtosleep=int_or_none(
+            data.get(GetSleepSummaryField.DURATION_TO_SLEEP.value)
+        ),
+        durationtowakeup=int_or_none(
+            data.get(GetSleepSummaryField.DURATION_TO_WAKEUP.value)
+        ),
+        hr_average=int_or_none(data.get(GetSleepSummaryField.HR_AVERAGE.value)),
+        hr_max=int_or_none(data.get(GetSleepSummaryField.HR_MAX.value)),
+        hr_min=int_or_none(data.get(GetSleepSummaryField.HR_MIN.value)),
+        lightsleepduration=int_or_none(
+            data.get(GetSleepSummaryField.LIGHT_SLEEP_DURATION.value)
+        ),
+        remsleepduration=int_or_none(
+            data.get(GetSleepSummaryField.REM_SLEEP_DURATION.value)
+        ),
+        rr_average=int_or_none(data.get(GetSleepSummaryField.RR_AVERAGE.value)),
+        rr_max=int_or_none(data.get(GetSleepSummaryField.RR_MAX.value)),
+        rr_min=int_or_none(data.get(GetSleepSummaryField.RR_MIN.value)),
+        sleep_score=int_or_none(data.get(GetSleepSummaryField.SLEEP_SCORE.value)),
+        snoring=int_or_none(data.get(GetSleepSummaryField.SNORING.value)),
+        snoringepisodecount=int_or_none(
+            data.get(GetSleepSummaryField.SNORING_EPISODE_COUNT.value)
+        ),
+        wakeupcount=int_or_none(data.get(GetSleepSummaryField.WAKEUP_COUNT.value)),
+        wakeupduration=int_or_none(
+            data.get(GetSleepSummaryField.WAKEUP_DURATION.value)
+        ),
     )
 
 
@@ -695,22 +713,22 @@ def new_measure_get_activity_activity(data: dict) -> MeasureGetActivityActivity:
         deviceid=str_or_none(data.get("deviceid")),
         brand=int_or_raise(data.get("brand")),
         is_tracker=bool_or_raise(data.get("is_tracker")),
-        steps=int_or_none(data.get("steps")),
-        distance=float_or_raise(data.get("distance")),
-        elevation=float_or_raise(data.get("elevation")),
-        soft=int_or_none(data.get("soft")),
-        moderate=int_or_none(data.get("moderate")),
-        intense=int_or_none(data.get("intense")),
-        active=int_or_none(data.get("active")),
-        calories=float_or_raise(data.get("calories")),
-        totalcalories=float_or_raise(data.get("totalcalories")),
-        hr_average=int_or_none(data.get("hr_average")),
-        hr_min=int_or_none(data.get("hr_min")),
-        hr_max=int_or_none(data.get("hr_max")),
-        hr_zone_0=int_or_none(data.get("hr_zone_0")),
-        hr_zone_1=int_or_none(data.get("hr_zone_1")),
-        hr_zone_2=int_or_none(data.get("hr_zone_2")),
-        hr_zone_3=int_or_none(data.get("hr_zone_3")),
+        steps=int_or_none(data.get(GetActivityField.STEPS.value)),
+        distance=float_or_raise(data.get(GetActivityField.DISTANCE.value)),
+        elevation=float_or_raise(data.get(GetActivityField.ELEVATION.value)),
+        soft=int_or_none(data.get(GetActivityField.SOFT.value)),
+        moderate=int_or_none(data.get(GetActivityField.MODERATE.value)),
+        intense=int_or_none(data.get(GetActivityField.INTENSE.value)),
+        active=int_or_none(data.get(GetActivityField.ACTIVE.value)),
+        calories=float_or_raise(data.get(GetActivityField.CALORIES.value)),
+        totalcalories=float_or_raise(data.get(GetActivityField.TOTAL_CALORIES.value)),
+        hr_average=int_or_none(data.get(GetActivityField.HR_AVERAGE.value)),
+        hr_min=int_or_none(data.get(GetActivityField.HR_MIN.value)),
+        hr_max=int_or_none(data.get(GetActivityField.HR_MAX.value)),
+        hr_zone_0=int_or_none(data.get(GetActivityField.HR_ZONE_0.value)),
+        hr_zone_1=int_or_none(data.get(GetActivityField.HR_ZONE_1.value)),
+        hr_zone_2=int_or_none(data.get(GetActivityField.HR_ZONE_2.value)),
+        hr_zone_3=int_or_none(data.get(GetActivityField.HR_ZONE_3.value)),
     )
 
 
