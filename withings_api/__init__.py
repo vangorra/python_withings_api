@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, Iterable, Optional, Union, cast
 import arrow
 from oauthlib.oauth2 import WebApplicationClient
 from requests_oauthlib import OAuth2Session
+from typing_extensions import Final
 
 from .common import (
     AuthScope,
@@ -43,10 +44,11 @@ from .common import (
 )
 
 DateType = Union[arrow.Arrow, datetime.date, datetime.datetime, int, str]
+ParamsType = Dict[str, Union[str, int, bool]]
 
 
 def update_params(
-    params: dict, name: str, current_value: Any, new_value: Any = None
+    params: ParamsType, name: str, current_value: Any, new_value: Any = None
 ) -> None:
     """Add a conditional param to a params dict."""
     if current_value is None:
@@ -61,12 +63,12 @@ def update_params(
 class AbstractWithingsApi:
     """Abstract class for customizing which requests module you want."""
 
-    URL = "https://wbsapi.withings.net"
-    PATH_V2_USER = "v2/user"
-    PATH_V2_MEASURE = "v2/measure"
-    PATH_MEASURE = "measure"
-    PATH_V2_SLEEP = "v2/sleep"
-    PATH_NOTIFY = "notify"
+    URL: Final = "https://wbsapi.withings.net"
+    PATH_V2_USER: Final = "v2/user"
+    PATH_V2_MEASURE: Final = "v2/measure"
+    PATH_MEASURE: Final = "measure"
+    PATH_V2_SLEEP: Final = "v2/sleep"
+    PATH_NOTIFY: Final = "notify"
 
     @abstractmethod
     def _request(
@@ -101,7 +103,7 @@ class AbstractWithingsApi:
         lastupdate: Optional[DateType] = None,
     ) -> MeasureGetActivityResponse:
         """Get user created activities."""
-        params = {}  # type: Dict[str, Any]
+        params: Final[ParamsType] = {}
 
         update_params(
             params,
@@ -141,7 +143,7 @@ class AbstractWithingsApi:
         lastupdate: Optional[DateType] = None,
     ) -> MeasureGetMeasResponse:
         """Get measures."""
-        params = {}  # type: Dict[str, Any]
+        params: Final[ParamsType] = {}
 
         update_params(params, "meastype", meastype, lambda val: val.value)
         update_params(params, "category", category, lambda val: val.value)
@@ -166,7 +168,7 @@ class AbstractWithingsApi:
         data_fields: Optional[Iterable[GetSleepField]] = None,
     ) -> SleepGetResponse:
         """Get sleep data."""
-        params = {}  # type: Dict[str, Any]
+        params: Final[ParamsType] = {}
 
         update_params(
             params, "startdate", startdate, lambda val: arrow.get(val).timestamp
@@ -192,7 +194,7 @@ class AbstractWithingsApi:
         lastupdate: Optional[DateType] = None,
     ) -> SleepGetSummaryResponse:
         """Get sleep summary."""
-        params = {}  # type: Dict[str, Any]
+        params: Final[ParamsType] = {}
 
         update_params(
             params,
@@ -230,7 +232,7 @@ class AbstractWithingsApi:
         Return the last notification service that a user was subscribed to,
         and its expiry date.
         """
-        params = {}  # type: Dict[str, Any]
+        params: Final[ParamsType] = {}
 
         update_params(params, "callbackurl", callbackurl)
         update_params(params, "appli", appli, lambda appli: appli.value)
@@ -242,7 +244,7 @@ class AbstractWithingsApi:
 
     def notify_list(self, appli: Optional[NotifyAppli] = None) -> NotifyListResponse:
         """List notification configuration for this user."""
-        params = {}  # type: Dict[str, Any]
+        params: Final[ParamsType] = {}
 
         update_params(params, "appli", appli, lambda appli: appli.value)
         update_params(params, "action", "list")
@@ -260,7 +262,7 @@ class AbstractWithingsApi:
         This service disables the notification between the API and the
         specified applications for the user.
         """
-        params = {}  # type: Dict[str, Any]
+        params: Final[ParamsType] = {}
 
         update_params(params, "callbackurl", callbackurl)
         update_params(params, "appli", appli, lambda appli: appli.value)
@@ -275,7 +277,7 @@ class AbstractWithingsApi:
         comment: Optional[str] = None,
     ) -> None:
         """Subscribe to receive notifications when new data is available."""
-        params = {}  # type: Dict[str, Any]
+        params: Final[ParamsType] = {}
 
         update_params(params, "callbackurl", callbackurl)
         update_params(params, "appli", appli, lambda appli: appli.value)
@@ -293,7 +295,7 @@ class AbstractWithingsApi:
         comment: Optional[str] = None,
     ) -> None:
         """Update the callbackurl and or appli of a created notification."""
-        params = {}  # type: Dict[str, Any]
+        params: Final[ParamsType] = {}
 
         update_params(params, "callbackurl", callbackurl)
         update_params(params, "appli", appli, lambda appli: appli.value)
@@ -308,9 +310,9 @@ class AbstractWithingsApi:
 class WithingsAuth:
     """Handles management of oauth2 authorization calls."""
 
-    URL = "https://account.withings.com"
-    PATH_AUTHORIZE = "oauth2_user/authorize2"
-    PATH_TOKEN = "oauth2/token"  # nosec
+    URL: Final = "https://account.withings.com"
+    PATH_AUTHORIZE: Final = "oauth2_user/authorize2"
+    PATH_TOKEN: Final = "oauth2/token"  # nosec
 
     def __init__(
         self,
@@ -321,12 +323,12 @@ class WithingsAuth:
         mode: Optional[str] = None,
     ):
         """Initialize new object."""
-        self._client_id = client_id
-        self._consumer_secret = consumer_secret
-        self._callback_uri = callback_uri
-        self._scope = scope
-        self._mode = mode
-        self._session = OAuth2Session(
+        self._client_id: Final = client_id
+        self._consumer_secret: Final = consumer_secret
+        self._callback_uri: Final = callback_uri
+        self._scope: Final = scope
+        self._mode: Final = mode
+        self._session: Final = OAuth2Session(
             self._client_id,
             redirect_uri=self._callback_uri,
             scope=",".join((scope.value for scope in self._scope)),
@@ -334,20 +336,20 @@ class WithingsAuth:
 
     def get_authorize_url(self) -> str:
         """Generate the authorize url."""
-        url = str(
+        url: Final = str(
             self._session.authorization_url("%s/%s" % (self.URL, self.PATH_AUTHORIZE))[
                 0
             ]
         )
 
         if self._mode:
-            url = url + "&mode=" + self._mode
+            return url + "&mode=" + self._mode
 
         return url
 
     def get_credentials(self, code: str) -> Credentials:
         """Get the oauth credentials."""
-        response = self._session.fetch_token(
+        response: Final = self._session.fetch_token(
             "%s/oauth2/token" % self.URL,
             code=code,
             client_secret=self._consumer_secret,
@@ -384,15 +386,15 @@ class WithingsApi(AbstractWithingsApi):
     ):
         """Initialize new object."""
         self._credentials = credentials
-        self._refresh_cb = refresh_cb
-        token = {
+        self._refresh_cb: Final = refresh_cb
+        token: Final = {
             "access_token": credentials.access_token,
             "refresh_token": credentials.refresh_token,
             "token_type": credentials.token_type,
             "expires_in": str(int(credentials.token_expiry) - arrow.utcnow().timestamp),
         }
 
-        self._client = OAuth2Session(
+        self._client: Final = OAuth2Session(
             credentials.client_id,
             token=token,
             client=WebApplicationClient(  # nosec
@@ -412,7 +414,9 @@ class WithingsApi(AbstractWithingsApi):
 
     def refresh_token(self) -> None:
         """Manually refresh the token."""
-        token_dict = self._client.refresh_token(token_url=self._client.auto_refresh_url)
+        token_dict: Final = self._client.refresh_token(
+            token_url=self._client.auto_refresh_url
+        )
         self._update_token(token=token_dict)
 
     def _update_token(self, token: Dict[str, Union[str, int]]) -> None:
