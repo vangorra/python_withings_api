@@ -7,7 +7,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Final,
     Iterable,
     List,
     NamedTuple,
@@ -22,6 +21,7 @@ from typing import (
 import arrow
 from arrow import Arrow
 from dateutil import tz
+from typing_extensions import Final
 
 from .const import (
     STATUS_AUTH_FAILED,

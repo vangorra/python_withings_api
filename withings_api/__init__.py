@@ -7,11 +7,12 @@ Withings Health API
 from abc import abstractmethod
 import datetime
 from types import LambdaType
-from typing import Any, Callable, Dict, Final, Iterable, Optional, Union, cast
+from typing import Any, Callable, Dict, Iterable, Optional, Union, cast
 
 import arrow
 from oauthlib.oauth2 import WebApplicationClient
 from requests_oauthlib import OAuth2Session
+from typing_extensions import Final
 
 from .common import (
     AuthScope,

@@ -1,13 +1,13 @@
 """Tets for main API."""
 import datetime
 import re
-from typing import Final
 from unittest.mock import MagicMock
 from urllib import parse
 
 import arrow
 import pytest
 import responses
+from typing_extensions import Final
 from withings_api import WithingsApi, WithingsAuth
 from withings_api.common import (
     AuthScope,

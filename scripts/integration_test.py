@@ -3,10 +3,11 @@
 import argparse
 from os import path
 import pickle
-from typing import Final, cast
+from typing import cast
 from urllib import parse
 
 import arrow
+from typing_extensions import Final
 from withings_api import AuthScope, Credentials, WithingsApi, WithingsAuth
 
 CREDENTIALS_FILE: Final = path.abspath(

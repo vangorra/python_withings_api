@@ -1,8 +1,9 @@
 """Tests for common code."""
-from typing import Any, Dict, Final
+from typing import Any, Dict
 
 import arrow
 import pytest
+from typing_extensions import Final
 from withings_api.common import (
     AuthFailedException,
     BadStateException,

@@ -1,5 +1,5 @@
 """Constant values."""
-from typing import Final
+from typing_extensions import Final
 
 STATUS_SUCCESS: Final = (0,)
 
