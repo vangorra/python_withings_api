@@ -3,12 +3,13 @@
 import argparse
 from os import path
 import pickle
+from typing import Final, cast
 from urllib import parse
 
 import arrow
 from withings_api import AuthScope, Credentials, WithingsApi, WithingsAuth
 
-CREDENTIALS_FILE = path.abspath(
+CREDENTIALS_FILE: Final = path.abspath(
     path.join(path.dirname(path.abspath(__file__)), "../.credentials")
 )
 
@@ -19,9 +20,16 @@ def save_credentials(credentials: Credentials) -> None:
         pickle.dump(credentials, file_handle)
 
 
+def load_credentials() -> Credentials:
+    """Load credentials from a file."""
+    print("Using credentials saved in:", CREDENTIALS_FILE)
+    with open(CREDENTIALS_FILE, "rb") as file_handle:
+        return cast(Credentials, pickle.load(file_handle))
+
+
 def main() -> None:
     """Run main function."""
-    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser: Final = argparse.ArgumentParser(description="Process some integers.")
     parser.add_argument(
         "--client-id",
         dest="client_id",
@@ -47,15 +55,11 @@ def main() -> None:
         help="Should we run against live data? (Removal of .credentials file is required before running)",
     )
 
-    args = parser.parse_args()
+    args: Final = parser.parse_args()
 
-    if path.isfile(CREDENTIALS_FILE):
-        print("Using credentials saved in:", CREDENTIALS_FILE)
-        with open(CREDENTIALS_FILE, "rb") as file_handle:
-            credentials = pickle.load(file_handle)
-    else:
+    if not path.isfile(CREDENTIALS_FILE):
         print("Attempting to get credentials...")
-        auth = WithingsAuth(
+        auth: Final = WithingsAuth(
             client_id=args.client_id,
             consumer_secret=args.consumer_secret,
             callback_uri=args.callback_uri,
@@ -68,23 +72,22 @@ def main() -> None:
             ),
         )
 
-        authorize_url = auth.get_authorize_url()
+        authorize_url: Final = auth.get_authorize_url()
         print("Goto this URL in your browser and authorize:", authorize_url)
         print(
             "Once you are redirected, copy and paste the whole url"
             "(including code) here."
         )
-        redirected_uri = input("Provide the entire redirect uri: ")
-        redirected_uri_params = dict(
+        redirected_uri: Final = input("Provide the entire redirect uri: ")
+        redirected_uri_params: Final = dict(
             parse.parse_qsl(parse.urlsplit(redirected_uri).query)
         )
-        auth_code = redirected_uri_params["code"]
+        auth_code: Final = redirected_uri_params["code"]
 
         print("Getting credentials with auth code", auth_code)
-        credentials = auth.get_credentials(auth_code)
-        save_credentials(credentials)
+        save_credentials(auth.get_credentials(auth_code))
 
-    api = WithingsApi(credentials, refresh_cb=save_credentials)
+    api: Final = WithingsApi(load_credentials(), refresh_cb=save_credentials)
 
     print("Getting devices...")
     assert api.measure_get_meas() is not None

@@ -1,5 +1,5 @@
 """Tests for common code."""
-from typing import Any, Dict
+from typing import Any, Dict, Final
 
 import arrow
 import pytest
@@ -56,7 +56,7 @@ def test_enum_or_raise() -> None:
 
 def test_query_measure_groups() -> None:
     """Test function."""
-    response = MeasureGetMeasResponse(
+    response: Final = MeasureGetMeasResponse(
         offset=0,
         more=False,
         timezone=TIMEZONE0,
@@ -96,7 +96,7 @@ def test_query_measure_groups() -> None:
     )
 
     # Measure type filter.
-    expected = tuple(
+    expected1: Final = tuple(
         [
             MeasureGetMeasGroup(
                 attrib=MeasureGetMeasGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
@@ -122,9 +122,9 @@ def test_query_measure_groups() -> None:
             ),
         ]
     )
-    assert query_measure_groups(response, MeasureType.FAT_FREE_MASS) == expected
+    assert query_measure_groups(response, MeasureType.FAT_FREE_MASS) == expected1
 
-    expected = tuple(
+    expected2: Final = tuple(
         [
             MeasureGetMeasGroup(
                 attrib=MeasureGetMeasGroupAttrib.MEASURE_USER_CONFIRMED,
@@ -147,10 +147,10 @@ def test_query_measure_groups() -> None:
             MeasureType.FAT_FREE_MASS,
             MeasureGetMeasGroupAttrib.MEASURE_USER_CONFIRMED,
         )
-        == expected
+        == expected2
     )
 
-    expected = tuple(
+    expected3: Final = tuple(
         [
             MeasureGetMeasGroup(
                 attrib=MeasureGetMeasGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
@@ -180,7 +180,7 @@ def test_query_measure_groups() -> None:
             ),
         ]
     )
-    assert query_measure_groups(response, MeasureType.BONE_MASS) == expected
+    assert query_measure_groups(response, MeasureType.BONE_MASS) == expected3
 
     # Group attrib filter.
     assert query_measure_groups(response) == response.measuregrps
@@ -205,7 +205,7 @@ def test_query_measure_groups() -> None:
 
 def test_get_measure_value() -> None:
     """Test function."""
-    response = MeasureGetMeasResponse(
+    response: Final = MeasureGetMeasResponse(
         offset=0,
         more=False,
         timezone=TIMEZONE0,

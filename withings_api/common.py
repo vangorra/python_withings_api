@@ -7,6 +7,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Final,
     Iterable,
     List,
     NamedTuple,
@@ -621,7 +622,7 @@ def new_get_sleep_summary_data(data: dict) -> GetSleepSummaryData:
 
 def new_get_sleep_summary_serie(data: dict) -> GetSleepSummarySerie:
     """Create GetSleepSummarySerie from json."""
-    timezone = timezone_or_raise(data.get("timezone"))
+    timezone: Final = timezone_or_raise(data.get("timezone"))
 
     return GetSleepSummarySerie(
         date=arrow_or_raise(data.get("date")).replace(tzinfo=timezone),
@@ -674,7 +675,7 @@ def _flexible_tuple_of(
 
     If the lambda throws an exception, the resulting item will be ignored.
     """
-    new_items: List[GenericType] = []
+    new_items: Final[List[GenericType]] = []
     for item in items:
         try:
             new_items.append(fun(item))
@@ -689,7 +690,7 @@ def _flexible_tuple_of(
 
 def new_measure_get_meas_response(data: dict) -> MeasureGetMeasResponse:
     """Create GetMeasResponse from json."""
-    timezone = timezone_or_raise(data.get("timezone"))
+    timezone: Final = timezone_or_raise(data.get("timezone"))
 
     return MeasureGetMeasResponse(
         measuregrps=_flexible_tuple_of(
@@ -705,7 +706,7 @@ def new_measure_get_meas_response(data: dict) -> MeasureGetMeasResponse:
 
 def new_measure_get_activity_activity(data: dict) -> MeasureGetActivityActivity:
     """Create GetActivityActivity from json."""
-    timezone = timezone_or_raise(data.get("timezone"))
+    timezone: Final = timezone_or_raise(data.get("timezone"))
 
     return MeasureGetActivityActivity(
         date=arrow_or_raise(data.get("date")).replace(tzinfo=timezone),
@@ -743,7 +744,7 @@ def new_measure_get_activity_response(data: dict) -> MeasureGetActivityResponse:
     )
 
 
-AMBIGUOUS_GROUP_ATTRIBS = (
+AMBIGUOUS_GROUP_ATTRIBS: Final = (
     MeasureGetMeasGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
     MeasureGetMeasGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
 )
@@ -752,9 +753,9 @@ AMBIGUOUS_GROUP_ATTRIBS = (
 class MeasureGroupAttribs:
     """Groups of MeasureGetMeasGroupAttrib."""
 
-    ANY = tuple(enum_val for enum_val in MeasureGetMeasGroupAttrib)
-    AMBIGUOUS = AMBIGUOUS_GROUP_ATTRIBS
-    UNAMBIGUOUS = tuple(
+    ANY: Final = tuple(enum_val for enum_val in MeasureGetMeasGroupAttrib)
+    AMBIGUOUS: Final = AMBIGUOUS_GROUP_ATTRIBS
+    UNAMBIGUOUS: Final = tuple(
         enum_val
         for enum_val in MeasureGetMeasGroupAttrib
         if enum_val not in AMBIGUOUS_GROUP_ATTRIBS
@@ -764,7 +765,7 @@ class MeasureGroupAttribs:
 class MeasureTypes:
     """Groups of MeasureType."""
 
-    ANY = tuple(enum_val for enum_val in MeasureType)
+    ANY: Final = tuple(enum_val for enum_val in MeasureType)
 
 
 def query_measure_groups(
@@ -794,31 +795,23 @@ def query_measure_groups(
     else:
         iter_group_attrib = cast(Tuple[MeasureGetMeasGroupAttrib], with_group_attrib)
 
-    groups = []
-    for group in iter_groups:
-        if group.attrib not in iter_group_attrib:
-            continue
-
-        measures = []
-        for measure in group.measures:
-            if measure.type not in iter_measure_type:
-                continue
-
-            measures.append(measure)
-
-        groups.append(
-            MeasureGetMeasGroup(
-                attrib=group.attrib,
-                category=group.category,
-                created=group.created,
-                date=group.date,
-                deviceid=group.deviceid,
-                grpid=group.grpid,
-                measures=tuple(measures),
-            )
+    return tuple(
+        MeasureGetMeasGroup(
+            attrib=group.attrib,
+            category=group.category,
+            created=group.created,
+            date=group.date,
+            deviceid=group.deviceid,
+            grpid=group.grpid,
+            measures=tuple(
+                measure
+                for measure in group.measures
+                if measure.type in iter_measure_type
+            ),
         )
-
-    return tuple(groups)
+        for group in iter_groups
+        if group.attrib in iter_group_attrib
+    )
 
 
 def get_measure_value(
@@ -831,13 +824,20 @@ def get_measure_value(
     ] = MeasureGroupAttribs.ANY,
 ) -> Optional[float]:
     """Get the first value of a measure that meet the query requirements."""
-    groups = query_measure_groups(from_source, with_measure_type, with_group_attrib)
+    groups: Final = query_measure_groups(
+        from_source, with_measure_type, with_group_attrib
+    )
 
-    for group in groups:
-        for measure in group.measures:
-            return float(measure.value * pow(10, measure.unit))
-
-    return None
+    return next(
+        iter(
+            tuple(
+                float(measure.value * pow(10, measure.unit))
+                for group in groups
+                for measure in group.measures
+            )
+        ),
+        None,
+    )
 
 
 class StatusException(Exception):
@@ -882,9 +882,9 @@ class UnknownStatusException(StatusException):
 
 def response_body_or_raise(data: Any) -> Dict[str, Any]:
     """Parse withings response or raise exception."""
-    parsed_response = dict_or_raise(data)
-    status_any = parsed_response.get("status")
-    status = int_or_none(status_any)
+    parsed_response: Final = dict_or_raise(data)
+    status_any: Final = parsed_response.get("status")
+    status: Final = int_or_none(status_any)
 
     if status is None:
         raise UnknownStatusException(status=status)

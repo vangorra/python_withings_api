@@ -1,6 +1,7 @@
 """Tets for main API."""
 import datetime
 import re
+from typing import Final
 from unittest.mock import MagicMock
 from urllib import parse
 
@@ -40,8 +41,8 @@ from withings_api.common import (
 
 from .common import TIMEZONE0, TIMEZONE1, TIMEZONE_STR0, TIMEZONE_STR1
 
-_USERID = 12345
-_FETCH_TOKEN_RESPONSE_BODY = {
+_USERID: Final = 12345
+_FETCH_TOKEN_RESPONSE_BODY: Final = {
     "access_token": "my_access_token",
     "expires_in": 11,
     "token_type": "Bearer",
@@ -53,9 +54,9 @@ _FETCH_TOKEN_RESPONSE_BODY = {
 @pytest.fixture(name="withings_api")
 def withings_api_instance() -> WithingsApi:
     """Test function."""
-    client_id = "my_client_id"
-    consumer_secret = "my_consumer_secret"
-    credentials = Credentials(
+    client_id: Final = "my_client_id"
+    consumer_secret: Final = "my_consumer_secret"
+    credentials: Final = Credentials(
         access_token="my_access_token",
         token_expiry=arrow.utcnow().timestamp + 10000,
         token_type="Bearer",
@@ -71,9 +72,9 @@ def withings_api_instance() -> WithingsApi:
 @responses.activate
 def test_authorize() -> None:
     """Test function."""
-    client_id = "fake_client_id"
-    consumer_secret = "fake_consumer_secret"
-    callback_uri = "http://127.0.0.1:8080"
+    client_id: Final = "fake_client_id"
+    consumer_secret: Final = "fake_consumer_secret"
+    callback_uri: Final = "http://127.0.0.1:8080"
     arrow.utcnow = MagicMock(return_value=arrow.get(100000000))
 
     responses.add(
@@ -83,14 +84,14 @@ def test_authorize() -> None:
         status=200,
     )
 
-    auth = WithingsAuth(
+    auth: Final = WithingsAuth(
         client_id,
         consumer_secret,
         callback_uri=callback_uri,
         scope=(AuthScope.USER_METRICS, AuthScope.USER_ACTIVITY),
     )
 
-    url = auth.get_authorize_url()
+    url: Final = auth.get_authorize_url()
 
     assert url.startswith("https://account.withings.com/oauth2_user/authorize2")
 
@@ -104,11 +105,11 @@ def test_authorize() -> None:
         },
     )
 
-    params = dict(parse.parse_qsl(parse.urlsplit(url).query))
+    params: Final = dict(parse.parse_qsl(parse.urlsplit(url).query))
     assert "scope" in params
     assert len(params["scope"]) > 0
 
-    creds = auth.get_credentials("FAKE_CODE")
+    creds: Final = auth.get_credentials("FAKE_CODE")
 
     assert creds == Credentials(
         access_token="my_access_token",
@@ -124,10 +125,10 @@ def test_authorize() -> None:
 @responses.activate
 def test_refresh_token() -> None:
     """Test function."""
-    client_id = "my_client_id"
-    consumer_secret = "my_consumer_secret"
+    client_id: Final = "my_client_id"
+    consumer_secret: Final = "my_consumer_secret"
 
-    credentials = Credentials(
+    credentials: Final = Credentials(
         access_token="my_access_token,_old",
         token_expiry=arrow.utcnow().timestamp - 1,
         token_type="Bearer",
@@ -158,23 +159,23 @@ def test_refresh_token() -> None:
 
     responses_add_measure_get_activity()
 
-    refresh_callback = MagicMock()
-    api = WithingsApi(credentials, refresh_callback)
+    refresh_callback: Final = MagicMock()
+    api: Final = WithingsApi(credentials, refresh_callback)
     api.measure_get_activity()
 
     refresh_callback.assert_called_with(api.get_credentials())
-    new_credentials = api.get_credentials()
-    assert new_credentials.access_token == "my_access_token"
-    assert new_credentials.refresh_token == "my_refresh_token"
-    assert new_credentials.token_expiry > credentials.token_expiry
+    new_credentials1: Final = api.get_credentials()
+    assert new_credentials1.access_token == "my_access_token"
+    assert new_credentials1.refresh_token == "my_refresh_token"
+    assert new_credentials1.token_expiry > credentials.token_expiry
     refresh_callback.reset_mock()
 
     api.refresh_token()
     refresh_callback.assert_called_with(api.get_credentials())
-    new_credentials = api.get_credentials()
-    assert new_credentials.access_token == "my_access_token_refreshed"
-    assert new_credentials.refresh_token == "my_refresh_token_refreshed"
-    assert new_credentials.token_expiry > credentials.token_expiry
+    new_credentials2: Final = api.get_credentials()
+    assert new_credentials2.access_token == "my_access_token_refreshed"
+    assert new_credentials2.refresh_token == "my_refresh_token_refreshed"
+    assert new_credentials2.token_expiry > credentials.token_expiry
 
 
 def responses_add_user_get_device() -> None:
@@ -967,7 +968,7 @@ def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
 
 def assert_url_query_equals(url: str, expected: dict) -> None:
     """Assert a url query contains specific params."""
-    params = dict(parse.parse_qsl(parse.urlsplit(url).query))
+    params: Final = dict(parse.parse_qsl(parse.urlsplit(url).query))
 
     for key in expected:
         assert key in params
