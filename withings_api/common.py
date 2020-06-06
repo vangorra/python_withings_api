@@ -625,11 +625,11 @@ def new_get_sleep_summary_serie(data: dict) -> GetSleepSummarySerie:
     timezone: Final = timezone_or_raise(data.get("timezone"))
 
     return GetSleepSummarySerie(
-        date=arrow_or_raise(data.get("date")).replace(tzinfo=timezone),
-        enddate=arrow_or_raise(data.get("enddate")).replace(tzinfo=timezone),
+        date=arrow_or_raise(data.get("date")).to(timezone),
+        enddate=arrow_or_raise(data.get("enddate")).to(timezone),
         model=new_sleep_model(data.get("model")),
-        modified=arrow_or_raise(data.get("modified")).replace(tzinfo=timezone),
-        startdate=arrow_or_raise(data.get("startdate")).replace(tzinfo=timezone),
+        modified=arrow_or_raise(data.get("modified")).to(timezone),
+        startdate=arrow_or_raise(data.get("startdate")).to(timezone),
         timezone=timezone,
         data=new_get_sleep_summary_data(dict_or_raise(data.get("data"))),
     )
@@ -658,8 +658,8 @@ def new_measure_get_meas_group(data: dict, timezone: tzinfo) -> MeasureGetMeasGr
     return MeasureGetMeasGroup(
         grpid=int_or_raise(data.get("grpid")),
         attrib=new_measure_group_attrib(data.get("attrib")),
-        date=arrow_or_raise(data.get("date")).replace(tzinfo=timezone),
-        created=arrow_or_raise(data.get("created")).replace(tzinfo=timezone),
+        date=arrow_or_raise(data.get("date")).to(timezone),
+        created=arrow_or_raise(data.get("created")).to(timezone),
         category=new_measure_category(data.get("category")),
         deviceid=data.get("deviceid"),
         measures=_flexible_tuple_of(
@@ -700,7 +700,7 @@ def new_measure_get_meas_response(data: dict) -> MeasureGetMeasResponse:
         more=data.get("more"),
         offset=data.get("offset"),
         timezone=timezone,
-        updatetime=arrow_or_raise(data.get("updatetime")).replace(tzinfo=timezone),
+        updatetime=arrow_or_raise(data.get("updatetime")).to(timezone),
     )
 
 
@@ -709,7 +709,7 @@ def new_measure_get_activity_activity(data: dict) -> MeasureGetActivityActivity:
     timezone: Final = timezone_or_raise(data.get("timezone"))
 
     return MeasureGetActivityActivity(
-        date=arrow_or_raise(data.get("date")).replace(tzinfo=timezone),
+        date=arrow_or_raise(data.get("date")).to(timezone),
         timezone=timezone,
         deviceid=str_or_none(data.get("deviceid")),
         brand=int_or_raise(data.get("brand")),

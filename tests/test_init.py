@@ -310,7 +310,7 @@ def test_measure_get_activity(withings_api: WithingsApi) -> None:
         offset=0,
         activities=(
             MeasureGetActivityActivity(
-                date=arrow.get("2019-01-01").replace(tzinfo=TIMEZONE0),
+                date=arrow.get("2019-01-01").to(TIMEZONE0),
                 timezone=TIMEZONE0,
                 is_tracker=True,
                 deviceid="dev1",
@@ -333,7 +333,7 @@ def test_measure_get_activity(withings_api: WithingsApi) -> None:
                 hr_zone_3=116,
             ),
             MeasureGetActivityActivity(
-                date=arrow.get("2019-01-02").replace(tzinfo=TIMEZONE1),
+                date=arrow.get("2019-01-02").to(TIMEZONE1),
                 timezone=TIMEZONE1,
                 is_tracker=False,
                 deviceid="dev2",
@@ -417,13 +417,13 @@ def test_measure_get_meas(withings_api: WithingsApi) -> None:
         more=False,
         offset=0,
         timezone=TIMEZONE0,
-        updatetime=arrow.get(1409596058).replace(tzinfo=TIMEZONE0),
+        updatetime=arrow.get(1409596058).to(TIMEZONE0),
         measuregrps=(
             MeasureGetMeasGroup(
                 attrib=MeasureGetMeasGroupAttrib.MANUAL_USER_DURING_ACCOUNT_CREATION,
                 category=MeasureGetMeasGroupCategory.REAL,
-                created=arrow.get(1111111111).replace(tzinfo=TIMEZONE0),
-                date=arrow.get("2019-01-01").replace(tzinfo=TIMEZONE0),
+                created=arrow.get(1111111111).to(TIMEZONE0),
+                date=arrow.get("2019-01-01").to(TIMEZONE0),
                 deviceid="dev1",
                 grpid=1,
                 measures=(
@@ -434,8 +434,8 @@ def test_measure_get_meas(withings_api: WithingsApi) -> None:
             MeasureGetMeasGroup(
                 attrib=MeasureGetMeasGroupAttrib.DEVICE_ENTRY_FOR_USER_AMBIGUOUS,
                 category=MeasureGetMeasGroupCategory.USER_OBJECTIVES,
-                created=arrow.get(2222222222).replace(tzinfo=TIMEZONE0),
-                date=arrow.get("2019-01-02").replace(tzinfo=TIMEZONE0),
+                created=arrow.get(2222222222).to(TIMEZONE0),
+                date=arrow.get("2019-01-02").to(TIMEZONE0),
                 deviceid="dev2",
                 grpid=2,
                 measures=(
@@ -590,11 +590,11 @@ def test_sleep_get_summary(withings_api: WithingsApi) -> None:
         offset=1,
         series=(
             GetSleepSummarySerie(
-                date=arrow.get("2018-10-30").replace(tzinfo=TIMEZONE0),
-                enddate=arrow.get(1540897020).replace(tzinfo=TIMEZONE0),
+                date=arrow.get("2018-10-30").to(TIMEZONE0),
+                enddate=arrow.get(1540897020).to(TIMEZONE0),
                 model=SleepModel.TRACKER,
-                modified=arrow.get(1540897246).replace(tzinfo=TIMEZONE0),
-                startdate=arrow.get(1540857420).replace(tzinfo=TIMEZONE0),
+                modified=arrow.get(1540897246).to(TIMEZONE0),
+                startdate=arrow.get(1540857420).to(TIMEZONE0),
                 timezone=TIMEZONE0,
                 data=GetSleepSummaryData(
                     breathing_disturbances_intensity=110,
@@ -617,11 +617,11 @@ def test_sleep_get_summary(withings_api: WithingsApi) -> None:
                 ),
             ),
             GetSleepSummarySerie(
-                date=arrow.get("2018-10-31").replace(tzinfo=TIMEZONE1),
-                enddate=arrow.get(1540973400).replace(tzinfo=TIMEZONE1),
+                date=arrow.get("2018-10-31").to(TIMEZONE1),
+                enddate=arrow.get(1540973400).to(TIMEZONE1),
                 model=SleepModel.TRACKER,
-                modified=arrow.get(1541020749).replace(tzinfo=TIMEZONE1),
-                startdate=arrow.get(1540944960).replace(tzinfo=TIMEZONE1),
+                modified=arrow.get(1541020749).to(TIMEZONE1),
+                startdate=arrow.get(1540944960).to(TIMEZONE1),
                 timezone=TIMEZONE1,
                 data=GetSleepSummaryData(
                     breathing_disturbances_intensity=210,
