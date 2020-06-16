@@ -91,7 +91,7 @@ def main() -> None:
     api: Final = WithingsApi(load_credentials(), refresh_cb=save_credentials)
 
     print("Getting devices...")
-    assert api.measure_get_meas() is not None
+    assert api.user_get_device() is not None
 
     print("Getting measures...")
     assert (
