@@ -164,6 +164,7 @@ class GetSleepField(Enum):
 
     HR = "hr"
     RR = "rr"
+    SNORING = "snoring"
 
 
 class GetSleepSummaryField(Enum):
@@ -213,10 +214,11 @@ class UserGetDeviceResponse(NamedTuple):
     devices: Tuple[UserGetDeviceDevice, ...]
 
 
-class SleepGetTimestamp(NamedTuple):
-    """SleepGetTimestamp."""
+class SleepGetTimestampValue(NamedTuple):
+    """SleepGetTimestampValue."""
 
     timestamp: Arrow
+    value: int
 
 
 class SleepGetSerie(NamedTuple):
@@ -225,8 +227,9 @@ class SleepGetSerie(NamedTuple):
     enddate: Arrow
     startdate: Arrow
     state: SleepState
-    hr: Optional[SleepGetTimestamp]
-    rr: Optional[SleepGetTimestamp]
+    hr: Tuple[SleepGetTimestampValue, ...]
+    rr: Tuple[SleepGetTimestampValue, ...]
+    snoring: Tuple[SleepGetTimestampValue, ...]
 
 
 class SleepGetResponse(NamedTuple):
@@ -554,12 +557,17 @@ def new_notify_get_response(data: dict) -> NotifyGetResponse:
     )
 
 
-def new_sleep_timestamp(data: Optional[Dict[Any, Any]]) -> Optional[SleepGetTimestamp]:
+def new_sleep_timestamps(
+    data: Optional[Dict[Any, Any]]
+) -> Tuple[SleepGetTimestampValue, ...]:
     """Create SleepTimestamp from json."""
     if data is None:
-        return data
+        return ()
 
-    return SleepGetTimestamp(arrow_or_raise(data.get("$timestamp")))
+    return tuple(
+        SleepGetTimestampValue(arrow_or_raise(int(timestamp)), value)
+        for timestamp, value in data.items()
+    )
 
 
 def new_sleep_get_serie(data: dict) -> SleepGetSerie:
@@ -568,8 +576,11 @@ def new_sleep_get_serie(data: dict) -> SleepGetSerie:
         enddate=arrow_or_raise(data.get("enddate")),
         startdate=arrow_or_raise(data.get("startdate")),
         state=new_sleep_state(data.get("state")),
-        hr=new_sleep_timestamp(dict_or_none(data.get(GetSleepField.HR.value))),
-        rr=new_sleep_timestamp(dict_or_none(data.get(GetSleepField.RR.value))),
+        hr=new_sleep_timestamps(dict_or_none(data.get(GetSleepField.HR.value))),
+        rr=new_sleep_timestamps(dict_or_none(data.get(GetSleepField.RR.value))),
+        snoring=new_sleep_timestamps(
+            dict_or_none(data.get(GetSleepField.SNORING.value))
+        ),
     )
 
 
