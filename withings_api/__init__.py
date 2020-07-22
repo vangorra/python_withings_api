@@ -20,6 +20,8 @@ from .common import (
     GetActivityField,
     GetSleepField,
     GetSleepSummaryField,
+    HeartGetResponse,
+    HeartListResponse,
     MeasureGetActivityResponse,
     MeasureGetMeasGroupCategory,
     MeasureGetMeasResponse,
@@ -32,6 +34,8 @@ from .common import (
     UserGetDeviceResponse,
     int_or_raise,
     new_credentials,
+    new_heart_get_response,
+    new_heart_list_response,
     new_measure_get_activity_response,
     new_measure_get_meas_response,
     new_notify_get_response,
@@ -69,6 +73,7 @@ class AbstractWithingsApi:
     PATH_MEASURE: Final = "measure"
     PATH_V2_SLEEP: Final = "v2/sleep"
     PATH_NOTIFY: Final = "notify"
+    PATH_V2_HEART: Final = "v2/heart"
 
     @abstractmethod
     def _request(
@@ -221,6 +226,39 @@ class AbstractWithingsApi:
 
         return new_sleep_get_summary_response(
             self.request(path=self.PATH_V2_SLEEP, params=params)
+        )
+
+    def heart_get(self, signalid: int) -> HeartGetResponse:
+        """Get ECG recording."""
+        params: Final[ParamsType] = {}
+
+        update_params(params, "signalid", signalid)
+        update_params(params, "action", "get")
+
+        return new_heart_get_response(
+            self.request(path=self.PATH_V2_HEART, params=params)
+        )
+
+    def heart_list(
+        self,
+        startdate: Optional[DateType] = None,
+        enddate: Optional[DateType] = None,
+        offset: Optional[int] = None,
+    ) -> HeartListResponse:
+        """Get heart list."""
+        params: Final[ParamsType] = {}
+
+        update_params(
+            params, "startdate", startdate, lambda val: arrow.get(val).timestamp,
+        )
+        update_params(
+            params, "enddate", enddate, lambda val: arrow.get(val).timestamp,
+        )
+        update_params(params, "offset", offset)
+        update_params(params, "action", "list")
+
+        return new_heart_list_response(
+            self.request(path=self.PATH_V2_HEART, params=params)
         )
 
     def notify_get(
