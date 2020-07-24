@@ -20,7 +20,6 @@ jobs:
         run: |
           ./scripts/build.sh
         env:
-          CI: true
-          # Only run codecov for 1 version of python. The service fails if we push too many results at once.
-          CODECOV_ENABLED: ${{ matrix.python-version == 3.8 }}
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          CI: 1
+      - name: Codecov
+        uses: codecov/codecov-action@v1.0.12

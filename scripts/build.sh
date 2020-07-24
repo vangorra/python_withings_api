@@ -87,13 +87,4 @@ poetry build
 
 
 echo
-echo "===Uploading code coverage==="
-if [[ "${CI:-}" = "true" ]] && [[ "${CODECOV_ENABLED:-}" = "true" ]]; then
-  curl -s https://codecov.io/bash | bash
-else
-  echo "Skipping."
-fi
-
-
-echo
 echo "Build complete"
