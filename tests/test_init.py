@@ -678,7 +678,7 @@ def responses_add_heart_get() -> None:
             "body": {
                 "signal": [-20, 0, 20],
                 "sampling_frequency": 500,
-                "wearposition": HeartWearPosition.LEFT_ARM,
+                "wearposition": HeartWearPosition.LEFT_ARM.real,
             },
         },
     )
