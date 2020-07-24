@@ -10,6 +10,7 @@ import responses
 from typing_extensions import Final
 from withings_api import WithingsApi, WithingsAuth
 from withings_api.common import (
+    AfibClassification,
     AuthScope,
     Credentials,
     GetActivityField,
@@ -17,6 +18,13 @@ from withings_api.common import (
     GetSleepSummaryData,
     GetSleepSummaryField,
     GetSleepSummarySerie,
+    HeartBloodPressure,
+    HeartGetResponse,
+    HeartListECG,
+    HeartListResponse,
+    HeartListSerie,
+    HeartModel,
+    HeartWearPosition,
     MeasureGetActivityActivity,
     MeasureGetActivityResponse,
     MeasureGetMeasGroup,
@@ -659,6 +667,119 @@ def test_sleep_get_summary(withings_api: WithingsApi) -> None:
     )
 
 
+def responses_add_heart_get() -> None:
+    """Set up request response."""
+    responses.add(
+        method=responses.GET,
+        url=re.compile("https://wbsapi.withings.net/v2/heart?.*action=get(&.*)?"),
+        status=200,
+        json={
+            "status": 0,
+            "body": {
+                "signal": [-20, 0, 20],
+                "sampling_frequency": 500,
+                "wearposition": HeartWearPosition.LEFT_ARM.real,
+            },
+        },
+    )
+
+
+@responses.activate
+def test_heart_get(withings_api: WithingsApi) -> None:
+    """Test function."""
+    responses_add_heart_get()
+    assert withings_api.heart_get(123456) == HeartGetResponse(
+        signal=tuple([-20, 0, 20]),
+        sampling_frequency=500,
+        wearposition=HeartWearPosition.LEFT_ARM,
+    )
+
+
+def responses_add_heart_list() -> None:
+    """Set up request response."""
+    responses.add(
+        method=responses.GET,
+        url=re.compile("https://wbsapi.withings.net/v2/heart?.*action=list(&.*)?"),
+        status=200,
+        json={
+            "status": 0,
+            "body": {
+                "series": [
+                    {
+                        "deviceid": "0123456789abcdef0123456789abcdef01234567",
+                        "model": HeartModel.BPM_CORE.real,
+                        "ecg": {
+                            "signalid": 9876543,
+                            "afib": AfibClassification.NEGATIVE.real,
+                        },
+                        "bloodpressure": {"diastole": 80, "systole": 120},
+                        "heart_rate": 78,
+                        "timestamp": 1594911107,
+                    },
+                    {
+                        "deviceid": "0123456789abcdef0123456789abcdef01234567",
+                        "model": HeartModel.BPM_CORE.real,
+                        "ecg": {
+                            "signalid": 7654321,
+                            "afib": AfibClassification.POSITIVE.real,
+                        },
+                        "bloodpressure": {"diastole": 75, "systole": 125},
+                        "heart_rate": 87,
+                        "timestamp": 1594910902,
+                    },
+                    # the Move ECG device does not take blood pressure, leave it out here
+                    {
+                        "deviceid": "abcdef0123456789abcdef012345670123456789",
+                        "model": HeartModel.MOVE_ECG.real,
+                        "ecg": {
+                            "signalid": 123987,
+                            "afib": AfibClassification.INCONCLUSIVE.real,
+                        },
+                        "heart_rate": 77,
+                        "timestamp": 1594921551,
+                    },
+                ],
+                "more": False,
+                "offset": 0,
+            },
+        },
+    )
+
+
+@responses.activate
+def test_heart_list(withings_api: WithingsApi) -> None:
+    """Test function."""
+    responses_add_heart_list()
+    assert withings_api.heart_list() == HeartListResponse(
+        more=False,
+        offset=0,
+        series=(
+            HeartListSerie(
+                ecg=HeartListECG(signalid=9876543, afib=AfibClassification.NEGATIVE),
+                bloodpressure=HeartBloodPressure(diastole=80, systole=120),
+                heart_rate=78,
+                timestamp=arrow.get(1594911107),
+                model=HeartModel.BPM_CORE,
+            ),
+            HeartListSerie(
+                ecg=HeartListECG(signalid=7654321, afib=AfibClassification.POSITIVE),
+                bloodpressure=HeartBloodPressure(diastole=75, systole=125),
+                heart_rate=87,
+                timestamp=arrow.get(1594910902),
+                model=HeartModel.BPM_CORE,
+            ),
+            # the Move ECG device does not take blood pressure
+            HeartListSerie(
+                ecg=HeartListECG(signalid=123987, afib=AfibClassification.INCONCLUSIVE),
+                bloodpressure=None,
+                heart_rate=77,
+                timestamp=arrow.get(1594921551),
+                model=HeartModel.MOVE_ECG,
+            ),
+        ),
+    )
+
+
 def responses_add_notify_get() -> None:
     """Set up request response."""
     responses.add(
@@ -976,6 +1097,35 @@ def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
 
     assert_url_path(responses.calls[0].request.url, "/v2/sleep")
     assert_url_query_equals(responses.calls[0].request.url, {"action": "getsummary"})
+
+
+@responses.activate
+def test_heart_get_params(withings_api: WithingsApi) -> None:
+    """Test function."""
+    responses_add_heart_get()
+    withings_api.heart_get(signalid=1234567)
+
+    assert_url_query_equals(
+        responses.calls[0].request.url, {"signalid": "1234567"},
+    )
+
+    assert_url_path(responses.calls[0].request.url, "/v2/heart")
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "get"})
+
+
+@responses.activate
+def test_heart_list_params(withings_api: WithingsApi) -> None:
+    """Test function."""
+    responses_add_heart_list()
+    withings_api.heart_list(startdate="2020-01-01", enddate="2020-07-23", offset=1)
+
+    assert_url_query_equals(
+        responses.calls[0].request.url,
+        {"startdate": "1577836800", "enddate": "1595462400", "offset": "1"},
+    )
+
+    assert_url_path(responses.calls[0].request.url, "/v2/heart")
+    assert_url_query_equals(responses.calls[0].request.url, {"action": "list"})
 
 
 def assert_url_query_equals(url: str, expected: dict) -> None:

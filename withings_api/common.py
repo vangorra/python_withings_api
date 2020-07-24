@@ -43,7 +43,7 @@ class SleepModel(IntEnum):
 
 
 def new_sleep_model(value: Optional[int]) -> SleepModel:
-    """Create enum base on primitive."""
+    """Create enum based on primitive."""
     return cast(SleepModel, enum_or_raise(value, SleepModel))
 
 
@@ -57,7 +57,7 @@ class SleepState(IntEnum):
 
 
 def new_sleep_state(value: Optional[int]) -> SleepState:
-    """Create enum base on primitive."""
+    """Create enum based on primitive."""
     return cast(SleepState, enum_or_raise(value, SleepState))
 
 
@@ -75,7 +75,7 @@ class MeasureGetMeasGroupAttrib(IntEnum):
 
 
 def new_measure_group_attrib(value: Optional[int]) -> MeasureGetMeasGroupAttrib:
-    """Create enum base on primitive."""
+    """Create enum based on primitive."""
     return cast(
         MeasureGetMeasGroupAttrib, enum_or_raise(value, MeasureGetMeasGroupAttrib)
     )
@@ -89,7 +89,7 @@ class MeasureGetMeasGroupCategory(IntEnum):
 
 
 def new_measure_category(value: Optional[int]) -> MeasureGetMeasGroupCategory:
-    """Create enum base on primitive."""
+    """Create enum based on primitive."""
     return cast(
         MeasureGetMeasGroupCategory, enum_or_raise(value, MeasureGetMeasGroupCategory)
     )
@@ -117,7 +117,7 @@ class MeasureType(IntEnum):
 
 
 def new_measure_type(value: Optional[int]) -> MeasureType:
-    """Create enum base on primitive."""
+    """Create enum based on primitive."""
     return cast(MeasureType, enum_or_raise(value, MeasureType))
 
 
@@ -134,7 +134,7 @@ class NotifyAppli(IntEnum):
 
 
 def new_notify_appli(value: Optional[int]) -> NotifyAppli:
-    """Create enum base on primitive."""
+    """Create enum based on primitive."""
     return cast(NotifyAppli, enum_or_raise(value, NotifyAppli))
 
 
@@ -343,6 +343,90 @@ class MeasureGetActivityResponse(NamedTuple):
     activities: Tuple[MeasureGetActivityActivity, ...]
     more: bool
     offset: int
+
+
+class HeartModel(IntEnum):
+    """Heart model."""
+
+    BPM_CORE = 44
+    MOVE_ECG = 91
+
+
+def new_heart_model(value: Optional[int]) -> HeartModel:
+    """Create enum based on primitive."""
+    return cast(HeartModel, enum_or_raise(value, HeartModel))
+
+
+class AfibClassification(IntEnum):
+    """Atrial fibrillation classification"""
+
+    NEGATIVE = 0
+    POSITIVE = 1
+    INCONCLUSIVE = 2
+
+
+def new_afib_classification(value: Optional[int]) -> AfibClassification:
+    """Create enum based on primitive."""
+    return cast(AfibClassification, enum_or_raise(value, AfibClassification))
+
+
+class HeartWearPosition(IntEnum):
+    """Wear position of heart model."""
+
+    RIGHT_WRIST = 0
+    LEFT_WRIST = 1
+    RIGHT_ARM = 2
+    LEFT_ARM = 3
+    RIGHT_FOOT = 4
+    LEFT_FOOT = 5
+
+
+def new_heart_wear_position(value: Optional[int]) -> HeartWearPosition:
+    """Create enum based on primitive."""
+    return cast(HeartWearPosition, enum_or_raise(value, HeartWearPosition))
+
+
+class HeartGetResponse(NamedTuple):
+    """HeartGetResponse."""
+
+    signal: Tuple[int, ...]
+    sampling_frequency: int
+    wearposition: HeartWearPosition
+
+
+class HeartListECG(NamedTuple):
+    """HeartListECG."""
+
+    signalid: int
+    afib: AfibClassification
+
+
+class HeartBloodPressure(NamedTuple):
+    """HeartBloodPressure."""
+
+    diastole: int
+    systole: int
+
+
+class HeartListSerie(NamedTuple):
+    """HeartListSerie"""
+
+    ecg: HeartListECG
+
+    # blood pressure is optional as not all devices (e.g. Move ECG) collect it
+    bloodpressure: Optional[HeartBloodPressure]
+
+    heart_rate: int
+    timestamp: Arrow
+    model: HeartModel
+
+
+class HeartListResponse(NamedTuple):
+    """HeartListResponse."""
+
+    more: bool
+    offset: int
+    series: Tuple[HeartListSerie, ...]
 
 
 class Credentials(NamedTuple):
@@ -848,6 +932,56 @@ def get_measure_value(
             )
         ),
         None,
+    )
+
+
+def new_heart_get_response(data: dict) -> HeartGetResponse:
+    """Create GetSleepResponse from json."""
+    return HeartGetResponse(
+        signal=tuple(sample for sample in data.get("signal", ())),
+        sampling_frequency=int_or_raise(data.get("sampling_frequency")),
+        wearposition=new_heart_wear_position(data.get("wearposition")),
+    )
+
+
+def new_heart_list_ecg(data: dict) -> HeartListECG:
+    """Create HeartListECG from json."""
+    return HeartListECG(
+        signalid=int_or_raise(data.get("signalid")),
+        afib=new_afib_classification(data.get("afib")),
+    )
+
+
+def new_heart_blood_pressure(
+    data: Optional[Dict[Any, Any]]
+) -> Optional[HeartBloodPressure]:
+    """Create HeartBloodPressure from json."""
+    if data is None:
+        return data
+
+    return HeartBloodPressure(
+        diastole=int_or_raise(data.get("diastole")),
+        systole=int_or_raise(data.get("systole")),
+    )
+
+
+def new_heart_list_serie(data: dict) -> HeartListSerie:
+    """Create HeartListSerie from json."""
+    return HeartListSerie(
+        model=new_heart_model(int_or_raise(data.get("model"))),
+        ecg=new_heart_list_ecg(dict_or_raise(data.get("ecg"))),
+        bloodpressure=new_heart_blood_pressure(dict_or_none(data.get("bloodpressure"))),
+        heart_rate=int_or_raise(data.get("heart_rate")),
+        timestamp=arrow_or_raise((int_or_raise(data.get("timestamp")))),
+    )
+
+
+def new_heart_list_response(data: dict) -> HeartListResponse:
+    """Create HeartListResponse from json."""
+    return HeartListResponse(
+        more=bool_or_raise(data.get("more")),
+        offset=int_or_raise(data.get("offset")),
+        series=_flexible_tuple_of(data.get("series", ()), new_heart_list_serie),
     )
 
 
