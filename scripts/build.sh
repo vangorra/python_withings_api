@@ -91,7 +91,7 @@ echo "===Uploading code coverage==="
 if [[ "${CI:-}" = "true" ]] && [[ "${CODECOV_ENABLED:-}" = "true" ]]; then
   curl -s https://codecov.io/bash | bash
 else
-  echo "Skipping. Will only run during continuous integration build."
+  echo "Skipping."
 fi
 
 
