@@ -1082,6 +1082,7 @@ def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
             GetSleepSummaryField.DEEP_SLEEP_DURATION,
             GetSleepSummaryField.HR_AVERAGE,
         ),
+        offset=7,
         lastupdate=10000000,
     )
 
@@ -1091,6 +1092,7 @@ def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
             "startdateymd": "2019-01-01",
             "enddateymd": "2019-01-02",
             "data_fields": "deepsleepduration,hr_average",
+            "offset": "7",
             "lastupdate": "10000000",
         },
     )

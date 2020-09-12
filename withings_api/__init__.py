@@ -196,6 +196,7 @@ class AbstractWithingsApi:
         startdateymd: Optional[DateType] = None,
         enddateymd: Optional[DateType] = None,
         data_fields: Optional[Iterable[GetSleepSummaryField]] = None,
+        offset: Optional[int] = None,
         lastupdate: Optional[DateType] = None,
     ) -> SleepGetSummaryResponse:
         """Get sleep summary."""
@@ -219,6 +220,7 @@ class AbstractWithingsApi:
             data_fields,
             lambda fields: ",".join([field.value for field in fields]),
         )
+        update_params(params, "offset", offset)
         update_params(
             params, "lastupdate", lastupdate, lambda val: arrow.get(val).timestamp
         )
