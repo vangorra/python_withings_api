@@ -442,6 +442,7 @@ class WithingsApi(AbstractWithingsApi):
             ),
             auto_refresh_url="%s/%s" % (WithingsAuth.URL, WithingsAuth.PATH_TOKEN),
             auto_refresh_kwargs={
+                "action": "requesttoken",
                 "client_id": credentials.client_id,
                 "client_secret": credentials.consumer_secret,
             },

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Integration test."""
 import argparse
+import os
 from os import path
 import pickle
 from typing import cast
 from urllib import parse
 
 import arrow
+from oauthlib.oauth2.rfc6749.errors import MissingTokenError
 from typing_extensions import Final
 from withings_api import AuthScope, Credentials, WithingsApi, WithingsAuth
 
@@ -17,6 +19,7 @@ CREDENTIALS_FILE: Final = path.abspath(
 
 def save_credentials(credentials: Credentials) -> None:
     """Save credentials to a file."""
+    print("Saving credentials in:", CREDENTIALS_FILE)
     with open(CREDENTIALS_FILE, "wb") as file_handle:
         pickle.dump(credentials, file_handle)
 
@@ -58,6 +61,15 @@ def main() -> None:
 
     args: Final = parser.parse_args()
 
+    if path.isfile(CREDENTIALS_FILE):
+        print("Attempting to load credentials from:", CREDENTIALS_FILE)
+        api = WithingsApi(load_credentials(), refresh_cb=save_credentials)
+        try:
+            api.user_get_device()
+        except MissingTokenError:
+            os.remove(CREDENTIALS_FILE)
+            print("Credentials in file are expired. Re-starting auth procedure...")
+
     if not path.isfile(CREDENTIALS_FILE):
         print("Attempting to get credentials...")
         auth: Final = WithingsAuth(
@@ -88,7 +100,14 @@ def main() -> None:
         print("Getting credentials with auth code", auth_code)
         save_credentials(auth.get_credentials(auth_code))
 
-    api: Final = WithingsApi(load_credentials(), refresh_cb=save_credentials)
+        api = WithingsApi(load_credentials(), refresh_cb=save_credentials)
+
+    # This only tests the refresh token. Token refresh is handled automatically by the api so you should not
+    # need to use this method so long as your code regularly (every 3 hours or so) requests data from withings.
+    orig_access_token = api.get_credentials().access_token
+    print("Refreshing token...")
+    api.refresh_token()
+    assert orig_access_token != api.get_credentials().access_token
 
     print("Getting devices...")
     assert api.user_get_device() is not None
