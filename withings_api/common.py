@@ -2,6 +2,7 @@
 
 from datetime import tzinfo
 from enum import Enum, IntEnum
+import sys
 import traceback
 from typing import (
     Any,
@@ -17,7 +18,7 @@ from typing import (
     Union,
     cast,
 )
-
+from recordclass import RecordClass
 import arrow
 from arrow import Arrow
 from dateutil import tz
@@ -34,6 +35,33 @@ from .const import (
     STATUS_UNAUTHORIZED,
 )
 
+import yaml
+
+def named_tuple(self, data):
+    if hasattr(data, '_asdict'):
+        d = data._asdict()
+        if 'timezone' in d:
+          d['timezone'] = str(d['timezone'])
+        return self.represent_dict(d)
+    return self.represent_list(data)
+
+yaml.SafeDumper.yaml_multi_representers[tuple] = named_tuple
+
+def record_class(self, data):
+    return self.represent_dict(data)
+
+yaml.SafeDumper.yaml_multi_representers[dict] = record_class
+
+def object_repr(self, data):
+    return self.represent_str(str(data))
+
+yaml.SafeDumper.yaml_multi_representers[object] = object_repr
+
+def yamlAdd(c):
+  def dump(self, **kwargs):
+    yaml.safe_dump(self._asdict(), sys.stdout, **kwargs)
+  c.dump = dump
+  return c
 
 class SleepModel(IntEnum):
     """Sleep model."""
@@ -107,13 +135,14 @@ class MeasureType(IntEnum):
     SYSTOLIC_BLOOD_PRESSURE = 10
     HEART_RATE = 11
     TEMPERATURE = 12
-    SP02 = 54
+    SPO2 = 54
     BODY_TEMPERATURE = 71
     SKIN_TEMPERATURE = 73
     MUSCLE_MASS = 76
     HYDRATION = 77
     BONE_MASS = 88
     PULSE_WAVE_VELOCITY = 91
+    VO2_MAX = 123
 
 
 def new_measure_type(value: Optional[int]) -> MeasureType:
@@ -198,6 +227,7 @@ class AuthScope(Enum):
     USER_SLEEP_EVENTS = "user.sleepevents"
 
 
+@yamlAdd
 class UserGetDeviceDevice(NamedTuple):
     """UserGetDeviceDevice."""
 
@@ -208,12 +238,14 @@ class UserGetDeviceDevice(NamedTuple):
     timezone: tzinfo
 
 
+@yamlAdd
 class UserGetDeviceResponse(NamedTuple):
     """UserGetDeviceResponse."""
 
     devices: Tuple[UserGetDeviceDevice, ...]
 
 
+@yamlAdd
 class SleepGetTimestampValue(NamedTuple):
     """SleepGetTimestampValue."""
 
@@ -221,6 +253,7 @@ class SleepGetTimestampValue(NamedTuple):
     value: int
 
 
+@yamlAdd
 class SleepGetSerie(NamedTuple):
     """SleepGetSerie."""
 
@@ -232,6 +265,7 @@ class SleepGetSerie(NamedTuple):
     snoring: Tuple[SleepGetTimestampValue, ...]
 
 
+@yamlAdd
 class SleepGetResponse(NamedTuple):
     """SleepGetResponse."""
 
@@ -239,6 +273,7 @@ class SleepGetResponse(NamedTuple):
     series: Tuple[SleepGetSerie, ...]
 
 
+@yamlAdd
 class GetSleepSummaryData(NamedTuple):
     """GetSleepSummaryData."""
 
@@ -261,6 +296,7 @@ class GetSleepSummaryData(NamedTuple):
     wakeupduration: Optional[int]
 
 
+@yamlAdd
 class GetSleepSummarySerie(NamedTuple):
     """GetSleepSummarySerie."""
 
@@ -273,6 +309,7 @@ class GetSleepSummarySerie(NamedTuple):
     data: GetSleepSummaryData
 
 
+@yamlAdd
 class SleepGetSummaryResponse(NamedTuple):
     """SleepGetSummaryResponse."""
 
@@ -281,6 +318,7 @@ class SleepGetSummaryResponse(NamedTuple):
     series: Tuple[GetSleepSummarySerie, ...]
 
 
+@yamlAdd
 class MeasureGetMeasMeasure(NamedTuple):
     """MeasureGetMeasMeasure."""
 
@@ -289,6 +327,7 @@ class MeasureGetMeasMeasure(NamedTuple):
     value: int
 
 
+@yamlAdd
 class MeasureGetMeasGroup(NamedTuple):
     """MeasureGetMeasGroup."""
 
@@ -301,6 +340,7 @@ class MeasureGetMeasGroup(NamedTuple):
     measures: Tuple[MeasureGetMeasMeasure, ...]
 
 
+@yamlAdd
 class MeasureGetMeasResponse(NamedTuple):
     """MeasureGetMeasResponse."""
 
@@ -311,6 +351,7 @@ class MeasureGetMeasResponse(NamedTuple):
     updatetime: Arrow
 
 
+#@yamlAdd
 class MeasureGetActivityActivity(NamedTuple):
     """MeasureGetActivityActivity."""
 
@@ -337,6 +378,7 @@ class MeasureGetActivityActivity(NamedTuple):
     hr_zone_3: Optional[int]
 
 
+@yamlAdd
 class MeasureGetActivityResponse(NamedTuple):
     """MeasureGetActivityResponse."""
 
@@ -350,6 +392,7 @@ class HeartModel(IntEnum):
 
     BPM_CORE = 44
     MOVE_ECG = 91
+    SCAN_WATCH = 93
 
 
 def new_heart_model(value: Optional[int]) -> HeartModel:
@@ -386,6 +429,7 @@ def new_heart_wear_position(value: Optional[int]) -> HeartWearPosition:
     return cast(HeartWearPosition, enum_or_raise(value, HeartWearPosition))
 
 
+@yamlAdd
 class HeartGetResponse(NamedTuple):
     """HeartGetResponse."""
 
@@ -394,6 +438,7 @@ class HeartGetResponse(NamedTuple):
     wearposition: HeartWearPosition
 
 
+@yamlAdd
 class HeartListECG(NamedTuple):
     """HeartListECG."""
 
@@ -401,6 +446,7 @@ class HeartListECG(NamedTuple):
     afib: AfibClassification
 
 
+@yamlAdd
 class HeartBloodPressure(NamedTuple):
     """HeartBloodPressure."""
 
@@ -408,10 +454,12 @@ class HeartBloodPressure(NamedTuple):
     systole: int
 
 
-class HeartListSerie(NamedTuple):
+@yamlAdd
+class HeartListSerie(RecordClass):
     """HeartListSerie"""
 
-    ecg: HeartListECG
+    ecg: Optional[HeartListECG]
+    ecgvalues: Optional[HeartGetResponse]
 
     # blood pressure is optional as not all devices (e.g. Move ECG) collect it
     bloodpressure: Optional[HeartBloodPressure]
@@ -421,6 +469,7 @@ class HeartListSerie(NamedTuple):
     model: HeartModel
 
 
+@yamlAdd
 class HeartListResponse(NamedTuple):
     """HeartListResponse."""
 
@@ -429,6 +478,7 @@ class HeartListResponse(NamedTuple):
     series: Tuple[HeartListSerie, ...]
 
 
+@yamlAdd
 class Credentials(NamedTuple):
     """Credentials."""
 
@@ -441,6 +491,7 @@ class Credentials(NamedTuple):
     consumer_secret: str
 
 
+@yamlAdd
 class NotifyListProfile(NamedTuple):
     """NotifyListProfile."""
 
@@ -450,12 +501,14 @@ class NotifyListProfile(NamedTuple):
     comment: Optional[str]
 
 
+@yamlAdd
 class NotifyListResponse(NamedTuple):
     """NotifyListResponse."""
 
     profiles: Tuple[NotifyListProfile, ...]
 
 
+@yamlAdd
 class NotifyGetResponse(NamedTuple):
     """NotifyGetResponse."""
 
@@ -946,10 +999,13 @@ def new_heart_get_response(data: dict) -> HeartGetResponse:
 
 def new_heart_list_ecg(data: dict) -> HeartListECG:
     """Create HeartListECG from json."""
-    return HeartListECG(
-        signalid=int_or_raise(data.get("signalid")),
-        afib=new_afib_classification(data.get("afib")),
-    )
+    if data and 'signalid' in data:
+      return HeartListECG(
+          signalid=int_or_none(data.get("signalid")),
+          afib=new_afib_classification(data.get("afib")),
+      )
+    else:
+      return None
 
 
 def new_heart_blood_pressure(
@@ -969,15 +1025,18 @@ def new_heart_list_serie(data: dict) -> HeartListSerie:
     """Create HeartListSerie from json."""
     return HeartListSerie(
         model=new_heart_model(int_or_raise(data.get("model"))),
-        ecg=new_heart_list_ecg(dict_or_raise(data.get("ecg"))),
+        ecg=new_heart_list_ecg(dict_or_none(data.get("ecg"))),
+        ecgvalues=None,
         bloodpressure=new_heart_blood_pressure(dict_or_none(data.get("bloodpressure"))),
-        heart_rate=int_or_raise(data.get("heart_rate")),
+        heart_rate=int_or_none(data.get("heart_rate")),
         timestamp=arrow_or_raise((int_or_raise(data.get("timestamp")))),
     )
 
 
 def new_heart_list_response(data: dict) -> HeartListResponse:
     """Create HeartListResponse from json."""
+    series = data['series']
+    series = [s for s in series if 'ecg' in s]
     return HeartListResponse(
         more=bool_or_raise(data.get("more")),
         offset=int_or_raise(data.get("offset")),

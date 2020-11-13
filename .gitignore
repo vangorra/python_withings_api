@@ -13,3 +13,7 @@ build
 .credentials
 .mypy_cache
 .pytest_cache
+**/*.swo
+.vscode
+*.yml
+**/*.swp

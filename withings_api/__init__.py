@@ -26,6 +26,7 @@ from .common import (
     MeasureGetMeasGroupCategory,
     MeasureGetMeasResponse,
     MeasureType,
+    MeasureTypes,
     NotifyAppli,
     NotifyGetResponse,
     NotifyListResponse,
@@ -101,8 +102,8 @@ class AbstractWithingsApi:
 
     def measure_get_activity(
         self,
-        startdateymd: Optional[DateType] = None,
-        enddateymd: Optional[DateType] = None,
+        startdate: Optional[DateType] = None,
+        enddate: Optional[DateType] = None,
         offset: Optional[int] = None,
         data_fields: Optional[Iterable[GetActivityField]] = None,
         lastupdate: Optional[DateType] = None,
@@ -113,13 +114,13 @@ class AbstractWithingsApi:
         update_params(
             params,
             "startdateymd",
-            startdateymd,
+            startdate,
             lambda val: arrow.get(val).format("YYYY-MM-DD"),
         )
         update_params(
             params,
             "enddateymd",
-            enddateymd,
+            enddate,
             lambda val: arrow.get(val).format("YYYY-MM-DD"),
         )
         update_params(params, "offset", offset)
@@ -141,7 +142,8 @@ class AbstractWithingsApi:
     def measure_get_meas(
         self,
         meastype: Optional[MeasureType] = None,
-        category: Optional[MeasureGetMeasGroupCategory] = None,
+        meastypes: Optional[MeasureType] = MeasureTypes.ANY,
+        category: Optional[MeasureGetMeasGroupCategory] = MeasureGetMeasGroupCategory.REAL,
         startdate: Optional[DateType] = None,
         enddate: Optional[DateType] = None,
         offset: Optional[int] = None,
@@ -150,7 +152,9 @@ class AbstractWithingsApi:
         """Get measures."""
         params: Final[ParamsType] = {}
 
+#       import pdb; pdb.set_trace()
         update_params(params, "meastype", meastype, lambda val: val.value)
+        update_params(params, "meastypes", meastypes, lambda vals: tuple(val.value for val in vals))
         update_params(params, "category", category, lambda val: val.value)
         update_params(
             params, "startdate", startdate, lambda val: arrow.get(val).timestamp
@@ -193,8 +197,8 @@ class AbstractWithingsApi:
 
     def sleep_get_summary(
         self,
-        startdateymd: Optional[DateType] = None,
-        enddateymd: Optional[DateType] = None,
+        startdate: Optional[DateType] = None,
+        enddate: Optional[DateType] = None,
         data_fields: Optional[Iterable[GetSleepSummaryField]] = None,
         offset: Optional[int] = None,
         lastupdate: Optional[DateType] = None,
@@ -205,13 +209,13 @@ class AbstractWithingsApi:
         update_params(
             params,
             "startdateymd",
-            startdateymd,
+            startdate,
             lambda val: arrow.get(val).format("YYYY-MM-DD"),
         )
         update_params(
             params,
             "enddateymd",
-            enddateymd,
+            enddate,
             lambda val: arrow.get(val).format("YYYY-MM-DD"),
         )
         update_params(
@@ -240,6 +244,17 @@ class AbstractWithingsApi:
         return new_heart_get_response(
             self.request(path=self.PATH_V2_HEART, params=params)
         )
+
+#   def heart_get_filled(self, signalid: int) -> HeartGetResponse:
+#       """Get ECG recording."""
+#       params: Final[ParamsType] = {}
+
+#       update_params(params, "signalid", signalid)
+#       update_params(params, "action", "get")
+
+#       return new_heart_get_response(
+#           self.request(path=self.PATH_V2_HEART, params=params)
+#       )
 
     def heart_list(
         self,
@@ -479,7 +494,7 @@ class WithingsApi(AbstractWithingsApi):
     def _request(
         self, path: str, params: Dict[str, Any], method: str = "GET"
     ) -> Dict[str, Any]:
-        return cast(
+        data = cast(
             Dict[str, Any],
             self._client.request(
                 method=method,
@@ -487,3 +502,13 @@ class WithingsApi(AbstractWithingsApi):
                 params=params,
             ).json(),
         )
+
+        if 'body' in data and 'devices' in data['body']:
+          for d in data['body']['devices']:
+            if d['model'] == None and d['model_id'] == 93:
+              d['model'] = 'ScanWatch'
+              d['status'] = 0
+
+        return data
+
+
