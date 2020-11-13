@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Integration test."""
 import argparse
-import sys, os
+import os
 from os import path
 import pickle
 from typing import cast
@@ -10,7 +10,7 @@ from urllib import parse
 import arrow
 from oauthlib.oauth2.rfc6749.errors import MissingTokenError
 from typing_extensions import Final
-from withings_api import AuthScope, Credentials, WithingsApi, WithingsAuth, MeasureType
+from withings_api import AuthScope, Credentials, MeasureType, WithingsApi, WithingsAuth
 
 CREDENTIALS_FILE: Final = path.abspath(
     path.join(path.dirname(path.abspath(__file__)), "../.credentials")
@@ -109,41 +109,50 @@ def main() -> None:
     api.refresh_token()
     assert orig_access_token != api.get_credentials().access_token
 
-    print('#'+'*'*80+'\n# Getting devices...\n#'+'*'*80+'\n')
-    a = api.user_get_device()
-    a.dump()
+    print("#" + "*" * 80 + "\n# Getting devices...\n#" + "*" * 80 + "\n")
+    api.user_get_device().yamldump()  # type: ignore
+    #   import pdb; pdb.set_trace()
+    #   api.user_get_device().yamldump()  # type: ignore
 
-    print('#'+'*'*80+'\n# Getting measures...\n#'+'*'*80+'\n')
-    a = api.measure_get_meas(meastype=MeasureType.SPO2, startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow())
-    a.dump()
+    print("#" + "*" * 80 + "\n# Getting measures...\n#" + "*" * 80 + "\n")
+    api.measure_get_meas(
+        meastype=MeasureType.SPO2,
+        startdate=arrow.utcnow().shift(days=-2),
+        enddate=arrow.utcnow(),
+    ).yamldump()  # type: ignore
 
-    print('#'+'*'*80+'\n# Getting activity...\n#'+'*'*80+'\n')
-    a = api.measure_get_activity(startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow())
-    a.dump()
+    print("#" + "*" * 80 + "\n# Getting activity...\n#" + "*" * 80 + "\n")
+    api.measure_get_activity(
+        startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow()
+    ).yamldump()  # type: ignore
 
-    print('#'+'*'*80+'\n# Getting sleep...\n#'+'*'*80+'\n')
-    a = api.sleep_get(startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow())
-    a.dump()
+    print("#" + "*" * 80 + "\n# Getting sleep...\n#" + "*" * 80 + "\n")
+    api.sleep_get(
+        startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow()
+    ).yamldump()  # type: ignore
 
-    print('#'+'*'*80+'\n# Getting sleep summary...\n#'+'*'*80+'\n')
-    a = api.sleep_get_summary(startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow())
-    a.dump()
+    print("#" + "*" * 80 + "\n# Getting sleep summary...\n#" + "*" * 80 + "\n")
+    api.sleep_get_summary(
+        startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow()
+    ).yamldump()  # type: ignore
 
-    heartList = api.heart_list(startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow())
+    heart_list = api.heart_list(
+        startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow()
+    )
 
-    for serie in heartList.series:
-      if serie.ecg:
-        signalid = serie.ecg.signalid
+    for series in heart_list.series:
+        if series.ecg:
+            signalid = series.ecg.signalid
 
-        print('#'+'*'*80+'\n# Getting heart ecg...\n#'+'*'*80+'\n')
-        serie.ecgvalues = api.heart_get(signalid)
-        serie.dump(default_flow_style=True, width=200, indent=2)
+            print("#" + "*" * 80 + "\n# Getting heart ecg...\n#" + "*" * 80 + "\n")
+            series.ecgvalues = api.heart_get(signalid)
+            series.yamldump(default_flow_style=True, width=200, indent=2)
 
-    print('#'+'*'*80+'\n# Getting subscriptions...\n#'+'*'*80+'\n')
-    a = api.notify_list()
-    a.dump()
+    print("#" + "*" * 80 + "\n# Getting subscriptions...\n#" + "*" * 80 + "\n")
+    api.notify_list().yamldump()  # type: ignore
 
-    print('# Successfully finished.')
+    print("# Successfully finished.")
+
 
 if __name__ == "__main__":
     main()

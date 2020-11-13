@@ -1026,8 +1026,8 @@ def test_measure_get_activity_params(withings_api: WithingsApi) -> None:
     """Test function."""
     responses_add_measure_get_activity()
     withings_api.measure_get_activity(
-        startdateymd="2019-01-01",
-        enddateymd=arrow.get("2019-01-02"),
+        startdate="2019-01-01",
+        enddate=arrow.get("2019-01-02"),
         offset=2,
         data_fields=(
             GetActivityField.ACTIVE,
@@ -1076,8 +1076,8 @@ def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
     """Test function."""
     responses_add_sleep_get_summary()
     withings_api.sleep_get_summary(
-        startdateymd="2019-01-01",
-        enddateymd=arrow.get("2019-01-02"),
+        startdate="2019-01-01",
+        enddate=arrow.get("2019-01-02"),
         data_fields=(
             GetSleepSummaryField.DEEP_SLEEP_DURATION,
             GetSleepSummaryField.HR_AVERAGE,

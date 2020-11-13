@@ -26,7 +26,6 @@ from .common import (
     MeasureGetMeasGroupCategory,
     MeasureGetMeasResponse,
     MeasureType,
-    MeasureTypes,
     NotifyAppli,
     NotifyGetResponse,
     NotifyListResponse,
@@ -142,8 +141,10 @@ class AbstractWithingsApi:
     def measure_get_meas(
         self,
         meastype: Optional[MeasureType] = None,
-        meastypes: Optional[MeasureType] = MeasureTypes.ANY,
-        category: Optional[MeasureGetMeasGroupCategory] = MeasureGetMeasGroupCategory.REAL,
+        meastypes: Optional[MeasureType] = None,
+        category: Optional[
+            MeasureGetMeasGroupCategory
+        ] = MeasureGetMeasGroupCategory.REAL,
         startdate: Optional[DateType] = None,
         enddate: Optional[DateType] = None,
         offset: Optional[int] = None,
@@ -153,7 +154,12 @@ class AbstractWithingsApi:
         params: Final[ParamsType] = {}
 
         update_params(params, "meastype", meastype, lambda val: val.value)
-        update_params(params, "meastypes", meastypes, lambda vals: tuple(val.value for val in vals))
+        update_params(
+            params,
+            "meastypes",
+            meastypes,
+            lambda vals: tuple(val.value for val in vals),
+        )
         update_params(params, "category", category, lambda val: val.value)
         update_params(
             params, "startdate", startdate, lambda val: arrow.get(val).timestamp
@@ -233,7 +239,7 @@ class AbstractWithingsApi:
             self.request(path=self.PATH_V2_SLEEP, params=params)
         )
 
-    def heart_get(self, signalid: int) -> HeartGetResponse:
+    def heart_get(self, signalid: Optional[int]) -> HeartGetResponse:
         """Get ECG recording."""
         params: Final[ParamsType] = {}
 
@@ -243,17 +249,6 @@ class AbstractWithingsApi:
         return new_heart_get_response(
             self.request(path=self.PATH_V2_HEART, params=params)
         )
-
-#   def heart_get_filled(self, signalid: int) -> HeartGetResponse:
-#       """Get ECG recording."""
-#       params: Final[ParamsType] = {}
-
-#       update_params(params, "signalid", signalid)
-#       update_params(params, "action", "get")
-
-#       return new_heart_get_response(
-#           self.request(path=self.PATH_V2_HEART, params=params)
-#       )
 
     def heart_list(
         self,
@@ -502,12 +497,10 @@ class WithingsApi(AbstractWithingsApi):
             ).json(),
         )
 
-        if 'body' in data and 'devices' in data['body']:
-          for d in data['body']['devices']:
-            if d['model'] == None and d['model_id'] == 93:
-              d['model'] = 'ScanWatch'
-              d['status'] = 0
+        if "body" in data and "devices" in data["body"]:
+            for dev in data["body"]["devices"]:
+                if dev["model"] is None and dev["model_id"] == 93:
+                    dev["model"] = "ScanWatch"
+                    dev["status"] = 0
 
         return data
-
-

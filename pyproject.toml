@@ -22,6 +22,7 @@ arrow = ">=0.15.2"
 requests-oauth = ">=0.4.1"
 requests-oauthlib = ">=1.2"
 typing-extensions = ">=3.7.4.2"
+recordclass = ">=0.14.3"
 
 [tool.poetry.dev-dependencies]
 bandit = "==1.6.2"
