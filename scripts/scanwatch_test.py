@@ -111,9 +111,7 @@ def main() -> None:
 
     print("#" + "*" * 80 + "\n# Getting devices...\n#" + "*" * 80 + "\n")
     api.user_get_device().yamldump()  # type: ignore
-    #   import pdb; pdb.set_trace()
-    #   api.user_get_device().yamldump()  # type: ignore
-
+    
     print("#" + "*" * 80 + "\n# Getting measures...\n#" + "*" * 80 + "\n")
     api.measure_get_meas(
         meastype=MeasureType.SPO2,
