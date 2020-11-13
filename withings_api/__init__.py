@@ -152,7 +152,6 @@ class AbstractWithingsApi:
         """Get measures."""
         params: Final[ParamsType] = {}
 
-#       import pdb; pdb.set_trace()
         update_params(params, "meastype", meastype, lambda val: val.value)
         update_params(params, "meastypes", meastypes, lambda vals: tuple(val.value for val in vals))
         update_params(params, "category", category, lambda val: val.value)
