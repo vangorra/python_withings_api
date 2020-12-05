@@ -10,25 +10,26 @@ from urllib import parse
 import arrow
 from oauthlib.oauth2.rfc6749.errors import MissingTokenError
 from typing_extensions import Final
-from withings_api import AuthScope, Credentials, WithingsApi, WithingsAuth
+from withings_api import AuthScope, WithingsApi, WithingsAuth
+from withings_api.common import CredentialsType
 
 CREDENTIALS_FILE: Final = path.abspath(
     path.join(path.dirname(path.abspath(__file__)), "../.credentials")
 )
 
 
-def save_credentials(credentials: Credentials) -> None:
+def save_credentials(credentials: CredentialsType) -> None:
     """Save credentials to a file."""
     print("Saving credentials in:", CREDENTIALS_FILE)
     with open(CREDENTIALS_FILE, "wb") as file_handle:
         pickle.dump(credentials, file_handle)
 
 
-def load_credentials() -> Credentials:
+def load_credentials() -> CredentialsType:
     """Load credentials from a file."""
     print("Using credentials saved in:", CREDENTIALS_FILE)
     with open(CREDENTIALS_FILE, "rb") as file_handle:
-        return cast(Credentials, pickle.load(file_handle))
+        return cast(CredentialsType, pickle.load(file_handle))
 
 
 def main() -> None:

@@ -9,12 +9,12 @@ authors = [
     "Robbie Van Gorkom <robbie.van.gorkom@protonmail.com>"
 ]
 
-readme = 'README.md'
+readme = "README.md"
 
 repository = "https://github.com/vangorra/python_withings_api"
 homepage = "https://github.com/vangorra/python_withings_api"
 
-keywords = ['withings', 'api']
+keywords = ["withings", "api"]
 
 [tool.poetry.dependencies]
 python = "^3.6 || ^3.7"
@@ -22,6 +22,7 @@ arrow = ">=0.15.2"
 requests-oauth = ">=0.4.1"
 requests-oauthlib = ">=1.2"
 typing-extensions = ">=3.7.4.2"
+pydantic = "^1.7.2"
 
 [tool.poetry.dev-dependencies]
 bandit = "==1.6.2"
@@ -30,10 +31,10 @@ codespell = "==1.16.0"
 coverage = "==5.0.4"
 flake8 = "==3.7.8"
 isort = "==4.3.21"
-mypy = "==0.740"
-pylint = "==2.4.3"
-pytest = "==5.2.1"
-pytest-cov = "==2.8.1"
+mypy = "==0.790"
+pylint = "==2.6.0"
+pytest = "==6.1.2"
+pytest-cov = "==2.10.1"
 responses = "==0.10.6"
 toml = "==0.10.0"  # Needed by isort and others.
 wheel = "==0.33.6"  # Needed for successful compile of other modules.
@@ -87,4 +88,8 @@ combine_as_imports = true
 branch = true
 
 [tool.coverage.report]
-fail_under = 97.0
+fail_under = 99.0
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = "--capture no --cov ./withings_api --cov-report html:build/coverage_report --cov-report term --cov-report xml:build/coverage.xml"
