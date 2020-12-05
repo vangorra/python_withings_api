@@ -1,6 +1,8 @@
 """Constant values."""
 from typing_extensions import Final
 
+LOG_NAMESPACE: Final = "python_withings_api"
+
 STATUS_SUCCESS: Final = (0,)
 
 STATUS_AUTH_FAILED: Final = (100, 101, 102, 200, 401)

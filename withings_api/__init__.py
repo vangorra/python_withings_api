@@ -16,7 +16,8 @@ from typing_extensions import Final
 
 from .common import (
     AuthScope,
-    Credentials,
+    Credentials2,
+    CredentialsType,
     GetActivityField,
     GetSleepField,
     GetSleepSummaryField,
@@ -32,19 +33,8 @@ from .common import (
     SleepGetResponse,
     SleepGetSummaryResponse,
     UserGetDeviceResponse,
-    int_or_raise,
-    new_credentials,
-    new_heart_get_response,
-    new_heart_list_response,
-    new_measure_get_activity_response,
-    new_measure_get_meas_response,
-    new_notify_get_response,
-    new_notify_list_response,
-    new_sleep_get_response,
-    new_sleep_get_summary_response,
-    new_user_get_device_response,
+    maybe_upgrade_credentials,
     response_body_or_raise,
-    str_or_raise,
 )
 
 DateType = Union[arrow.Arrow, datetime.date, datetime.datetime, int, str]
@@ -95,8 +85,8 @@ class AbstractWithingsApi:
 
         Some data related to user profile are available through those services.
         """
-        return new_user_get_device_response(
-            self.request(path=self.PATH_V2_USER, params={"action": "getdevice"})
+        return UserGetDeviceResponse(
+            **self.request(path=self.PATH_V2_USER, params={"action": "getdevice"})
         )
 
     def measure_get_activity(
@@ -134,8 +124,8 @@ class AbstractWithingsApi:
         )
         update_params(params, "action", "getactivity")
 
-        return new_measure_get_activity_response(
-            self.request(path=self.PATH_V2_MEASURE, params=params)
+        return MeasureGetActivityResponse(
+            **self.request(path=self.PATH_V2_MEASURE, params=params)
         )
 
     def measure_get_meas(
@@ -162,8 +152,8 @@ class AbstractWithingsApi:
         )
         update_params(params, "action", "getmeas")
 
-        return new_measure_get_meas_response(
-            self.request(path=self.PATH_MEASURE, params=params)
+        return MeasureGetMeasResponse(
+            **self.request(path=self.PATH_MEASURE, params=params)
         )
 
     def sleep_get(
@@ -187,9 +177,7 @@ class AbstractWithingsApi:
         )
         update_params(params, "action", "get")
 
-        return new_sleep_get_response(
-            self.request(path=self.PATH_V2_SLEEP, params=params)
-        )
+        return SleepGetResponse(**self.request(path=self.PATH_V2_SLEEP, params=params))
 
     def sleep_get_summary(
         self,
@@ -226,8 +214,8 @@ class AbstractWithingsApi:
         )
         update_params(params, "action", "getsummary")
 
-        return new_sleep_get_summary_response(
-            self.request(path=self.PATH_V2_SLEEP, params=params)
+        return SleepGetSummaryResponse(
+            **self.request(path=self.PATH_V2_SLEEP, params=params)
         )
 
     def heart_get(self, signalid: int) -> HeartGetResponse:
@@ -237,9 +225,7 @@ class AbstractWithingsApi:
         update_params(params, "signalid", signalid)
         update_params(params, "action", "get")
 
-        return new_heart_get_response(
-            self.request(path=self.PATH_V2_HEART, params=params)
-        )
+        return HeartGetResponse(**self.request(path=self.PATH_V2_HEART, params=params))
 
     def heart_list(
         self,
@@ -259,9 +245,7 @@ class AbstractWithingsApi:
         update_params(params, "offset", offset)
         update_params(params, "action", "list")
 
-        return new_heart_list_response(
-            self.request(path=self.PATH_V2_HEART, params=params)
-        )
+        return HeartListResponse(**self.request(path=self.PATH_V2_HEART, params=params))
 
     def notify_get(
         self, callbackurl: str, appli: Optional[NotifyAppli] = None
@@ -278,9 +262,7 @@ class AbstractWithingsApi:
         update_params(params, "appli", appli, lambda appli: appli.value)
         update_params(params, "action", "get")
 
-        return new_notify_get_response(
-            self.request(path=self.PATH_NOTIFY, params=params)
-        )
+        return NotifyGetResponse(**self.request(path=self.PATH_NOTIFY, params=params))
 
     def notify_list(self, appli: Optional[NotifyAppli] = None) -> NotifyListResponse:
         """List notification configuration for this user."""
@@ -289,9 +271,7 @@ class AbstractWithingsApi:
         update_params(params, "appli", appli, lambda appli: appli.value)
         update_params(params, "action", "list")
 
-        return new_notify_list_response(
-            self.request(path=self.PATH_NOTIFY, params=params)
-        )
+        return NotifyListResponse(**self.request(path=self.PATH_NOTIFY, params=params))
 
     def notify_revoke(
         self, callbackurl: Optional[str] = None, appli: Optional[NotifyAppli] = None
@@ -387,15 +367,23 @@ class WithingsAuth:
 
         return url
 
-    def get_credentials(self, code: str) -> Credentials:
+    def get_credentials(self, code: str) -> Credentials2:
         """Get the oauth credentials."""
         response: Final = self._session.fetch_token(
-            "%s/oauth2/token" % self.URL,
+            "%s/%s" % (self.URL, self.PATH_TOKEN),
             code=code,
             client_secret=self._consumer_secret,
             include_client_id=True,
         )
-        return new_credentials(self._client_id, self._consumer_secret, response)
+
+        return Credentials2(
+            **{
+                **response,
+                **dict(
+                    client_id=self._client_id, consumer_secret=self._consumer_secret
+                ),
+            }
+        )
 
 
 class WithingsApi(AbstractWithingsApi):
@@ -421,35 +409,40 @@ class WithingsApi(AbstractWithingsApi):
 
     def __init__(
         self,
-        credentials: Credentials,
-        refresh_cb: Optional[Callable[[Credentials], None]] = None,
+        credentials: CredentialsType,
+        refresh_cb: Optional[Callable[[Credentials2], None]] = None,
     ):
         """Initialize new object."""
-        self._credentials = credentials
-        self._refresh_cb: Final = refresh_cb
+        self._credentials = maybe_upgrade_credentials(credentials)
+        self._refresh_cb: Final = refresh_cb or self._blank_refresh_cb
         token: Final = {
-            "access_token": credentials.access_token,
-            "refresh_token": credentials.refresh_token,
-            "token_type": credentials.token_type,
-            "expires_in": str(int(credentials.token_expiry) - arrow.utcnow().timestamp),
+            "access_token": self._credentials.access_token,
+            "refresh_token": self._credentials.refresh_token,
+            "token_type": self._credentials.token_type,
+            "expires_in": self._credentials.expires_in,
         }
 
         self._client: Final = OAuth2Session(
-            credentials.client_id,
+            self._credentials.client_id,
             token=token,
             client=WebApplicationClient(  # nosec
-                credentials.client_id, token=token, default_token_placement="query"
+                self._credentials.client_id,
+                token=token,
+                default_token_placement="query",
             ),
             auto_refresh_url="%s/%s" % (WithingsAuth.URL, WithingsAuth.PATH_TOKEN),
             auto_refresh_kwargs={
                 "action": "requesttoken",
-                "client_id": credentials.client_id,
-                "client_secret": credentials.consumer_secret,
+                "client_id": self._credentials.client_id,
+                "client_secret": self._credentials.consumer_secret,
             },
             token_updater=self._update_token,
         )
 
-    def get_credentials(self) -> Credentials:
+    def _blank_refresh_cb(self, creds: Credentials2) -> None:
+        """The default callback which does nothing."""
+
+    def get_credentials(self) -> Credentials2:
         """Get the current oauth credentials."""
         return self._credentials
 
@@ -462,19 +455,17 @@ class WithingsApi(AbstractWithingsApi):
 
     def _update_token(self, token: Dict[str, Union[str, int]]) -> None:
         """Set the oauth token."""
-        self._credentials = Credentials(
-            access_token=str_or_raise(token.get("access_token")),
-            token_expiry=arrow.utcnow().timestamp
-            + int_or_raise(token.get("expires_in")),
+        self._credentials = Credentials2(
+            access_token=token["access_token"],
+            expires_in=token["expires_in"],
             token_type=self._credentials.token_type,
-            refresh_token=str_or_raise(token.get("refresh_token")),
+            refresh_token=token["refresh_token"],
             userid=self._credentials.userid,
             client_id=self._credentials.client_id,
             consumer_secret=self._credentials.consumer_secret,
         )
 
-        if self._refresh_cb:
-            self._refresh_cb(self._credentials)
+        self._refresh_cb(self._credentials)
 
     def _request(
         self, path: str, params: Dict[str, Any], method: str = "GET"

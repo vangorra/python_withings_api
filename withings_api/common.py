@@ -1,29 +1,19 @@
 """Common classes and functions."""
-
+from dataclasses import dataclass
 from datetime import tzinfo
 from enum import Enum, IntEnum
-import traceback
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    NamedTuple,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+import logging
+from typing import Any, Dict, Optional, Tuple, Type, TypeVar, Union, cast
 
 import arrow
 from arrow import Arrow
 from dateutil import tz
+from dateutil.tz import tzlocal
+from pydantic import BaseModel, Field, validator
 from typing_extensions import Final
 
 from .const import (
+    LOG_NAMESPACE,
     STATUS_AUTH_FAILED,
     STATUS_BAD_STATE,
     STATUS_ERROR_OCCURRED,
@@ -34,31 +24,102 @@ from .const import (
     STATUS_UNAUTHORIZED,
 )
 
+_LOGGER = logging.getLogger(LOG_NAMESPACE)
+_GenericType = TypeVar("_GenericType")
+
+
+def to_enum(
+    enum_class: Type[_GenericType], value: Any, default_value: _GenericType
+) -> _GenericType:
+    """Attempt to convert a value to an enum."""
+    try:
+        return enum_class(value)  # type: ignore
+    except ValueError:
+        _LOGGER.warning(
+            "Unsupported %s value %s. Replacing with UNKNOWN value %s. Please report this warning to the developer to ensure proper support.",
+            str(enum_class),
+            value,
+            str(default_value),
+        )
+        return default_value
+
+
+class ConfiguredBaseModel(BaseModel):
+    """An already configured pydantic model."""
+
+    class Config:
+        """Config for pydantic model."""
+
+        ignore_extra: Final = True
+        allow_extra: Final = False
+        allow_mutation: Final = False
+
+
+class TimeZone(tzlocal):
+    """Subclass of tzinfo for parsing timezones."""
+
+    @classmethod
+    def __get_validators__(cls) -> Any:
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value: Any) -> tzinfo:
+        """Convert input to the desired object."""
+        if isinstance(value, tzinfo):
+            return value
+        if isinstance(value, str):
+            timezone: Final = tz.gettz(value)
+            if timezone:
+                return timezone
+            raise ValueError(f"Invalid timezone provided {value}")
+
+        raise TypeError("string or tzinfo required")
+
+
+class ArrowType(Arrow):  # type: ignore
+    """Subclass of Arrow for parsing dates."""
+
+    @classmethod
+    def __get_validators__(cls) -> Any:
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value: Any) -> Arrow:
+        """Convert input to the desired object."""
+        if isinstance(value, str):
+            if value.isdigit():
+                return arrow.get(int(value))
+            return arrow.get(value)
+        if isinstance(value, int):
+            return arrow.get(value)
+        if isinstance(value, (Arrow, ArrowType)):
+            return value
+
+        raise TypeError("string or int required")
+
 
 class SleepModel(IntEnum):
     """Sleep model."""
 
+    UNKNOWN = -999999
     TRACKER = 16
     SLEEP_MONITOR = 32
-
-
-def new_sleep_model(value: Optional[int]) -> SleepModel:
-    """Create enum based on primitive."""
-    return cast(SleepModel, enum_or_raise(value, SleepModel))
 
 
 class SleepState(IntEnum):
     """Sleep states."""
 
+    UNKNOWN = -999999
     AWAKE = 0
     LIGHT = 1
     DEEP = 2
     REM = 3
-
-
-def new_sleep_state(value: Optional[int]) -> SleepState:
-    """Create enum based on primitive."""
-    return cast(SleepState, enum_or_raise(value, SleepState))
 
 
 class MeasureGetMeasGroupAttrib(IntEnum):
@@ -74,30 +135,18 @@ class MeasureGetMeasGroupAttrib(IntEnum):
     SAME_AS_DEVICE_ENTRY_FOR_USER = 8
 
 
-def new_measure_group_attrib(value: Optional[int]) -> MeasureGetMeasGroupAttrib:
-    """Create enum based on primitive."""
-    return cast(
-        MeasureGetMeasGroupAttrib, enum_or_raise(value, MeasureGetMeasGroupAttrib)
-    )
-
-
 class MeasureGetMeasGroupCategory(IntEnum):
     """Measure categories."""
 
+    UNKNOWN = -999999
     REAL = 1
     USER_OBJECTIVES = 2
-
-
-def new_measure_category(value: Optional[int]) -> MeasureGetMeasGroupCategory:
-    """Create enum based on primitive."""
-    return cast(
-        MeasureGetMeasGroupCategory, enum_or_raise(value, MeasureGetMeasGroupCategory)
-    )
 
 
 class MeasureType(IntEnum):
     """Measure types."""
 
+    UNKNOWN = -999999
     WEIGHT = 1
     HEIGHT = 4
     FAT_FREE_MASS = 5
@@ -116,14 +165,10 @@ class MeasureType(IntEnum):
     PULSE_WAVE_VELOCITY = 91
 
 
-def new_measure_type(value: Optional[int]) -> MeasureType:
-    """Create enum based on primitive."""
-    return cast(MeasureType, enum_or_raise(value, MeasureType))
-
-
 class NotifyAppli(IntEnum):
     """Data to notify_subscribe to."""
 
+    UNKNOWN = -999999
     WEIGHT = 1
     CIRCULATORY = 4
     ACTIVITY = 16
@@ -131,11 +176,6 @@ class NotifyAppli(IntEnum):
     USER = 46
     BED_IN = 50
     BED_OUT = 51
-
-
-def new_notify_appli(value: Optional[int]) -> NotifyAppli:
-    """Create enum based on primitive."""
-    return cast(NotifyAppli, enum_or_raise(value, NotifyAppli))
 
 
 class GetActivityField(Enum):
@@ -198,48 +238,91 @@ class AuthScope(Enum):
     USER_SLEEP_EVENTS = "user.sleepevents"
 
 
-class UserGetDeviceDevice(NamedTuple):
+class UserGetDeviceDevice(ConfiguredBaseModel):
     """UserGetDeviceDevice."""
 
     type: str
     model: str
     battery: str
     deviceid: str
-    timezone: tzinfo
+    timezone: TimeZone
 
 
-class UserGetDeviceResponse(NamedTuple):
+class UserGetDeviceResponse(ConfiguredBaseModel):
     """UserGetDeviceResponse."""
 
     devices: Tuple[UserGetDeviceDevice, ...]
 
 
-class SleepGetTimestampValue(NamedTuple):
+class SleepGetTimestampValue(ConfiguredBaseModel):
     """SleepGetTimestampValue."""
 
-    timestamp: Arrow
+    timestamp: ArrowType
     value: int
 
 
-class SleepGetSerie(NamedTuple):
+class SleepGetSerie(ConfiguredBaseModel):
     """SleepGetSerie."""
 
-    enddate: Arrow
-    startdate: Arrow
+    enddate: ArrowType
+    startdate: ArrowType
     state: SleepState
-    hr: Tuple[SleepGetTimestampValue, ...]
-    rr: Tuple[SleepGetTimestampValue, ...]
-    snoring: Tuple[SleepGetTimestampValue, ...]
+    hr: Tuple[SleepGetTimestampValue, ...] = ()  # pylint: disable=invalid-name
+    rr: Tuple[SleepGetTimestampValue, ...] = ()  # pylint: disable=invalid-name
+    snoring: Tuple[SleepGetTimestampValue, ...] = ()
+
+    @validator("hr", pre=True)
+    @classmethod
+    def _hr_to_tuple(cls, value: Dict[str, int]) -> Tuple:
+        return SleepGetSerie._timestamp_value_to_object(value)
+
+    @validator("rr", pre=True)
+    @classmethod
+    def _rr_to_tuple(cls, value: Dict[str, int]) -> Tuple:
+        return SleepGetSerie._timestamp_value_to_object(value)
+
+    @validator("snoring", pre=True)
+    @classmethod
+    def _snoring_to_tuple(cls, value: Dict[str, int]) -> Tuple:
+        return SleepGetSerie._timestamp_value_to_object(value)
+
+    @classmethod
+    def _timestamp_value_to_object(
+        cls, value: Any
+    ) -> Tuple[SleepGetTimestampValue, ...]:
+        if not value:
+            return ()
+        if isinstance(value, dict):
+            return tuple(
+                [
+                    SleepGetTimestampValue(timestamp=item_key, value=item_value)
+                    for item_key, item_value in value.items()
+                ]
+            )
+
+        return cast(Tuple[SleepGetTimestampValue, ...], value)
+
+    @validator("state", pre=True)
+    @classmethod
+    def _state_to_enum(cls, value: Any) -> SleepState:
+        return to_enum(SleepState, value, SleepState.UNKNOWN)
 
 
-class SleepGetResponse(NamedTuple):
+class SleepGetResponse(ConfiguredBaseModel):
     """SleepGetResponse."""
 
     model: SleepModel
     series: Tuple[SleepGetSerie, ...]
 
+    @validator("model", pre=True)
+    @classmethod
+    def _model_to_enum(cls, value: Any) -> SleepModel:
+        return to_enum(SleepModel, value, SleepModel.UNKNOWN)
 
-class GetSleepSummaryData(NamedTuple):
+
+class GetSleepSummaryData(
+    ConfiguredBaseModel
+):  # pylint: disable=too-many-instance-attributes
     """GetSleepSummaryData."""
 
     breathing_disturbances_intensity: Optional[int]
@@ -261,19 +344,51 @@ class GetSleepSummaryData(NamedTuple):
     wakeupduration: Optional[int]
 
 
-class GetSleepSummarySerie(NamedTuple):
+class GetSleepSummarySerie(ConfiguredBaseModel):
     """GetSleepSummarySerie."""
 
-    timezone: tzinfo
+    timezone: TimeZone
     model: SleepModel
-    startdate: Arrow
-    enddate: Arrow
-    date: Arrow
-    modified: Arrow
+    startdate: ArrowType
+    enddate: ArrowType
+    date: ArrowType
+    modified: ArrowType
     data: GetSleepSummaryData
+    id: Optional[int] = None
+
+    @validator("startdate")
+    @classmethod
+    def _set_timezone_on_startdate(
+        cls, value: ArrowType, values: Dict[str, Any]
+    ) -> Arrow:
+        return cast(Arrow, value.to(values["timezone"]))
+
+    @validator("enddate")
+    @classmethod
+    def _set_timezone_on_enddate(
+        cls, value: ArrowType, values: Dict[str, Any]
+    ) -> Arrow:
+        return cast(Arrow, value.to(values["timezone"]))
+
+    @validator("date")
+    @classmethod
+    def _set_timezone_on_date(cls, value: ArrowType, values: Dict[str, Any]) -> Arrow:
+        return cast(Arrow, value.to(values["timezone"]))
+
+    @validator("modified")
+    @classmethod
+    def _set_timezone_on_modified(
+        cls, value: ArrowType, values: Dict[str, Any]
+    ) -> Arrow:
+        return cast(Arrow, value.to(values["timezone"]))
+
+    @validator("model", pre=True)
+    @classmethod
+    def _model_to_enum(cls, value: Any) -> SleepModel:
+        return to_enum(SleepModel, value, SleepModel.UNKNOWN)
 
 
-class SleepGetSummaryResponse(NamedTuple):
+class SleepGetSummaryResponse(ConfiguredBaseModel):
     """SleepGetSummaryResponse."""
 
     more: bool
@@ -281,41 +396,69 @@ class SleepGetSummaryResponse(NamedTuple):
     series: Tuple[GetSleepSummarySerie, ...]
 
 
-class MeasureGetMeasMeasure(NamedTuple):
+class MeasureGetMeasMeasure(ConfiguredBaseModel):
     """MeasureGetMeasMeasure."""
 
     type: MeasureType
     unit: int
     value: int
 
+    @validator("type", pre=True)
+    @classmethod
+    def _type_to_enum(cls, value: Any) -> MeasureType:
+        return to_enum(MeasureType, value, MeasureType.UNKNOWN)
 
-class MeasureGetMeasGroup(NamedTuple):
+
+class MeasureGetMeasGroup(ConfiguredBaseModel):
     """MeasureGetMeasGroup."""
 
     attrib: MeasureGetMeasGroupAttrib
     category: MeasureGetMeasGroupCategory
-    created: Arrow
-    date: Arrow
+    created: ArrowType
+    date: ArrowType
     deviceid: Optional[str]
     grpid: int
     measures: Tuple[MeasureGetMeasMeasure, ...]
 
+    @validator("attrib", pre=True)
+    @classmethod
+    def _attrib_to_enum(cls, value: Any) -> MeasureGetMeasGroupAttrib:
+        return to_enum(
+            MeasureGetMeasGroupAttrib, value, MeasureGetMeasGroupAttrib.UNKNOWN
+        )
 
-class MeasureGetMeasResponse(NamedTuple):
+    @validator("category", pre=True)
+    @classmethod
+    def _category_to_enum(cls, value: Any) -> MeasureGetMeasGroupCategory:
+        return to_enum(
+            MeasureGetMeasGroupCategory, value, MeasureGetMeasGroupCategory.UNKNOWN
+        )
+
+
+class MeasureGetMeasResponse(ConfiguredBaseModel):
     """MeasureGetMeasResponse."""
 
     measuregrps: Tuple[MeasureGetMeasGroup, ...]
     more: Optional[bool]
     offset: Optional[int]
-    timezone: tzinfo
-    updatetime: Arrow
+    timezone: TimeZone
+    updatetime: ArrowType
+
+    @validator("updatetime")
+    @classmethod
+    def _set_timezone_on_updatetime(
+        cls, value: ArrowType, values: Dict[str, Any]
+    ) -> Arrow:
+        return cast(Arrow, value.to(values["timezone"]))
 
 
-class MeasureGetActivityActivity(NamedTuple):
+class MeasureGetActivityActivity(
+    BaseModel
+):  # pylint: disable=too-many-instance-attributes
     """MeasureGetActivityActivity."""
 
-    date: Arrow
-    timezone: tzinfo
+    date: ArrowType
+    timezone: TimeZone
     deviceid: Optional[str]
     brand: int
     is_tracker: bool
@@ -337,7 +480,7 @@ class MeasureGetActivityActivity(NamedTuple):
     hr_zone_3: Optional[int]
 
 
-class MeasureGetActivityResponse(NamedTuple):
+class MeasureGetActivityResponse(ConfiguredBaseModel):
     """MeasureGetActivityResponse."""
 
     activities: Tuple[MeasureGetActivityActivity, ...]
@@ -348,31 +491,24 @@ class MeasureGetActivityResponse(NamedTuple):
 class HeartModel(IntEnum):
     """Heart model."""
 
+    UNKNOWN = -999999
     BPM_CORE = 44
     MOVE_ECG = 91
-
-
-def new_heart_model(value: Optional[int]) -> HeartModel:
-    """Create enum based on primitive."""
-    return cast(HeartModel, enum_or_raise(value, HeartModel))
 
 
 class AfibClassification(IntEnum):
     """Atrial fibrillation classification"""
 
+    UNKNOWN = -999999
     NEGATIVE = 0
     POSITIVE = 1
     INCONCLUSIVE = 2
 
 
-def new_afib_classification(value: Optional[int]) -> AfibClassification:
-    """Create enum based on primitive."""
-    return cast(AfibClassification, enum_or_raise(value, AfibClassification))
-
-
 class HeartWearPosition(IntEnum):
     """Wear position of heart model."""
 
+    UNKNOWN = -999999
     RIGHT_WRIST = 0
     LEFT_WRIST = 1
     RIGHT_ARM = 2
@@ -381,47 +517,59 @@ class HeartWearPosition(IntEnum):
     LEFT_FOOT = 5
 
 
-def new_heart_wear_position(value: Optional[int]) -> HeartWearPosition:
-    """Create enum based on primitive."""
-    return cast(HeartWearPosition, enum_or_raise(value, HeartWearPosition))
-
-
-class HeartGetResponse(NamedTuple):
+class HeartGetResponse(ConfiguredBaseModel):
     """HeartGetResponse."""
 
     signal: Tuple[int, ...]
     sampling_frequency: int
     wearposition: HeartWearPosition
 
+    @validator("wearposition", pre=True)
+    @classmethod
+    def _wearposition_to_enum(cls, value: Any) -> HeartWearPosition:
+        return to_enum(HeartWearPosition, value, HeartWearPosition.UNKNOWN)
 
-class HeartListECG(NamedTuple):
+
+class HeartListECG(ConfiguredBaseModel):
     """HeartListECG."""
 
     signalid: int
     afib: AfibClassification
 
+    @validator("afib", pre=True)
+    @classmethod
+    def _afib_to_enum(cls, value: Any) -> AfibClassification:
+        return to_enum(AfibClassification, value, AfibClassification.UNKNOWN)
 
-class HeartBloodPressure(NamedTuple):
+
+class HeartBloodPressure(ConfiguredBaseModel):
     """HeartBloodPressure."""
 
     diastole: int
     systole: int
 
 
-class HeartListSerie(NamedTuple):
+class HeartListSerie(ConfiguredBaseModel):
     """HeartListSerie"""
 
     ecg: HeartListECG
 
-    # blood pressure is optional as not all devices (e.g. Move ECG) collect it
-    bloodpressure: Optional[HeartBloodPressure]
-
     heart_rate: int
-    timestamp: Arrow
+    timestamp: ArrowType
     model: HeartModel
 
+    # blood pressure is optional as not all devices (e.g. Move ECG) collect it
+    bloodpressure: Optional[HeartBloodPressure] = None
 
-class HeartListResponse(NamedTuple):
+    deviceid: Optional[str] = None
+
+    @validator("model", pre=True)
+    @classmethod
+    def _model_to_enum(cls, value: Any) -> HeartModel:
+        return to_enum(HeartModel, value, HeartModel.UNKNOWN)
+
+
+class HeartListResponse(ConfiguredBaseModel):
     """HeartListResponse."""
 
     more: bool
@@ -429,7 +577,8 @@ class HeartListResponse(NamedTuple):
     series: Tuple[HeartListSerie, ...]
 
 
-class Credentials(NamedTuple):
+@dataclass(frozen=True)
+class Credentials:
     """Credentials."""
 
     access_token: str
@@ -441,402 +590,85 @@ class Credentials(NamedTuple):
     consumer_secret: str
 
 
-class NotifyListProfile(NamedTuple):
+class Credentials2(ConfiguredBaseModel):
+    """Credentials."""
+
+    access_token: str
+    token_type: str
+    refresh_token: str
+    userid: int
+    client_id: str
+    consumer_secret: str
+    expires_in: int
+    created: ArrowType = Field(default_factory=arrow.utcnow)
+
+    @property
+    def token_expiry(self) -> int:
+        """Get the token expiry."""
+        return cast(int, self.created.shift(seconds=self.expires_in).timestamp)
+
+
+CredentialsType = Union[Credentials, Credentials2]
+
+
+def maybe_upgrade_credentials(value: CredentialsType) -> Credentials2:
+    """Upgrade older versions of credentials to the newer signature."""
+    if isinstance(value, Credentials2):
+        return value
+
+    creds = cast(Credentials, value)
+    return Credentials2(
+        access_token=creds.access_token,
+        token_type=creds.token_type,
+        refresh_token=creds.refresh_token,
+        userid=creds.userid,
+        client_id=creds.client_id,
+        consumer_secret=creds.consumer_secret,
+        expires_in=creds.token_expiry - arrow.utcnow().timestamp,
+    )
+
+
+class NotifyListProfile(ConfiguredBaseModel):
     """NotifyListProfile."""
 
     appli: NotifyAppli
     callbackurl: str
-    expires: Optional[Arrow]
+    expires: Optional[ArrowType]
     comment: Optional[str]
 
+    @validator("appli", pre=True)
+    @classmethod
+    def _appli_to_enum(cls, value: Any) -> NotifyAppli:
+        return to_enum(NotifyAppli, value, NotifyAppli.UNKNOWN)
 
-class NotifyListResponse(NamedTuple):
+
+class NotifyListResponse(ConfiguredBaseModel):
     """NotifyListResponse."""
 
     profiles: Tuple[NotifyListProfile, ...]
 
 
-class NotifyGetResponse(NamedTuple):
+class NotifyGetResponse(ConfiguredBaseModel):
     """NotifyGetResponse."""
 
     appli: NotifyAppli
     callbackurl: str
     comment: Optional[str]
 
-
-GenericType = TypeVar("GenericType")
+    @validator("appli", pre=True)
+    @classmethod
+    def _appli_to_enum(cls, value: Any) -> NotifyAppli:
+        return to_enum(NotifyAppli, value, NotifyAppli.UNKNOWN)
 
 
 class UnexpectedTypeException(Exception):
     """Thrown when encountering an unexpected type."""
 
-    def __init__(self, value: Any, expected: Type[GenericType]):
+    def __init__(self, value: Any, expected: Type[_GenericType]):
         """Initialize."""
         super().__init__(
             'Expected of "%s" to be "%s" but was "%s."' % (value, expected, type(value))
         )
-
-
-def enforce_type(value: Any, expected: Type[GenericType]) -> GenericType:
-    """Enforce a data type."""
-    if not isinstance(value, expected):
-        raise UnexpectedTypeException(value, expected)
-
-    return value
-
-
-def value_or_none(
-    value: Any, convert_fn: Callable[[Any], GenericType]
-) -> Union[GenericType, None]:
-    """Convert a value given a specific conversion function."""
-    if value is None:
-        return None
-
-    try:
-        return convert_fn(value)
-    except Exception:  # pylint: disable=broad-except
-        return None
-
-
-def enum_or_raise(value: Optional[Union[str, int]], enum: Type[Enum]) -> Enum:
-    """Return Enum or raise exception."""
-    if value is None:
-        raise Exception("Received None value for enum %s" % enum)
-
-    return enum(value)
-
-
-def str_or_raise(value: Any) -> str:
-    """Return string or raise exception."""
-    return enforce_type(str_or_none(value), str)
-
-
-def str_or_none(value: Any) -> Optional[str]:
-    """Return str or None."""
-    return value_or_none(value, str)
-
-
-def bool_or_raise(value: Any) -> bool:
-    """Return bool or raise exception."""
-    return enforce_type(value, bool)
-
-
-def bool_or_none(value: Any) -> Optional[bool]:
-    """Return bool or None."""
-    return value_or_none(value, bool)
-
-
-def int_or_raise(value: Any) -> int:
-    """Return int or raise exception."""
-    return enforce_type(int_or_none(value), int)
-
-
-def int_or_none(value: Any) -> Optional[int]:
-    """Return int or None."""
-    return value_or_none(value, int)
-
-
-def float_or_raise(value: Any) -> float:
-    """Return float or raise exception."""
-    return enforce_type(float_or_none(value), float)
-
-
-def float_or_none(value: Any) -> Optional[float]:
-    """Return float or None."""
-    return value_or_none(value, float)
-
-
-def arrow_or_none(value: Any) -> Optional[Arrow]:
-    """Return Arrow or None."""
-    if value is None:
-        return None
-
-    return arrow.get(value)
-
-
-def timezone_or_none(value: Any) -> Optional[tzinfo]:
-    """Return tzinfo or None."""
-    if value is None:
-        return None
-
-    return tz.gettz(value)
-
-
-def arrow_or_raise(value: Any) -> Arrow:
-    """Return Arrow or raise exception."""
-    return enforce_type(arrow_or_none(value), Arrow)
-
-
-def timezone_or_raise(value: Any) -> tzinfo:
-    """Return tzinfo or raise exception."""
-    return enforce_type(timezone_or_none(value), tzinfo)
-
-
-def dict_or_raise(value: Any) -> Dict[Any, Any]:
-    """Return dict or raise exception."""
-    return enforce_type(value, dict)
-
-
-def dict_or_none(value: Any) -> Optional[Dict[Any, Any]]:
-    """Return dict or None."""
-    return value_or_none(value, dict)
-
-
-def new_credentials(
-    client_id: str, consumer_secret: str, data: Dict[str, Any]
-) -> Credentials:
-    """Create Credentials from config and json."""
-    return Credentials(
-        access_token=str_or_raise(data.get("access_token")),
-        token_expiry=arrow.utcnow().timestamp + data.get("expires_in"),
-        token_type=str_or_raise(data.get("token_type")),
-        refresh_token=str_or_raise(data.get("refresh_token")),
-        userid=int_or_raise(data.get("userid")),
-        client_id=str_or_raise(client_id),
-        consumer_secret=str_or_raise(consumer_secret),
-    )
-
-
-def new_user_get_device_device(data: dict) -> UserGetDeviceDevice:
-    """Create GetDeviceDevice from json."""
-    return UserGetDeviceDevice(
-        type=str_or_raise(data.get("type")),
-        model=str_or_raise(data.get("model")),
-        battery=str_or_raise(data.get("battery")),
-        deviceid=str_or_raise(data.get("deviceid")),
-        timezone=timezone_or_raise(data.get("timezone")),
-    )
-
-
-def new_user_get_device_response(data: dict) -> UserGetDeviceResponse:
-    """Create GetDeviceResponse from json."""
-    return UserGetDeviceResponse(
-        devices=_flexible_tuple_of(data.get("devices", ()), new_user_get_device_device)
-    )
-
-
-def new_notify_list_profile(data: dict) -> NotifyListProfile:
-    """Create ListSubscriptionProfile from json."""
-    return NotifyListProfile(
-        appli=new_notify_appli(data.get("appli")),
-        callbackurl=str_or_raise(data.get("callbackurl")),
-        expires=arrow_or_none(data.get("expires")),
-        comment=str_or_none(data.get("comment")),
-    )
-
-
-def new_notify_list_response(data: dict) -> NotifyListResponse:
-    """Create NotifyListResponse from json."""
-    return NotifyListResponse(
-        profiles=_flexible_tuple_of(data.get("profiles", ()), new_notify_list_profile)
-    )
-
-
-def new_notify_get_response(data: dict) -> NotifyGetResponse:
-    """Create NotifyGetResponse from json."""
-    return NotifyGetResponse(
-        appli=new_notify_appli(data.get("appli")),
-        callbackurl=str_or_raise(data.get("callbackurl")),
-        comment=str_or_none(data.get("comment")),
-    )
-
-
-def new_sleep_timestamps(
-    data: Optional[Dict[Any, Any]]
-) -> Tuple[SleepGetTimestampValue, ...]:
-    """Create SleepTimestamp from json."""
-    if data is None:
-        return ()
-
-    return tuple(
-        SleepGetTimestampValue(arrow_or_raise(int(timestamp)), value)
-        for timestamp, value in data.items()
-    )
-
-
-def new_sleep_get_serie(data: dict) -> SleepGetSerie:
-    """Create GetSleepSerie from json."""
-    return SleepGetSerie(
-        enddate=arrow_or_raise(data.get("enddate")),
-        startdate=arrow_or_raise(data.get("startdate")),
-        state=new_sleep_state(data.get("state")),
-        hr=new_sleep_timestamps(dict_or_none(data.get(GetSleepField.HR.value))),
-        rr=new_sleep_timestamps(dict_or_none(data.get(GetSleepField.RR.value))),
-        snoring=new_sleep_timestamps(
-            dict_or_none(data.get(GetSleepField.SNORING.value))
-        ),
-    )
-
-
-def new_sleep_get_response(data: dict) -> SleepGetResponse:
-    """Create GetSleepResponse from json."""
-    return SleepGetResponse(
-        model=new_sleep_model(data.get("model")),
-        series=_flexible_tuple_of(data.get("series", ()), new_sleep_get_serie),
-    )
-
-
-def new_get_sleep_summary_data(data: dict) -> GetSleepSummaryData:
-    """Create GetSleepSummarySerie from json."""
-    return GetSleepSummaryData(
-        breathing_disturbances_intensity=int_or_none(
-            data.get(GetSleepSummaryField.BREATHING_DISTURBANCES_INTENSITY.value)
-        ),
-        deepsleepduration=int_or_none(
-            data.get(GetSleepSummaryField.DEEP_SLEEP_DURATION.value)
-        ),
-        durationtosleep=int_or_none(
-            data.get(GetSleepSummaryField.DURATION_TO_SLEEP.value)
-        ),
-        durationtowakeup=int_or_none(
-            data.get(GetSleepSummaryField.DURATION_TO_WAKEUP.value)
-        ),
-        hr_average=int_or_none(data.get(GetSleepSummaryField.HR_AVERAGE.value)),
-        hr_max=int_or_none(data.get(GetSleepSummaryField.HR_MAX.value)),
-        hr_min=int_or_none(data.get(GetSleepSummaryField.HR_MIN.value)),
-        lightsleepduration=int_or_none(
-            data.get(GetSleepSummaryField.LIGHT_SLEEP_DURATION.value)
-        ),
-        remsleepduration=int_or_none(
-            data.get(GetSleepSummaryField.REM_SLEEP_DURATION.value)
-        ),
-        rr_average=int_or_none(data.get(GetSleepSummaryField.RR_AVERAGE.value)),
-        rr_max=int_or_none(data.get(GetSleepSummaryField.RR_MAX.value)),
-        rr_min=int_or_none(data.get(GetSleepSummaryField.RR_MIN.value)),
-        sleep_score=int_or_none(data.get(GetSleepSummaryField.SLEEP_SCORE.value)),
-        snoring=int_or_none(data.get(GetSleepSummaryField.SNORING.value)),
-        snoringepisodecount=int_or_none(
-            data.get(GetSleepSummaryField.SNORING_EPISODE_COUNT.value)
-        ),
-        wakeupcount=int_or_none(data.get(GetSleepSummaryField.WAKEUP_COUNT.value)),
-        wakeupduration=int_or_none(
-            data.get(GetSleepSummaryField.WAKEUP_DURATION.value)
-        ),
-    )
-
-
-def new_get_sleep_summary_serie(data: dict) -> GetSleepSummarySerie:
-    """Create GetSleepSummarySerie from json."""
-    timezone: Final = timezone_or_raise(data.get("timezone"))
-
-    return GetSleepSummarySerie(
-        date=arrow_or_raise(data.get("date")).to(timezone),
-        enddate=arrow_or_raise(data.get("enddate")).to(timezone),
-        model=new_sleep_model(data.get("model")),
-        modified=arrow_or_raise(data.get("modified")).to(timezone),
-        startdate=arrow_or_raise(data.get("startdate")).to(timezone),
-        timezone=timezone,
-        data=new_get_sleep_summary_data(dict_or_raise(data.get("data"))),
-    )
-
-
-def new_sleep_get_summary_response(data: dict) -> SleepGetSummaryResponse:
-    """Create GetSleepSummaryResponse from json."""
-    return SleepGetSummaryResponse(
-        more=bool_or_raise(data.get("more")),
-        offset=int_or_raise(data.get("offset")),
-        series=_flexible_tuple_of(data.get("series", ()), new_get_sleep_summary_serie),
-    )
-
-
-def new_measure_get_meas_measure(data: dict) -> MeasureGetMeasMeasure:
-    """Create GetMeasMeasure from json."""
-    return MeasureGetMeasMeasure(
-        value=int_or_raise(data.get("value")),
-        type=new_measure_type(data.get("type")),
-        unit=int_or_raise(data.get("unit")),
-    )
-
-
-def new_measure_get_meas_group(data: dict, timezone: tzinfo) -> MeasureGetMeasGroup:
-    """Create GetMeasGroup from json."""
-    return MeasureGetMeasGroup(
-        grpid=int_or_raise(data.get("grpid")),
-        attrib=new_measure_group_attrib(data.get("attrib")),
-        date=arrow_or_raise(data.get("date")).to(timezone),
-        created=arrow_or_raise(data.get("created")).to(timezone),
-        category=new_measure_category(data.get("category")),
-        deviceid=data.get("deviceid"),
-        measures=_flexible_tuple_of(
-            data.get("measures", ()), new_measure_get_meas_measure
-        ),
-    )
-
-
-def _flexible_tuple_of(
-    items: Iterable[Any], fun: Callable[[Any], GenericType]
-) -> Tuple[GenericType, ...]:
-    """Create a tuple of objects resolved through lambda.
-
-    If the lambda throws an exception, the resulting item will be ignored.
-    """
-    new_items: Final[List[GenericType]] = []
-    for item in items:
-        try:
-            new_items.append(fun(item))
-        except Exception:  # pylint:disable=broad-except
-            print(
-                "Warning: Failed to convert object. See exception for details.",
-                traceback.format_exc(),
-            )
-
-    return tuple(new_items)
-
-
-def new_measure_get_meas_response(data: dict) -> MeasureGetMeasResponse:
-    """Create GetMeasResponse from json."""
-    timezone: Final = timezone_or_raise(data.get("timezone"))
-
-    return MeasureGetMeasResponse(
-        measuregrps=_flexible_tuple_of(
-            data.get("measuregrps", ()),
-            lambda group: new_measure_get_meas_group(group, timezone),
-        ),
-        more=data.get("more"),
-        offset=data.get("offset"),
-        timezone=timezone,
-        updatetime=arrow_or_raise(data.get("updatetime")).to(timezone),
-    )
-
-
-def new_measure_get_activity_activity(data: dict) -> MeasureGetActivityActivity:
-    """Create GetActivityActivity from json."""
-    timezone: Final = timezone_or_raise(data.get("timezone"))
-
-    return MeasureGetActivityActivity(
-        date=arrow_or_raise(data.get("date")).to(timezone),
-        timezone=timezone,
-        deviceid=str_or_none(data.get("deviceid")),
-        brand=int_or_raise(data.get("brand")),
-        is_tracker=bool_or_raise(data.get("is_tracker")),
-        steps=int_or_none(data.get(GetActivityField.STEPS.value)),
-        distance=float_or_raise(data.get(GetActivityField.DISTANCE.value)),
-        elevation=float_or_raise(data.get(GetActivityField.ELEVATION.value)),
-        soft=int_or_none(data.get(GetActivityField.SOFT.value)),
-        moderate=int_or_none(data.get(GetActivityField.MODERATE.value)),
-        intense=int_or_none(data.get(GetActivityField.INTENSE.value)),
-        active=int_or_none(data.get(GetActivityField.ACTIVE.value)),
-        calories=float_or_raise(data.get(GetActivityField.CALORIES.value)),
-        totalcalories=float_or_raise(data.get(GetActivityField.TOTAL_CALORIES.value)),
-        hr_average=int_or_none(data.get(GetActivityField.HR_AVERAGE.value)),
-        hr_min=int_or_none(data.get(GetActivityField.HR_MIN.value)),
-        hr_max=int_or_none(data.get(GetActivityField.HR_MAX.value)),
-        hr_zone_0=int_or_none(data.get(GetActivityField.HR_ZONE_0.value)),
-        hr_zone_1=int_or_none(data.get(GetActivityField.HR_ZONE_1.value)),
-        hr_zone_2=int_or_none(data.get(GetActivityField.HR_ZONE_2.value)),
-        hr_zone_3=int_or_none(data.get(GetActivityField.HR_ZONE_3.value)),
-    )
-
-
-def new_measure_get_activity_response(data: dict) -> MeasureGetActivityResponse:
-    """Create GetActivityResponse from json."""
-    return MeasureGetActivityResponse(
-        activities=_flexible_tuple_of(
-            data.get("activities", ()), new_measure_get_activity_activity
-        ),
-        more=bool_or_raise(data.get("more")),
-        offset=int_or_raise(data.get("offset")),
-    )
 
 
 AMBIGUOUS_GROUP_ATTRIBS: Final = (
@@ -935,56 +767,6 @@ def get_measure_value(
     )
 
 
-def new_heart_get_response(data: dict) -> HeartGetResponse:
-    """Create GetSleepResponse from json."""
-    return HeartGetResponse(
-        signal=tuple(sample for sample in data.get("signal", ())),
-        sampling_frequency=int_or_raise(data.get("sampling_frequency")),
-        wearposition=new_heart_wear_position(data.get("wearposition")),
-    )
-
-
-def new_heart_list_ecg(data: dict) -> HeartListECG:
-    """Create HeartListECG from json."""
-    return HeartListECG(
-        signalid=int_or_raise(data.get("signalid")),
-        afib=new_afib_classification(data.get("afib")),
-    )
-
-
-def new_heart_blood_pressure(
-    data: Optional[Dict[Any, Any]]
-) -> Optional[HeartBloodPressure]:
-    """Create HeartBloodPressure from json."""
-    if data is None:
-        return data
-
-    return HeartBloodPressure(
-        diastole=int_or_raise(data.get("diastole")),
-        systole=int_or_raise(data.get("systole")),
-    )
-
-
-def new_heart_list_serie(data: dict) -> HeartListSerie:
-    """Create HeartListSerie from json."""
-    return HeartListSerie(
-        model=new_heart_model(int_or_raise(data.get("model"))),
-        ecg=new_heart_list_ecg(dict_or_raise(data.get("ecg"))),
-        bloodpressure=new_heart_blood_pressure(dict_or_none(data.get("bloodpressure"))),
-        heart_rate=int_or_raise(data.get("heart_rate")),
-        timestamp=arrow_or_raise((int_or_raise(data.get("timestamp")))),
-    )
-
-
-def new_heart_list_response(data: dict) -> HeartListResponse:
-    """Create HeartListResponse from json."""
-    return HeartListResponse(
-        more=bool_or_raise(data.get("more")),
-        offset=int_or_raise(data.get("offset")),
-        series=_flexible_tuple_of(data.get("series", ()), new_heart_list_serie),
-    )
-
-
 class StatusException(Exception):
     """Status exception."""
 
@@ -1027,9 +809,11 @@ class UnknownStatusException(StatusException):
 
 def response_body_or_raise(data: Any) -> Dict[str, Any]:
     """Parse withings response or raise exception."""
-    parsed_response: Final = dict_or_raise(data)
-    status_any: Final = parsed_response.get("status")
-    status: Final = int_or_none(status_any)
+    if not isinstance(data, dict):
+        raise UnexpectedTypeException(data, dict)
+
+    parsed_response: Final = cast(dict, data)
+    status: Final = parsed_response.get("status")
 
     if status is None:
         raise UnknownStatusException(status=status)

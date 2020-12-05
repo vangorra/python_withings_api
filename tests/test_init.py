@@ -12,7 +12,7 @@ from withings_api import WithingsApi, WithingsAuth
 from withings_api.common import (
     AfibClassification,
     AuthScope,
-    Credentials,
+    Credentials2,
     GetActivityField,
     GetSleepField,
     GetSleepSummaryData,
@@ -49,12 +49,15 @@ from withings_api.common import (
 
 from .common import TIMEZONE0, TIMEZONE1, TIMEZONE_STR0, TIMEZONE_STR1
 
+_UNKNOWN_INT = 1234567
 _USERID: Final = 12345
 _FETCH_TOKEN_RESPONSE_BODY: Final = {
     "access_token": "my_access_token",
+    "csrf_token": "CSRF_TOKEN",
     "expires_in": 11,
     "token_type": "Bearer",
     "refresh_token": "my_refresh_token",
+    "scope": "user.metrics,user.activity",
     "userid": _USERID,
 }
 
@@ -64,9 +67,9 @@ def withings_api_instance() -> WithingsApi:
     """Test function."""
     client_id: Final = "my_client_id"
     consumer_secret: Final = "my_consumer_secret"
-    credentials: Final = Credentials(
+    credentials: Final = Credentials2(
         access_token="my_access_token",
-        token_expiry=arrow.utcnow().timestamp + 10000,
+        expires_in=10000,
         token_type="Bearer",
         refresh_token="my_refresh_token",
         userid=_USERID,
@@ -77,13 +80,32 @@ def withings_api_instance() -> WithingsApi:
     return WithingsApi(credentials)
 
 
+def test_get_authorize_url() -> None:
+    """Test function."""
+
+    auth1: Final = WithingsAuth(
+        client_id="fake_client_id",
+        consumer_secret="fake_consumer_secret",
+        callback_uri="http://localhost",
+    )
+
+    auth2: Final = WithingsAuth(
+        client_id="fake_client_id",
+        consumer_secret="fake_consumer_secret",
+        callback_uri="http://localhost",
+        mode="MY_MODE",
+    )
+
+    assert "&mode=MY_MODE" not in auth1.get_authorize_url()
+    assert "&mode=MY_MODE" in auth2.get_authorize_url()
+
+
 @responses.activate
 def test_authorize() -> None:
     """Test function."""
     client_id: Final = "fake_client_id"
     consumer_secret: Final = "fake_consumer_secret"
     callback_uri: Final = "http://127.0.0.1:8080"
-    arrow.utcnow = MagicMock(return_value=arrow.get(100000000))
 
     responses.add(
         method=responses.POST,
@@ -119,15 +141,14 @@ def test_authorize() -> None:
 
     creds: Final = auth.get_credentials("FAKE_CODE")
 
-    assert creds == Credentials(
-        access_token="my_access_token",
-        token_expiry=100000011,
-        token_type="Bearer",
-        refresh_token="my_refresh_token",
-        userid=_USERID,
-        client_id=client_id,
-        consumer_secret=consumer_secret,
-    )
+    assert creds.access_token == "my_access_token"
+    assert creds.token_type == "Bearer"
+    assert creds.refresh_token == "my_refresh_token"
+    assert creds.userid == _USERID
+    assert creds.client_id == client_id
+    assert creds.consumer_secret == consumer_secret
+    assert creds.expires_in == 11
+    assert creds.token_expiry == arrow.utcnow().timestamp + 11
 
 
 @responses.activate
@@ -136,9 +157,9 @@ def test_refresh_token() -> None:
     client_id: Final = "my_client_id"
     consumer_secret: Final = "my_consumer_secret"
 
-    credentials: Final = Credentials(
+    credentials: Final = Credentials2(
         access_token="my_access_token,_old",
-        token_expiry=arrow.utcnow().timestamp - 1,
+        expires_in=-1,
         token_type="Bearer",
         refresh_token="my_refresh_token_old",
         userid=_USERID,
@@ -148,13 +169,13 @@ def test_refresh_token() -> None:
 
     responses.add(
         method=responses.POST,
-        url=re.compile("https://account.withings.com/oauth2/token.*"),
+        url=re.compile("https://account.withings.com/oauth2.*"),
         status=200,
         json=_FETCH_TOKEN_RESPONSE_BODY,
     )
     responses.add(
         method=responses.POST,
-        url=re.compile("https://account.withings.com/oauth2/token.*"),
+        url=re.compile("https://account.withings.com/oauth2.*"),
         status=200,
         json={
             "access_token": "my_access_token_refreshed",
@@ -407,9 +428,16 @@ def responses_add_measure_get_meas() -> None:
                                 "value": 210,
                             },
                             {"type": MeasureType.BONE_MASS, "unit": 220, "value": 220},
-                            #  This one will be ignored because 12345 is an invalid measure type.
-                            {"type": 12345, "unit": 220, "value": 220},
                         ],
+                    },
+                    {
+                        "attrib": _UNKNOWN_INT,
+                        "category": _UNKNOWN_INT,
+                        "created": 2222222222,
+                        "date": "2019-01-02",
+                        "deviceid": "dev2",
+                        "grpid": 2,
+                        "measures": [{"type": _UNKNOWN_INT, "unit": 230, "value": 230}],
                     },
                 ],
             },
@@ -455,11 +483,24 @@ def test_measure_get_meas(withings_api: WithingsApi) -> None:
                     ),
                 ),
             ),
+            MeasureGetMeasGroup(
+                attrib=MeasureGetMeasGroupAttrib.UNKNOWN,
+                category=MeasureGetMeasGroupCategory.UNKNOWN,
+                created=arrow.get(2222222222).to(TIMEZONE0),
+                date=arrow.get("2019-01-02").to(TIMEZONE0),
+                deviceid="dev2",
+                grpid=2,
+                measures=(
+                    MeasureGetMeasMeasure(
+                        type=MeasureType.UNKNOWN, unit=230, value=230
+                    ),
+                ),
+            ),
         ),
     )
 
 
-def responses_add_sleep_get() -> None:
+def responses_add_sleep_get(root_model: int) -> None:
     """Set up request response."""
     responses.add(
         method=responses.GET,
@@ -482,17 +523,22 @@ def responses_add_sleep_get() -> None:
                         "rr": {"1387243618": 45, "1387243700": 67},
                         "snoring": {"1387243618": 78, "1387243700": 90},
                     },
+                    {
+                        "startdate": 1387235398,
+                        "state": _UNKNOWN_INT,
+                        "enddate": 1387235758,
+                    },
                 ],
-                "model": SleepModel.TRACKER,
+                "model": root_model,
             },
         },
     )
 
 
 @responses.activate
-def test_sleep_get(withings_api: WithingsApi) -> None:
+def test_sleep_get_known(withings_api: WithingsApi) -> None:
     """Test function."""
-    responses_add_sleep_get()
+    responses_add_sleep_get(SleepModel.TRACKER)
     assert withings_api.sleep_get() == SleepGetResponse(
         model=SleepModel.TRACKER,
         series=(
@@ -509,17 +555,69 @@ def test_sleep_get(withings_api: WithingsApi) -> None:
                 state=SleepState.LIGHT,
                 enddate=arrow.get(1387244518),
                 hr=(
-                    SleepGetTimestampValue(arrow.get(1387243618), 12),
-                    SleepGetTimestampValue(arrow.get(1387243700), 34),
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243618), value=12),
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243700), value=34),
                 ),
                 rr=(
-                    SleepGetTimestampValue(arrow.get(1387243618), 45),
-                    SleepGetTimestampValue(arrow.get(1387243700), 67),
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243618), value=45),
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243700), value=67),
                 ),
                 snoring=(
-                    SleepGetTimestampValue(arrow.get(1387243618), 78),
-                    SleepGetTimestampValue(arrow.get(1387243700), 90),
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243618), value=78),
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243700), value=90),
                 ),
+            ),
+            SleepGetSerie(
+                startdate=arrow.get(1387235398),
+                state=SleepState.UNKNOWN,
+                enddate=arrow.get(1387235758),
+                hr=(),
+                rr=(),
+                snoring=(),
+            ),
+        ),
+    )
+
+
+@responses.activate
+def test_sleep_get_unknown(withings_api: WithingsApi) -> None:
+    """Test function."""
+    responses_add_sleep_get(_UNKNOWN_INT)
+    assert withings_api.sleep_get() == SleepGetResponse(
+        model=SleepModel.UNKNOWN,
+        series=(
+            SleepGetSerie(
+                startdate=arrow.get(1387235398),
+                state=SleepState.AWAKE,
+                enddate=arrow.get(1387235758),
+                hr=(),
+                rr=(),
+                snoring=(),
+            ),
+            SleepGetSerie(
+                startdate=arrow.get(1387243618),
+                state=SleepState.LIGHT,
+                enddate=arrow.get(1387244518),
+                hr=(
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243618), value=12),
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243700), value=34),
+                ),
+                rr=(
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243618), value=45),
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243700), value=67),
+                ),
+                snoring=(
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243618), value=78),
+                    SleepGetTimestampValue(timestamp=arrow.get(1387243700), value=90),
+                ),
+            ),
+            SleepGetSerie(
+                startdate=arrow.get(1387235398),
+                state=SleepState.UNKNOWN,
+                enddate=arrow.get(1387235758),
+                hr=(),
+                rr=(),
+                snoring=(),
             ),
         ),
     )
@@ -595,6 +693,34 @@ def responses_add_sleep_get_summary() -> None:
                         "startdate": 1540944960,
                         "timezone": TIMEZONE_STR1,
                     },
+                    {
+                        "data": {
+                            "breathing_disturbances_intensity": 210,
+                            "deepsleepduration": 211,
+                            "durationtosleep": 212,
+                            "durationtowakeup": 213,
+                            "hr_average": 214,
+                            "hr_max": 215,
+                            "hr_min": 216,
+                            "lightsleepduration": 217,
+                            "remsleepduration": 218,
+                            "rr_average": 219,
+                            "rr_max": 220,
+                            "rr_min": 221,
+                            "sleep_score": 222,
+                            "snoring": 223,
+                            "snoringepisodecount": 224,
+                            "wakeupcount": 225,
+                            "wakeupduration": 226,
+                        },
+                        "date": "2018-10-31",
+                        "enddate": 1540973400,
+                        "id": 901269807,
+                        "model": _UNKNOWN_INT,
+                        "modified": 1541020749,
+                        "startdate": 1540944960,
+                        "timezone": TIMEZONE_STR1,
+                    },
                 ],
             },
         },
@@ -616,6 +742,7 @@ def test_sleep_get_summary(withings_api: WithingsApi) -> None:
                 modified=arrow.get(1540897246).to(TIMEZONE0),
                 startdate=arrow.get(1540857420).to(TIMEZONE0),
                 timezone=TIMEZONE0,
+                id=900363515,
                 data=GetSleepSummaryData(
                     breathing_disturbances_intensity=110,
                     deepsleepduration=111,
@@ -643,6 +770,35 @@ def test_sleep_get_summary(withings_api: WithingsApi) -> None:
                 modified=arrow.get(1541020749).to(TIMEZONE1),
                 startdate=arrow.get(1540944960).to(TIMEZONE1),
                 timezone=TIMEZONE1,
+                id=901269807,
+                data=GetSleepSummaryData(
+                    breathing_disturbances_intensity=210,
+                    deepsleepduration=211,
+                    durationtosleep=212,
+                    durationtowakeup=213,
+                    hr_average=214,
+                    hr_max=215,
+                    hr_min=216,
+                    lightsleepduration=217,
+                    remsleepduration=218,
+                    rr_average=219,
+                    rr_max=220,
+                    rr_min=221,
+                    sleep_score=222,
+                    snoring=223,
+                    snoringepisodecount=224,
+                    wakeupcount=225,
+                    wakeupduration=226,
+                ),
+            ),
+            GetSleepSummarySerie(
+                date=arrow.get("2018-10-31").to(TIMEZONE1),
+                enddate=arrow.get(1540973400).to(TIMEZONE1),
+                model=SleepModel.UNKNOWN,
+                modified=arrow.get(1541020749).to(TIMEZONE1),
+                startdate=arrow.get(1540944960).to(TIMEZONE1),
+                timezone=TIMEZONE1,
+                id=901269807,
                 data=GetSleepSummaryData(
                     breathing_disturbances_intensity=210,
                     deepsleepduration=211,
@@ -667,7 +823,7 @@ def test_sleep_get_summary(withings_api: WithingsApi) -> None:
     )
 
 
-def responses_add_heart_get() -> None:
+def responses_add_heart_get(wear_potion: int) -> None:
     """Set up request response."""
     responses.add(
         method=responses.GET,
@@ -678,20 +834,31 @@ def responses_add_heart_get() -> None:
             "body": {
                 "signal": [-20, 0, 20],
                 "sampling_frequency": 500,
-                "wearposition": HeartWearPosition.LEFT_ARM.real,
+                "wearposition": wear_potion,
             },
         },
     )
 
 
 @responses.activate
-def test_heart_get(withings_api: WithingsApi) -> None:
+def test_heart_get_known(withings_api: WithingsApi) -> None:
     """Test function."""
-    responses_add_heart_get()
+    responses_add_heart_get(HeartWearPosition.LEFT_ARM.real)
     assert withings_api.heart_get(123456) == HeartGetResponse(
         signal=tuple([-20, 0, 20]),
         sampling_frequency=500,
         wearposition=HeartWearPosition.LEFT_ARM,
+    )
+
+
+@responses.activate
+def test_heart_get_unknown(withings_api: WithingsApi) -> None:
+    """Test function."""
+    responses_add_heart_get(_UNKNOWN_INT)
+    assert withings_api.heart_get(123456) == HeartGetResponse(
+        signal=tuple([-20, 0, 20]),
+        sampling_frequency=500,
+        wearposition=HeartWearPosition.UNKNOWN,
     )
 
 
@@ -738,6 +905,13 @@ def responses_add_heart_list() -> None:
                         "heart_rate": 77,
                         "timestamp": 1594921551,
                     },
+                    {
+                        "deviceid": "abcdef0123456789abcdef012345670123456789",
+                        "model": _UNKNOWN_INT,
+                        "ecg": {"signalid": 123987, "afib": _UNKNOWN_INT},
+                        "heart_rate": 77,
+                        "timestamp": 1594921551,
+                    },
                 ],
                 "more": False,
                 "offset": 0,
@@ -755,6 +929,7 @@ def test_heart_list(withings_api: WithingsApi) -> None:
         offset=0,
         series=(
             HeartListSerie(
+                deviceid="0123456789abcdef0123456789abcdef01234567",
                 ecg=HeartListECG(signalid=9876543, afib=AfibClassification.NEGATIVE),
                 bloodpressure=HeartBloodPressure(diastole=80, systole=120),
                 heart_rate=78,
@@ -762,6 +937,7 @@ def test_heart_list(withings_api: WithingsApi) -> None:
                 model=HeartModel.BPM_CORE,
             ),
             HeartListSerie(
+                deviceid="0123456789abcdef0123456789abcdef01234567",
                 ecg=HeartListECG(signalid=7654321, afib=AfibClassification.POSITIVE),
                 bloodpressure=HeartBloodPressure(diastole=75, systole=125),
                 heart_rate=87,
@@ -770,17 +946,26 @@ def test_heart_list(withings_api: WithingsApi) -> None:
             ),
             # the Move ECG device does not take blood pressure
             HeartListSerie(
+                deviceid="abcdef0123456789abcdef012345670123456789",
                 ecg=HeartListECG(signalid=123987, afib=AfibClassification.INCONCLUSIVE),
                 bloodpressure=None,
                 heart_rate=77,
                 timestamp=arrow.get(1594921551),
                 model=HeartModel.MOVE_ECG,
             ),
+            HeartListSerie(
+                deviceid="abcdef0123456789abcdef012345670123456789",
+                ecg=HeartListECG(signalid=123987, afib=AfibClassification.UNKNOWN),
+                bloodpressure=None,
+                heart_rate=77,
+                timestamp=arrow.get(1594921551),
+                model=HeartModel.UNKNOWN,
+            ),
         ),
     )
 
 
-def responses_add_notify_get() -> None:
+def responses_add_notify_get(appli: int) -> None:
     """Set up request response."""
     responses.add(
         method=responses.GET,
@@ -790,7 +975,7 @@ def responses_add_notify_get() -> None:
             "status": 0,
             "body": {
                 "callbackurl": "http://localhost/callback",
-                "appli": NotifyAppli.ACTIVITY.real,
+                "appli": appli,
                 "comment": "comment1",
             },
         },
@@ -798,14 +983,27 @@ def responses_add_notify_get() -> None:
 
 
 @responses.activate
-def test_notify_get(withings_api: WithingsApi) -> None:
+def test_notify_get_known(withings_api: WithingsApi) -> None:
     """Test function."""
-    responses_add_notify_get()
+    responses_add_notify_get(NotifyAppli.ACTIVITY.real)
 
     response = withings_api.notify_get(callbackurl="http://localhost/callback")
     assert response == NotifyGetResponse(
         callbackurl="http://localhost/callback",
         appli=NotifyAppli.ACTIVITY,
+        comment="comment1",
+    )
+
+
+@responses.activate
+def test_notify_get_unknown(withings_api: WithingsApi) -> None:
+    """Test function."""
+    responses_add_notify_get(_UNKNOWN_INT)
+
+    response = withings_api.notify_get(callbackurl="http://localhost/callback")
+    assert response == NotifyGetResponse(
+        callbackurl="http://localhost/callback",
+        appli=NotifyAppli.UNKNOWN,
         comment="comment1",
     )
 
@@ -828,6 +1026,12 @@ def responses_add_notify_list() -> None:
                     },
                     {
                         "appli": NotifyAppli.CIRCULATORY.real,
+                        "callbackurl": "http://localhost/callback2",
+                        "comment": "fake_comment2",
+                        "expires": "2019-09-02",
+                    },
+                    {
+                        "appli": 1234567,
                         "callbackurl": "http://localhost/callback2",
                         "comment": "fake_comment2",
                         "expires": "2019-09-02",
@@ -857,6 +1061,12 @@ def test_notify_list(withings_api: WithingsApi) -> None:
                 comment="fake_comment2",
                 expires=arrow.get("2019-09-02"),
             ),
+            NotifyListProfile(
+                appli=NotifyAppli.UNKNOWN,
+                callbackurl="http://localhost/callback2",
+                comment="fake_comment2",
+                expires=arrow.get("2019-09-02"),
+            ),
         )
     )
 
@@ -867,7 +1077,7 @@ def test_notify_list(withings_api: WithingsApi) -> None:
 @responses.activate
 def test_notify_get_params(withings_api: WithingsApi) -> None:
     """Test function."""
-    responses_add_notify_get()
+    responses_add_notify_get(NotifyAppli.CIRCULATORY.real)
     withings_api.notify_get(
         callbackurl="http://localhost/callback2", appli=NotifyAppli.CIRCULATORY
     )
@@ -1055,7 +1265,7 @@ def test_measure_get_activity_params(withings_api: WithingsApi) -> None:
 @responses.activate
 def test_get_sleep_params(withings_api: WithingsApi) -> None:
     """Test function."""
-    responses_add_sleep_get()
+    responses_add_sleep_get(SleepModel.TRACKER)
     withings_api.sleep_get(
         startdate="2019-01-01",
         enddate=arrow.get("2019-01-02"),
@@ -1104,7 +1314,7 @@ def test_get_sleep_summary_params(withings_api: WithingsApi) -> None:
 @responses.activate
 def test_heart_get_params(withings_api: WithingsApi) -> None:
     """Test function."""
-    responses_add_heart_get()
+    responses_add_heart_get(HeartWearPosition.LEFT_ARM.real)
     withings_api.heart_get(signalid=1234567)
 
     assert_url_query_equals(

@@ -1,4 +1,5 @@
 [MASTER]
+extension-pkg-whitelist=pydantic
 jobs=4
 
 [MESSAGES CONTROL]

@@ -22,13 +22,13 @@ category = "dev"
 description = "An abstract syntax tree for Python with inference support."
 name = "astroid"
 optional = false
-python-versions = ">=3.5.*"
-version = "2.3.3"
+python-versions = ">=3.5"
+version = "2.4.2"
 
 [package.dependencies]
 lazy-object-proxy = ">=1.4.0,<1.5.0"
 six = ">=1.12,<2.0"
-wrapt = ">=1.11.0,<1.12.0"
+wrapt = ">=1.11,<2.0"
 
 [package.dependencies.typed-ast]
 python = "<3.8"
@@ -37,6 +37,7 @@ version = ">=1.4.0,<1.5"
 [[package]]
 category = "dev"
 description = "Atomic file writes."
+marker = "sys_platform == \"win32\""
 name = "atomicwrites"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -144,6 +145,15 @@ version = "5.0.4"
 toml = ["toml"]
 
 [[package]]
+category = "main"
+description = "A backport of the dataclasses module for Python 3.6"
+marker = "python_version < \"3.7\""
+name = "dataclasses"
+optional = false
+python-versions = "*"
+version = "0.6"
+
+[[package]]
 category = "dev"
 description = "Discover and load entry points from installed packages."
 name = "entrypoints"
@@ -213,6 +223,14 @@ testing = ["packaging", "importlib-resources"]
 
 [[package]]
 category = "dev"
+description = "iniconfig: brain-dead simple config-ini parsing"
+name = "iniconfig"
+optional = false
+python-versions = "*"
+version = "1.1.1"
+
+[[package]]
+category = "dev"
 description = "A Python utility / library to sort Python imports."
 name = "isort"
 optional = false
@@ -243,22 +261,14 @@ version = "0.6.1"
 
 [[package]]
 category = "dev"
-description = "More routines for operating on iterables, beyond itertools"
-name = "more-itertools"
-optional = false
-python-versions = ">=3.5"
-version = "8.2.0"
-
-[[package]]
-category = "dev"
 description = "Optional static typing for Python"
 name = "mypy"
 optional = false
 python-versions = ">=3.5"
-version = "0.740"
+version = "0.790"
 
 [package.dependencies]
-mypy-extensions = ">=0.4.0,<0.5.0"
+mypy-extensions = ">=0.4.3,<0.5.0"
 typed-ast = ">=1.4.0,<1.5.0"
 typing-extensions = ">=3.7.4"
 
@@ -336,7 +346,7 @@ description = "library with cross-python path, ini-parsing, io, code, log facili
 name = "py"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.8.1"
+version = "1.9.0"
 
 [[package]]
 category = "dev"
@@ -345,6 +355,24 @@ name = "pycodestyle"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.5.0"
+
+[[package]]
+category = "main"
+description = "Data validation and settings management using python 3.6 type hinting"
+name = "pydantic"
+optional = false
+python-versions = ">=3.6"
+version = "1.7.2"
+
+[package.dependencies]
+[package.dependencies.dataclasses]
+python = "<3.7"
+version = ">=0.6"
+
+[package.extras]
+dotenv = ["python-dotenv (>=0.10.4)"]
+email = ["email-validator (>=1.0.3)"]
+typing_extensions = ["typing-extensions (>=3.7.2)"]
 
 [[package]]
 category = "dev"
@@ -360,13 +388,14 @@ description = "python code static checker"
 name = "pylint"
 optional = false
 python-versions = ">=3.5.*"
-version = "2.4.3"
+version = "2.6.0"
 
 [package.dependencies]
-astroid = ">=2.3.0,<2.4"
+astroid = ">=2.4.0,<=2.5"
 colorama = "*"
-isort = ">=4.2.5,<5"
+isort = ">=4.2.5,<6"
 mccabe = ">=0.6,<0.7"
+toml = ">=0.7.1"
 
 [[package]]
 category = "dev"
@@ -382,23 +411,24 @@ description = "pytest: simple powerful testing with Python"
 name = "pytest"
 optional = false
 python-versions = ">=3.5"
-version = "5.2.1"
+version = "6.1.2"
 
 [package.dependencies]
 atomicwrites = ">=1.0"
 attrs = ">=17.4.0"
 colorama = "*"
-more-itertools = ">=4.0.0"
+iniconfig = "*"
 packaging = "*"
 pluggy = ">=0.12,<1.0"
-py = ">=1.5.0"
-wcwidth = "*"
+py = ">=1.8.2"
+toml = "*"
 
 [package.dependencies.importlib-metadata]
 python = "<3.8"
 version = ">=0.12"
 
 [package.extras]
+checkqa_mypy = ["mypy (0.780)"]
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xmlschema"]
 
 [[package]]
@@ -406,15 +436,15 @@ category = "dev"
 description = "Pytest plugin for measuring coverage."
 name = "pytest-cov"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "2.8.1"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+version = "2.10.1"
 
 [package.dependencies]
 coverage = ">=4.4"
-pytest = ">=3.6"
+pytest = ">=4.6"
 
 [package.extras]
-testing = ["fields", "hunter", "process-tests (2.0.2)", "six", "virtualenv"]
+testing = ["fields", "hunter", "process-tests (2.0.2)", "six", "pytest-xdist", "virtualenv"]
 
 [[package]]
 category = "main"
@@ -569,14 +599,6 @@ socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
 
 [[package]]
 category = "dev"
-description = "Measures number of Terminal column cells of wide-character codes"
-name = "wcwidth"
-optional = false
-python-versions = "*"
-version = "0.1.9"
-
-[[package]]
-category = "dev"
 description = "A built-package format for Python."
 name = "wheel"
 optional = false
@@ -608,7 +630,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "f56a43dde3bb1aab9acdff66cefc17648f1a137878e8c88327c92b6d476bb26f"
+content-hash = "aef381246378d6a692c8c07c43530bec02228eda527ef5f2db3f4574e683117e"
 python-versions = "^3.6 || ^3.7"
 
 [metadata.files]
@@ -621,8 +643,8 @@ arrow = [
     {file = "arrow-0.15.6.tar.gz", hash = "sha256:eb5d339f00072cc297d7de252a2e75f272085d1231a3723f1026d1fa91367118"},
 ]
 astroid = [
-    {file = "astroid-2.3.3-py3-none-any.whl", hash = "sha256:840947ebfa8b58f318d42301cf8c0a20fd794a33b61cc4638e28e9e61ba32f42"},
-    {file = "astroid-2.3.3.tar.gz", hash = "sha256:71ea07f44df9568a75d0f354c49143a4575d90645e9fead6dfb52c26a85ed13a"},
+    {file = "astroid-2.4.2-py3-none-any.whl", hash = "sha256:bc58d83eb610252fd8de6363e39d4f1d0619c894b0ed24603b881c02e64c7386"},
+    {file = "astroid-2.4.2.tar.gz", hash = "sha256:2f4078c2a41bf377eea06d71c9d2ba4eb8f6b1af2135bec27bbbb7d8f12bb703"},
 ]
 atomicwrites = [
     {file = "atomicwrites-1.4.0-py2.py3-none-any.whl", hash = "sha256:6d1784dea7c0c8d4a5172b6c620f40b6e4cbfdf96d783691f2e1302a7b88e197"},
@@ -693,6 +715,10 @@ coverage = [
     {file = "coverage-5.0.4-cp39-cp39-win_amd64.whl", hash = "sha256:4482f69e0701139d0f2c44f3c395d1d1d37abd81bfafbf9b6efbe2542679d892"},
     {file = "coverage-5.0.4.tar.gz", hash = "sha256:1b60a95fc995649464e0cd48cecc8288bac5f4198f21d04b8229dc4097d76823"},
 ]
+dataclasses = [
+    {file = "dataclasses-0.6-py3-none-any.whl", hash = "sha256:454a69d788c7fda44efd71e259be79577822f5e3f53f029a22d08004e951dc9f"},
+    {file = "dataclasses-0.6.tar.gz", hash = "sha256:6988bd2b895eef432d562370bb707d540f32f7360ab13da45340101bc2307d84"},
+]
 entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},
     {file = "entrypoints-0.3.tar.gz", hash = "sha256:c70dd71abe5a8c85e55e12c19bd91ccfeec11a6e99044204511f9ed547d48451"},
@@ -716,6 +742,10 @@ idna = [
 importlib-metadata = [
     {file = "importlib_metadata-1.6.0-py2.py3-none-any.whl", hash = "sha256:2a688cbaa90e0cc587f1df48bdc97a6eadccdcd9c35fb3f976a09e3b5016d90f"},
     {file = "importlib_metadata-1.6.0.tar.gz", hash = "sha256:34513a8a0c4962bc66d35b359558fd8a5e10cd472d37aec5f66858addef32c1e"},
+]
+iniconfig = [
+    {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
+    {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 isort = [
     {file = "isort-4.3.21-py2.py3-none-any.whl", hash = "sha256:6e811fcb295968434526407adb8796944f1988c5b65e8139058f2014cbe100fd"},
@@ -748,25 +778,21 @@ mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
-more-itertools = [
-    {file = "more-itertools-8.2.0.tar.gz", hash = "sha256:b1ddb932186d8a6ac451e1d95844b382f55e12686d51ca0c68b6f61f2ab7a507"},
-    {file = "more_itertools-8.2.0-py3-none-any.whl", hash = "sha256:5dd8bcf33e5f9513ffa06d5ad33d78f31e1931ac9a18f33d37e77a180d393a7c"},
-]
 mypy = [
-    {file = "mypy-0.740-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:9371290aa2cad5ad133e4cdc43892778efd13293406f7340b9ffe99d5ec7c1d9"},
-    {file = "mypy-0.740-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:b428f883d2b3fe1d052c630642cc6afddd07d5cd7873da948644508be3b9d4a7"},
-    {file = "mypy-0.740-cp35-cp35m-win_amd64.whl", hash = "sha256:ace6ac1d0f87d4072f05b5468a084a45b4eda970e4d26704f201e06d47ab2990"},
-    {file = "mypy-0.740-cp36-cp36m-macosx_10_6_x86_64.whl", hash = "sha256:d7574e283f83c08501607586b3167728c58e8442947e027d2d4c7dcd6d82f453"},
-    {file = "mypy-0.740-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:d5bf0e6ec8ba346a2cf35cb55bf4adfddbc6b6576fcc9e10863daa523e418dbb"},
-    {file = "mypy-0.740-cp36-cp36m-win_amd64.whl", hash = "sha256:1521c186a3d200c399bd5573c828ea2db1362af7209b2adb1bb8532cea2fb36f"},
-    {file = "mypy-0.740-cp37-cp37m-macosx_10_6_x86_64.whl", hash = "sha256:dc889c84241a857c263a2b1cd1121507db7d5b5f5e87e77147097230f374d10b"},
-    {file = "mypy-0.740-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:6ed3b9b3fdc7193ea7aca6f3c20549b377a56f28769783a8f27191903a54170f"},
-    {file = "mypy-0.740-cp37-cp37m-win_amd64.whl", hash = "sha256:31a046ab040a84a0fc38bc93694876398e62bc9f35eca8ccbf6418b7297f4c00"},
-    {file = "mypy-0.740-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:672e418425d957e276c291930a3921b4a6413204f53fe7c37cad7bc57b9a3391"},
-    {file = "mypy-0.740-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:3b1a411909c84b2ae9b8283b58b48541654b918e8513c20a400bb946aa9111ae"},
-    {file = "mypy-0.740-cp38-cp38-win_amd64.whl", hash = "sha256:540c9caa57a22d0d5d3c69047cc9dd0094d49782603eb03069821b41f9e970e9"},
-    {file = "mypy-0.740-py3-none-any.whl", hash = "sha256:f4748697b349f373002656bf32fede706a0e713d67bfdcf04edf39b1f61d46eb"},
-    {file = "mypy-0.740.tar.gz", hash = "sha256:48c8bc99380575deb39f5d3400ebb6a8a1cb5cc669bbba4d3bb30f904e0a0e7d"},
+    {file = "mypy-0.790-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:bd03b3cf666bff8d710d633d1c56ab7facbdc204d567715cb3b9f85c6e94f669"},
+    {file = "mypy-0.790-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:2170492030f6faa537647d29945786d297e4862765f0b4ac5930ff62e300d802"},
+    {file = "mypy-0.790-cp35-cp35m-win_amd64.whl", hash = "sha256:e86bdace26c5fe9cf8cb735e7cedfe7850ad92b327ac5d797c656717d2ca66de"},
+    {file = "mypy-0.790-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:e97e9c13d67fbe524be17e4d8025d51a7dca38f90de2e462243ab8ed8a9178d1"},
+    {file = "mypy-0.790-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:0d34d6b122597d48a36d6c59e35341f410d4abfa771d96d04ae2c468dd201abc"},
+    {file = "mypy-0.790-cp36-cp36m-win_amd64.whl", hash = "sha256:72060bf64f290fb629bd4a67c707a66fd88ca26e413a91384b18db3876e57ed7"},
+    {file = "mypy-0.790-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:eea260feb1830a627fb526d22fbb426b750d9f5a47b624e8d5e7e004359b219c"},
+    {file = "mypy-0.790-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:c614194e01c85bb2e551c421397e49afb2872c88b5830e3554f0519f9fb1c178"},
+    {file = "mypy-0.790-cp37-cp37m-win_amd64.whl", hash = "sha256:0a0d102247c16ce93c97066443d11e2d36e6cc2a32d8ccc1f705268970479324"},
+    {file = "mypy-0.790-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:cf4e7bf7f1214826cf7333627cb2547c0db7e3078723227820d0a2490f117a01"},
+    {file = "mypy-0.790-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:af4e9ff1834e565f1baa74ccf7ae2564ae38c8df2a85b057af1dbbc958eb6666"},
+    {file = "mypy-0.790-cp38-cp38-win_amd64.whl", hash = "sha256:da56dedcd7cd502ccd3c5dddc656cb36113dd793ad466e894574125945653cea"},
+    {file = "mypy-0.790-py3-none-any.whl", hash = "sha256:2842d4fbd1b12ab422346376aad03ff5d0805b706102e475e962370f874a5122"},
+    {file = "mypy-0.790.tar.gz", hash = "sha256:2b21ba45ad9ef2e2eb88ce4aeadd0112d0f5026418324176fd494a6824b74975"},
 ]
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
@@ -793,32 +819,56 @@ pluggy = [
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
 ]
 py = [
-    {file = "py-1.8.1-py2.py3-none-any.whl", hash = "sha256:c20fdd83a5dbc0af9efd622bee9a5564e278f6380fffcacc43ba6f43db2813b0"},
-    {file = "py-1.8.1.tar.gz", hash = "sha256:5e27081401262157467ad6e7f851b7aa402c5852dbcb3dae06768434de5752aa"},
+    {file = "py-1.9.0-py2.py3-none-any.whl", hash = "sha256:366389d1db726cd2fcfc79732e75410e5fe4d31db13692115529d34069a043c2"},
+    {file = "py-1.9.0.tar.gz", hash = "sha256:9ca6883ce56b4e8da7e79ac18787889fa5206c79dcc67fb065376cd2fe03f342"},
 ]
 pycodestyle = [
     {file = "pycodestyle-2.5.0-py2.py3-none-any.whl", hash = "sha256:95a2219d12372f05704562a14ec30bc76b05a5b297b21a5dfe3f6fac3491ae56"},
     {file = "pycodestyle-2.5.0.tar.gz", hash = "sha256:e40a936c9a450ad81df37f549d676d127b1b66000a6c500caa2b085bc0ca976c"},
+]
+pydantic = [
+    {file = "pydantic-1.7.2-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:dfaa6ed1d509b5aef4142084206584280bb6e9014f01df931ec6febdad5b200a"},
+    {file = "pydantic-1.7.2-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:2182ba2a9290964b278bcc07a8d24207de709125d520efec9ad6fa6f92ee058d"},
+    {file = "pydantic-1.7.2-cp36-cp36m-manylinux2014_i686.whl", hash = "sha256:0fe8b45d31ae53d74a6aa0bf801587bd49970070eac6a6326f9fa2a302703b8a"},
+    {file = "pydantic-1.7.2-cp36-cp36m-manylinux2014_x86_64.whl", hash = "sha256:01f0291f4951580f320f7ae3f2ecaf0044cdebcc9b45c5f882a7e84453362420"},
+    {file = "pydantic-1.7.2-cp36-cp36m-win_amd64.whl", hash = "sha256:4ba6b903e1b7bd3eb5df0e78d7364b7e831ed8b4cd781ebc3c4f1077fbcb72a4"},
+    {file = "pydantic-1.7.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:b11fc9530bf0698c8014b2bdb3bbc50243e82a7fa2577c8cfba660bcc819e768"},
+    {file = "pydantic-1.7.2-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:a3c274c49930dc047a75ecc865e435f3df89715c775db75ddb0186804d9b04d0"},
+    {file = "pydantic-1.7.2-cp37-cp37m-manylinux2014_i686.whl", hash = "sha256:c68b5edf4da53c98bb1ccb556ae8f655575cb2e676aef066c12b08c724a3f1a1"},
+    {file = "pydantic-1.7.2-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:95d4410c4e429480c736bba0db6cce5aaa311304aea685ebcf9ee47571bfd7c8"},
+    {file = "pydantic-1.7.2-cp37-cp37m-win_amd64.whl", hash = "sha256:a2fc7bf77ed4a7a961d7684afe177ff59971828141e608f142e4af858e07dddc"},
+    {file = "pydantic-1.7.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:b9572c0db13c8658b4a4cb705dcaae6983aeb9842248b36761b3fbc9010b740f"},
+    {file = "pydantic-1.7.2-cp38-cp38-manylinux1_i686.whl", hash = "sha256:f83f679e727742b0c465e7ef992d6da4a7e5268b8edd8fdaf5303276374bef52"},
+    {file = "pydantic-1.7.2-cp38-cp38-manylinux2014_i686.whl", hash = "sha256:e5fece30e80087d9b7986104e2ac150647ec1658c4789c89893b03b100ca3164"},
+    {file = "pydantic-1.7.2-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:ce2d452961352ba229fe1e0b925b41c0c37128f08dddb788d0fd73fd87ea0f66"},
+    {file = "pydantic-1.7.2-cp38-cp38-win_amd64.whl", hash = "sha256:fc21a37ff3f545de80b166e1735c4172b41b017948a3fb2d5e2f03c219eac50a"},
+    {file = "pydantic-1.7.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:c9760d1556ec59ff745f88269a8f357e2b7afc75c556b3a87b8dda5bc62da8ba"},
+    {file = "pydantic-1.7.2-cp39-cp39-manylinux1_i686.whl", hash = "sha256:2c1673633ad1eea78b1c5c420a47cd48717d2ef214c8230d96ca2591e9e00958"},
+    {file = "pydantic-1.7.2-cp39-cp39-manylinux2014_i686.whl", hash = "sha256:388c0c26c574ff49bad7d0fd6ed82fbccd86a0473fa3900397d3354c533d6ebb"},
+    {file = "pydantic-1.7.2-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:ab1d5e4d8de00575957e1c982b951bffaedd3204ddd24694e3baca3332e53a23"},
+    {file = "pydantic-1.7.2-cp39-cp39-win_amd64.whl", hash = "sha256:f045cf7afb3352a03bc6cb993578a34560ac24c5d004fa33c76efec6ada1361a"},
+    {file = "pydantic-1.7.2-py3-none-any.whl", hash = "sha256:6665f7ab7fbbf4d3c1040925ff4d42d7549a8c15fe041164adfe4fc2134d4cce"},
+    {file = "pydantic-1.7.2.tar.gz", hash = "sha256:c8200aecbd1fb914e1bd061d71a4d1d79ecb553165296af0c14989b89e90d09b"},
 ]
 pyflakes = [
     {file = "pyflakes-2.1.1-py2.py3-none-any.whl", hash = "sha256:17dbeb2e3f4d772725c777fabc446d5634d1038f234e77343108ce445ea69ce0"},
     {file = "pyflakes-2.1.1.tar.gz", hash = "sha256:d976835886f8c5b31d47970ed689944a0262b5f3afa00a5a7b4dc81e5449f8a2"},
 ]
 pylint = [
-    {file = "pylint-2.4.3-py3-none-any.whl", hash = "sha256:7b76045426c650d2b0f02fc47c14d7934d17898779da95288a74c2a7ec440702"},
-    {file = "pylint-2.4.3.tar.gz", hash = "sha256:856476331f3e26598017290fd65bebe81c960e806776f324093a46b76fb2d1c0"},
+    {file = "pylint-2.6.0-py3-none-any.whl", hash = "sha256:bfe68f020f8a0fece830a22dd4d5dddb4ecc6137db04face4c3420a46a52239f"},
+    {file = "pylint-2.6.0.tar.gz", hash = "sha256:bb4a908c9dadbc3aac18860550e870f58e1a02c9f2c204fdf5693d73be061210"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},
     {file = "pyparsing-2.4.7.tar.gz", hash = "sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1"},
 ]
 pytest = [
-    {file = "pytest-5.2.1-py3-none-any.whl", hash = "sha256:7e4800063ccfc306a53c461442526c5571e1462f61583506ce97e4da6a1d88c8"},
-    {file = "pytest-5.2.1.tar.gz", hash = "sha256:ca563435f4941d0cb34767301c27bc65c510cb82e90b9ecf9cb52dc2c63caaa0"},
+    {file = "pytest-6.1.2-py3-none-any.whl", hash = "sha256:4288fed0d9153d9646bfcdf0c0428197dba1ecb27a33bb6e031d002fa88653fe"},
+    {file = "pytest-6.1.2.tar.gz", hash = "sha256:c0a7e94a8cdbc5422a51ccdad8e6f1024795939cc89159a0ae7f0b316ad3823e"},
 ]
 pytest-cov = [
-    {file = "pytest-cov-2.8.1.tar.gz", hash = "sha256:cc6742d8bac45070217169f5f72ceee1e0e55b0221f54bcf24845972d3a47f2b"},
-    {file = "pytest_cov-2.8.1-py2.py3-none-any.whl", hash = "sha256:cdbdef4f870408ebdbfeb44e63e07eb18bb4619fae852f6e760645fa36172626"},
+    {file = "pytest-cov-2.10.1.tar.gz", hash = "sha256:47bd0ce14056fdd79f93e1713f88fad7bdcc583dcd7783da86ef2f085a0bb88e"},
+    {file = "pytest_cov-2.10.1-py2.py3-none-any.whl", hash = "sha256:45ec2d5182f89a81fc3eb29e3d1ed3113b9e9a873bcddb2a71faaab066110191"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
@@ -924,10 +974,6 @@ typing-extensions = [
 urllib3 = [
     {file = "urllib3-1.25.9-py2.py3-none-any.whl", hash = "sha256:88206b0eb87e6d677d424843ac5209e3fb9d0190d0ee169599165ec25e9d9115"},
     {file = "urllib3-1.25.9.tar.gz", hash = "sha256:3018294ebefce6572a474f0604c2021e33b3fd8006ecd11d62107a5d2a963527"},
-]
-wcwidth = [
-    {file = "wcwidth-0.1.9-py2.py3-none-any.whl", hash = "sha256:cafe2186b3c009a04067022ce1dcd79cb38d8d65ee4f4791b8888d6599d1bbe1"},
-    {file = "wcwidth-0.1.9.tar.gz", hash = "sha256:ee73862862a156bf77ff92b09034fc4825dd3af9cf81bc5b360668d425f3c5f1"},
 ]
 wheel = [
     {file = "wheel-0.33.6-py2.py3-none-any.whl", hash = "sha256:f4da1763d3becf2e2cd92a14a7c920f0f00eca30fdde9ea992c836685b9faf28"},

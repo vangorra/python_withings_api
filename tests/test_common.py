@@ -5,8 +5,11 @@ import arrow
 import pytest
 from typing_extensions import Final
 from withings_api.common import (
+    ArrowType,
     AuthFailedException,
     BadStateException,
+    Credentials,
+    Credentials2,
     ErrorOccurredException,
     InvalidParamsException,
     MeasureGetMeasGroup,
@@ -17,15 +20,14 @@ from withings_api.common import (
     MeasureGroupAttribs,
     MeasureType,
     MeasureTypes,
-    SleepModel,
     TimeoutException,
+    TimeZone,
     TooManyRequestsException,
     UnauthorizedException,
     UnexpectedTypeException,
     UnknownStatusException,
-    enforce_type,
-    enum_or_raise,
     get_measure_value,
+    maybe_upgrade_credentials,
     query_measure_groups,
     response_body_or_raise,
 )
@@ -40,19 +42,68 @@ from withings_api.const import (
     STATUS_UNAUTHORIZED,
 )
 
-from .common import TIMEZONE0
+from .common import TIMEZONE0, TIMEZONE_STR0
 
 
-def test_enforce_type_exception() -> None:
-    """Test function."""
-    with pytest.raises(Exception):
-        enforce_type("blah", int)
+def test_time_zone_validate() -> None:
+    """Test TimeZone conversation."""
+    with pytest.raises(TypeError):
+        assert TimeZone.validate(123)
+    with pytest.raises(ValueError):
+        assert TimeZone.validate("NOT_A_TIMEZONE")
+    assert TimeZone.validate(TIMEZONE_STR0) == TIMEZONE0
 
 
-def test_enum_or_raise() -> None:
-    """Test function."""
-    with pytest.raises(Exception):
-        enum_or_raise(None, SleepModel)
+def test_arrow_type_validate() -> None:
+    """Test ArrowType conversation."""
+    with pytest.raises(TypeError):
+        assert ArrowType.validate(1.23)
+
+    arrow_obj: Final = arrow.get(1234567)
+    assert ArrowType.validate("1234567") == arrow_obj
+    assert ArrowType.validate(str(arrow_obj)) == arrow_obj
+    assert ArrowType.validate(1234567) == arrow_obj
+    assert ArrowType.validate(arrow_obj) == arrow_obj
+
+
+def test_maybe_update_credentials() -> None:
+    """Test upgrade credentials objects."""
+
+    creds1: Final = Credentials(
+        access_token="my_access_token",
+        token_expiry=arrow.get("2020-01-01T00:00:00+07:00").timestamp,
+        token_type="Bearer",
+        refresh_token="my_refresh_token",
+        userid=1,
+        client_id="CLIENT_ID",
+        consumer_secret="CONSUMER_SECRET",
+    )
+
+    expires_in = creds1.token_expiry - arrow.utcnow().timestamp
+    creds2: Final = Credentials2(
+        access_token="my_access_token",
+        expires_in=expires_in,
+        token_type="Bearer",
+        refresh_token="my_refresh_token",
+        userid=1,
+        client_id="CLIENT_ID",
+        consumer_secret="CONSUMER_SECRET",
+    )
+
+    assert maybe_upgrade_credentials(creds2) == creds2
+
+    upgraded_creds: Final = maybe_upgrade_credentials(creds1)
+    assert upgraded_creds.access_token == creds1.access_token
+    assert upgraded_creds.expires_in == expires_in  # pylint: disable=no-member
+    assert upgraded_creds.token_type == creds1.token_type
+    assert upgraded_creds.refresh_token == creds1.refresh_token
+    assert upgraded_creds.userid == creds1.userid
+    assert upgraded_creds.client_id == creds1.client_id
+    assert upgraded_creds.consumer_secret == creds1.consumer_secret
+    assert upgraded_creds.created.format("YYYY-MM-DD HH:mm:ss") == arrow.get(
+        creds1.token_expiry - expires_in
+    ).format("YYYY-MM-DD HH:mm:ss")
+    assert upgraded_creds.token_expiry == creds1.token_expiry
 
 
 def test_query_measure_groups() -> None:
@@ -258,6 +309,9 @@ def test_response_body_or_raise() -> None:
 
     with pytest.raises(UnknownStatusException):
         response_body_or_raise(response_status_factory("hello"))
+
+    with pytest.raises(UnknownStatusException):
+        response_body_or_raise(response_status_factory(None))
 
     for status in STATUS_SUCCESS:
         response_body_or_raise(response_status_factory(status))
