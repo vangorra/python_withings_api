@@ -1,4 +1,4 @@
-# Python withings-api [![Build status](https://github.com/vangorra/python_withings_api/workflows/Build/badge.svg?branch=master)](https://github.com/vangorra/python_withings_api/actions?workflow=Build) [![codecov](https://codecov.io/gh/vangorra/python_withings_api/branch/master/graph/badge.svg)](https://codecov.io/gh/vangorra/python_withings_api) [![PyPI](https://img.shields.io/pypi/v/withings-api)](https://pypi.org/project/withings-api/)
+# Python withings-api [![Build status](https://github.com/vangorra/python_withings_api/workflows/Build/badge.svg?branch=master)](https://github.com/vangorra/python_withings_api/actions?workflow=Build) [![Coverage Status](https://coveralls.io/repos/github/vangorra/python_withings_api/badge.svg?branch=master)](https://coveralls.io/github/vangorra/python_withings_api?branch=master) [![PyPI](https://img.shields.io/pypi/v/withings-api)](https://pypi.org/project/withings-api/)
 Python library for the Withings Health API
 
 

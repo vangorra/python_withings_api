@@ -21,5 +21,16 @@ jobs:
           ./scripts/build.sh
         env:
           CI: 1
-      - name: Codecov
-        uses: codecov/codecov-action@v1.0.12
+      - name: ReportGenerator
+        uses: danielpalme/ReportGenerator-GitHub-Action@4.8.2
+        if: ${{ matrix.python-version == '3.8' }}
+        with:
+          reports: './build/coverage.xml'
+          targetdir: 'build'
+          reporttypes: 'lcov'
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        if: ${{ matrix.python-version == '3.8' }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./build/lcov.info
