@@ -539,7 +539,7 @@ def responses_add_sleep_get(root_model: int) -> None:
 def test_sleep_get_known(withings_api: WithingsApi) -> None:
     """Test function."""
     responses_add_sleep_get(SleepModel.TRACKER)
-    assert withings_api.sleep_get() == SleepGetResponse(
+    assert withings_api.sleep_get(data_fields=GetSleepField) == SleepGetResponse(
         model=SleepModel.TRACKER,
         series=(
             SleepGetSerie(
@@ -583,7 +583,7 @@ def test_sleep_get_known(withings_api: WithingsApi) -> None:
 def test_sleep_get_unknown(withings_api: WithingsApi) -> None:
     """Test function."""
     responses_add_sleep_get(_UNKNOWN_INT)
-    assert withings_api.sleep_get() == SleepGetResponse(
+    assert withings_api.sleep_get(data_fields=GetSleepField) == SleepGetResponse(
         model=SleepModel.UNKNOWN,
         series=(
             SleepGetSerie(
@@ -731,7 +731,9 @@ def responses_add_sleep_get_summary() -> None:
 def test_sleep_get_summary(withings_api: WithingsApi) -> None:
     """Test function."""
     responses_add_sleep_get_summary()
-    assert withings_api.sleep_get_summary() == SleepGetSummaryResponse(
+    assert withings_api.sleep_get_summary(
+        data_fields=GetSleepSummaryField
+    ) == SleepGetSummaryResponse(
         more=False,
         offset=1,
         series=(
