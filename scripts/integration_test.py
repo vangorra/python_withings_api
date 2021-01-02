@@ -11,7 +11,7 @@ import arrow
 from oauthlib.oauth2.rfc6749.errors import MissingTokenError
 from typing_extensions import Final
 from withings_api import AuthScope, WithingsApi, WithingsAuth
-from withings_api.common import CredentialsType
+from withings_api.common import CredentialsType, GetSleepField, GetSleepSummaryField
 
 CREDENTIALS_FILE: Final = path.abspath(
     path.join(path.dirname(path.abspath(__file__)), "../.credentials")
@@ -131,14 +131,20 @@ def main() -> None:
 
     print("Getting sleep...")
     assert (
-        api.sleep_get(startdate=arrow.utcnow().shift(days=-2), enddate=arrow.utcnow())
+        api.sleep_get(
+            data_fields=GetSleepField,
+            startdate=arrow.utcnow().shift(days=-2),
+            enddate=arrow.utcnow(),
+        )
         is not None
     )
 
     print("Getting sleep summary...")
     assert (
         api.sleep_get_summary(
-            startdateymd=arrow.utcnow().shift(days=-2), enddateymd=arrow.utcnow()
+            data_fields=GetSleepSummaryField,
+            startdateymd=arrow.utcnow().shift(days=-2),
+            enddateymd=arrow.utcnow(),
         )
         is not None
     )

@@ -91,10 +91,10 @@ class AbstractWithingsApi:
 
     def measure_get_activity(
         self,
+        data_fields: Iterable[GetActivityField] = GetActivityField,
         startdateymd: Optional[DateType] = None,
         enddateymd: Optional[DateType] = None,
         offset: Optional[int] = None,
-        data_fields: Optional[Iterable[GetActivityField]] = None,
         lastupdate: Optional[DateType] = None,
     ) -> MeasureGetActivityResponse:
         """Get user created activities."""
@@ -158,9 +158,9 @@ class AbstractWithingsApi:
 
     def sleep_get(
         self,
+        data_fields: Iterable[GetSleepField],
         startdate: Optional[DateType] = None,
         enddate: Optional[DateType] = None,
-        data_fields: Optional[Iterable[GetSleepField]] = None,
     ) -> SleepGetResponse:
         """Get sleep data."""
         params: Final[ParamsType] = {}
@@ -181,9 +181,9 @@ class AbstractWithingsApi:
 
     def sleep_get_summary(
         self,
+        data_fields: Iterable[GetSleepSummaryField],
         startdateymd: Optional[DateType] = None,
         enddateymd: Optional[DateType] = None,
-        data_fields: Optional[Iterable[GetSleepSummaryField]] = None,
         offset: Optional[int] = None,
         lastupdate: Optional[DateType] = None,
     ) -> SleepGetSummaryResponse:
