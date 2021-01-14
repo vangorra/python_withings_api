@@ -16,6 +16,10 @@ homepage = "https://github.com/vangorra/python_withings_api"
 
 keywords = ["withings", "api"]
 
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry.dependencies]
 python = "^3.6 || ^3.7"
 arrow = ">=0.15.2"
