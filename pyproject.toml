@@ -18,7 +18,7 @@ keywords = ["withings", "api"]
 
 [tool.poetry.dependencies]
 python = "^3.6 || ^3.7"
-arrow = ">=0.15.2"
+arrow = "0.17.0"
 requests-oauth = ">=0.4.1"
 requests-oauthlib = ">=1.2"
 typing-extensions = ">=3.7.4.2"
