@@ -148,7 +148,7 @@ def test_authorize() -> None:
     assert creds.client_id == client_id
     assert creds.consumer_secret == consumer_secret
     assert creds.expires_in == 11
-    assert creds.token_expiry == arrow.utcnow().timestamp + 11
+    assert creds.token_expiry == arrow.utcnow().int_timestamp + 11
 
 
 @responses.activate

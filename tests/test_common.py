@@ -71,7 +71,7 @@ def test_maybe_update_credentials() -> None:
 
     creds1: Final = Credentials(
         access_token="my_access_token",
-        token_expiry=arrow.get("2020-01-01T00:00:00+07:00").timestamp,
+        token_expiry=arrow.get("2020-01-01T00:00:00+07:00").int_timestamp,
         token_type="Bearer",
         refresh_token="my_refresh_token",
         userid=1,
@@ -79,7 +79,7 @@ def test_maybe_update_credentials() -> None:
         consumer_secret="CONSUMER_SECRET",
     )
 
-    expires_in = creds1.token_expiry - arrow.utcnow().timestamp
+    expires_in = creds1.token_expiry - arrow.utcnow().int_timestamp
     creds2: Final = Credentials2(
         access_token="my_access_token",
         expires_in=expires_in,

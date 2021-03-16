@@ -92,10 +92,10 @@ class AbstractWithingsApi:
     def measure_get_activity(
         self,
         data_fields: Iterable[GetActivityField] = GetActivityField,
-        startdateymd: Optional[DateType] = None,
-        enddateymd: Optional[DateType] = None,
+        startdateymd: Optional[DateType] = arrow.utcnow(),
+        enddateymd: Optional[DateType] = arrow.utcnow(),
         offset: Optional[int] = None,
-        lastupdate: Optional[DateType] = None,
+        lastupdate: Optional[DateType] = arrow.utcnow(),
     ) -> MeasureGetActivityResponse:
         """Get user created activities."""
         params: Final[ParamsType] = {}
@@ -120,7 +120,7 @@ class AbstractWithingsApi:
             lambda fields: ",".join([field.value for field in fields]),
         )
         update_params(
-            params, "lastupdate", lastupdate, lambda val: arrow.get(val).timestamp
+            params, "lastupdate", lastupdate, lambda val: arrow.get(val).int_timestamp
         )
         update_params(params, "action", "getactivity")
 
@@ -132,10 +132,10 @@ class AbstractWithingsApi:
         self,
         meastype: Optional[MeasureType] = None,
         category: Optional[MeasureGetMeasGroupCategory] = None,
-        startdate: Optional[DateType] = None,
-        enddate: Optional[DateType] = None,
+        startdate: Optional[DateType] = arrow.utcnow(),
+        enddate: Optional[DateType] = arrow.utcnow(),
         offset: Optional[int] = None,
-        lastupdate: Optional[DateType] = None,
+        lastupdate: Optional[DateType] = arrow.utcnow(),
     ) -> MeasureGetMeasResponse:
         """Get measures."""
         params: Final[ParamsType] = {}
@@ -143,12 +143,14 @@ class AbstractWithingsApi:
         update_params(params, "meastype", meastype, lambda val: val.value)
         update_params(params, "category", category, lambda val: val.value)
         update_params(
-            params, "startdate", startdate, lambda val: arrow.get(val).timestamp
+            params, "startdate", startdate, lambda val: arrow.get(val).int_timestamp
         )
-        update_params(params, "enddate", enddate, lambda val: arrow.get(val).timestamp)
+        update_params(
+            params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp
+        )
         update_params(params, "offset", offset)
         update_params(
-            params, "lastupdate", lastupdate, lambda val: arrow.get(val).timestamp
+            params, "lastupdate", lastupdate, lambda val: arrow.get(val).int_timestamp
         )
         update_params(params, "action", "getmeas")
 
@@ -159,16 +161,18 @@ class AbstractWithingsApi:
     def sleep_get(
         self,
         data_fields: Iterable[GetSleepField],
-        startdate: Optional[DateType] = None,
-        enddate: Optional[DateType] = None,
+        startdate: Optional[DateType] = arrow.utcnow(),
+        enddate: Optional[DateType] = arrow.utcnow(),
     ) -> SleepGetResponse:
         """Get sleep data."""
         params: Final[ParamsType] = {}
 
         update_params(
-            params, "startdate", startdate, lambda val: arrow.get(val).timestamp
+            params, "startdate", startdate, lambda val: arrow.get(val).int_timestamp
         )
-        update_params(params, "enddate", enddate, lambda val: arrow.get(val).timestamp)
+        update_params(
+            params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp
+        )
         update_params(
             params,
             "data_fields",
@@ -182,10 +186,10 @@ class AbstractWithingsApi:
     def sleep_get_summary(
         self,
         data_fields: Iterable[GetSleepSummaryField],
-        startdateymd: Optional[DateType] = None,
-        enddateymd: Optional[DateType] = None,
+        startdateymd: Optional[DateType] = arrow.utcnow(),
+        enddateymd: Optional[DateType] = arrow.utcnow(),
         offset: Optional[int] = None,
-        lastupdate: Optional[DateType] = None,
+        lastupdate: Optional[DateType] = arrow.utcnow(),
     ) -> SleepGetSummaryResponse:
         """Get sleep summary."""
         params: Final[ParamsType] = {}
@@ -210,7 +214,7 @@ class AbstractWithingsApi:
         )
         update_params(params, "offset", offset)
         update_params(
-            params, "lastupdate", lastupdate, lambda val: arrow.get(val).timestamp
+            params, "lastupdate", lastupdate, lambda val: arrow.get(val).int_timestamp
         )
         update_params(params, "action", "getsummary")
 
@@ -229,18 +233,18 @@ class AbstractWithingsApi:
 
     def heart_list(
         self,
-        startdate: Optional[DateType] = None,
-        enddate: Optional[DateType] = None,
+        startdate: Optional[DateType] = arrow.utcnow(),
+        enddate: Optional[DateType] = arrow.utcnow(),
         offset: Optional[int] = None,
     ) -> HeartListResponse:
         """Get heart list."""
         params: Final[ParamsType] = {}
 
         update_params(
-            params, "startdate", startdate, lambda val: arrow.get(val).timestamp,
+            params, "startdate", startdate, lambda val: arrow.get(val).int_timestamp,
         )
         update_params(
-            params, "enddate", enddate, lambda val: arrow.get(val).timestamp,
+            params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp,
         )
         update_params(params, "offset", offset)
         update_params(params, "action", "list")
