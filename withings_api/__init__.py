@@ -92,10 +92,10 @@ class AbstractWithingsApi:
     def measure_get_activity(
         self,
         data_fields: Iterable[GetActivityField] = GetActivityField,
-        startdateymd: Optional[DateType] = None,
-        enddateymd: Optional[DateType] = None,
+        startdateymd: Optional[DateType] = arrow.utcnow(),
+        enddateymd: Optional[DateType] = arrow.utcnow(),
         offset: Optional[int] = None,
-        lastupdate: Optional[DateType] = None,
+        lastupdate: Optional[DateType] = arrow.utcnow(),
     ) -> MeasureGetActivityResponse:
         """Get user created activities."""
         params: Final[ParamsType] = {}
@@ -132,10 +132,10 @@ class AbstractWithingsApi:
         self,
         meastype: Optional[MeasureType] = None,
         category: Optional[MeasureGetMeasGroupCategory] = None,
-        startdate: Optional[DateType] = None,
-        enddate: Optional[DateType] = None,
+        startdate: Optional[DateType] = arrow.utcnow(),
+        enddate: Optional[DateType] = arrow.utcnow(),
         offset: Optional[int] = None,
-        lastupdate: Optional[DateType] = None,
+        lastupdate: Optional[DateType] = arrow.utcnow(),
     ) -> MeasureGetMeasResponse:
         """Get measures."""
         params: Final[ParamsType] = {}
@@ -159,8 +159,8 @@ class AbstractWithingsApi:
     def sleep_get(
         self,
         data_fields: Iterable[GetSleepField],
-        startdate: Optional[DateType] = None,
-        enddate: Optional[DateType] = None,
+        startdate: Optional[DateType] = arrow.utcnow(),
+        enddate: Optional[DateType] = arrow.utcnow(),
     ) -> SleepGetResponse:
         """Get sleep data."""
         params: Final[ParamsType] = {}
@@ -182,10 +182,10 @@ class AbstractWithingsApi:
     def sleep_get_summary(
         self,
         data_fields: Iterable[GetSleepSummaryField],
-        startdateymd: Optional[DateType] = None,
-        enddateymd: Optional[DateType] = None,
+        startdateymd: Optional[DateType] = arrow.utcnow(),
+        enddateymd: Optional[DateType] = arrow.utcnow(),
         offset: Optional[int] = None,
-        lastupdate: Optional[DateType] = None,
+        lastupdate: Optional[DateType] = arrow.utcnow(),
     ) -> SleepGetSummaryResponse:
         """Get sleep summary."""
         params: Final[ParamsType] = {}
@@ -229,8 +229,8 @@ class AbstractWithingsApi:
 
     def heart_list(
         self,
-        startdate: Optional[DateType] = None,
-        enddate: Optional[DateType] = None,
+        startdate: Optional[DateType] = arrow.utcnow(),
+        enddate: Optional[DateType] = arrow.utcnow(),
         offset: Optional[int] = None,
     ) -> HeartListResponse:
         """Get heart list."""
