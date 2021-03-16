@@ -145,7 +145,9 @@ class AbstractWithingsApi:
         update_params(
             params, "startdate", startdate, lambda val: arrow.get(val).int_timestamp
         )
-        update_params(params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp)
+        update_params(
+            params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp
+        )
         update_params(params, "offset", offset)
         update_params(
             params, "lastupdate", lastupdate, lambda val: arrow.get(val).int_timestamp
@@ -168,7 +170,9 @@ class AbstractWithingsApi:
         update_params(
             params, "startdate", startdate, lambda val: arrow.get(val).int_timestamp
         )
-        update_params(params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp)
+        update_params(
+            params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp
+        )
         update_params(
             params,
             "data_fields",

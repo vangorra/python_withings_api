@@ -79,7 +79,7 @@ class TimeZone(tzlocal):
         raise TypeError("string or tzinfo required")
 
 
-class ArrowType(Arrow):  # type: ignore
+class ArrowType(Arrow):
     """Subclass of Arrow for parsing dates."""
 
     @classmethod
