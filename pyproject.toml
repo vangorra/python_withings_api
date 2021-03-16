@@ -22,7 +22,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
 python = "^3.6 || ^3.7"
-arrow = "0.17.0"
+arrow = ">=1.0.3"
 requests-oauth = ">=0.4.1"
 requests-oauthlib = ">=1.2"
 typing-extensions = ">=3.7.4.2"
