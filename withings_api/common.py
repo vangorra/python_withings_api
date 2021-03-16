@@ -605,7 +605,7 @@ class Credentials2(ConfiguredBaseModel):
     @property
     def token_expiry(self) -> int:
         """Get the token expiry."""
-        return cast(int, self.created.shift(seconds=self.expires_in).timestamp)
+        return cast(int, self.created.shift(seconds=self.expires_in).int_timestamp)
 
 
 CredentialsType = Union[Credentials, Credentials2]
@@ -624,7 +624,7 @@ def maybe_upgrade_credentials(value: CredentialsType) -> Credentials2:
         userid=creds.userid,
         client_id=creds.client_id,
         consumer_secret=creds.consumer_secret,
-        expires_in=creds.token_expiry - arrow.utcnow().timestamp,
+        expires_in=creds.token_expiry - arrow.utcnow().int_timestamp,
     )
 
 

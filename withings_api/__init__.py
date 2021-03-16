@@ -120,7 +120,7 @@ class AbstractWithingsApi:
             lambda fields: ",".join([field.value for field in fields]),
         )
         update_params(
-            params, "lastupdate", lastupdate, lambda val: arrow.get(val).timestamp
+            params, "lastupdate", lastupdate, lambda val: arrow.get(val).int_timestamp
         )
         update_params(params, "action", "getactivity")
 
@@ -143,12 +143,12 @@ class AbstractWithingsApi:
         update_params(params, "meastype", meastype, lambda val: val.value)
         update_params(params, "category", category, lambda val: val.value)
         update_params(
-            params, "startdate", startdate, lambda val: arrow.get(val).timestamp
+            params, "startdate", startdate, lambda val: arrow.get(val).int_timestamp
         )
-        update_params(params, "enddate", enddate, lambda val: arrow.get(val).timestamp)
+        update_params(params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp)
         update_params(params, "offset", offset)
         update_params(
-            params, "lastupdate", lastupdate, lambda val: arrow.get(val).timestamp
+            params, "lastupdate", lastupdate, lambda val: arrow.get(val).int_timestamp
         )
         update_params(params, "action", "getmeas")
 
@@ -166,9 +166,9 @@ class AbstractWithingsApi:
         params: Final[ParamsType] = {}
 
         update_params(
-            params, "startdate", startdate, lambda val: arrow.get(val).timestamp
+            params, "startdate", startdate, lambda val: arrow.get(val).int_timestamp
         )
-        update_params(params, "enddate", enddate, lambda val: arrow.get(val).timestamp)
+        update_params(params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp)
         update_params(
             params,
             "data_fields",
@@ -210,7 +210,7 @@ class AbstractWithingsApi:
         )
         update_params(params, "offset", offset)
         update_params(
-            params, "lastupdate", lastupdate, lambda val: arrow.get(val).timestamp
+            params, "lastupdate", lastupdate, lambda val: arrow.get(val).int_timestamp
         )
         update_params(params, "action", "getsummary")
 
@@ -237,10 +237,10 @@ class AbstractWithingsApi:
         params: Final[ParamsType] = {}
 
         update_params(
-            params, "startdate", startdate, lambda val: arrow.get(val).timestamp,
+            params, "startdate", startdate, lambda val: arrow.get(val).int_timestamp,
         )
         update_params(
-            params, "enddate", enddate, lambda val: arrow.get(val).timestamp,
+            params, "enddate", enddate, lambda val: arrow.get(val).int_timestamp,
         )
         update_params(params, "offset", offset)
         update_params(params, "action", "list")
