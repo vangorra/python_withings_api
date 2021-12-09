@@ -163,6 +163,11 @@ class MeasureType(IntEnum):
     HYDRATION = 77
     BONE_MASS = 88
     PULSE_WAVE_VELOCITY = 91
+    VO2 = 123
+    QRS_INTERVAL = 135
+    PR_INTERVAL = 136
+    QT_INTERVAL = 138
+    ATRIAL_FIBRILLATION = 139
 
 
 class NotifyAppli(IntEnum):
