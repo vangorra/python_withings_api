@@ -456,7 +456,7 @@ class WithingsApi(AbstractWithingsApi):
         token_dict: Final = self._client.refresh_token(
             token_url=self._client.auto_refresh_url
         )
-        self._update_token(token=token_dict)
+        self._update_token(token=token_dict["body"])
 
     def _update_token(self, token: Dict[str, Union[str, int]]) -> None:
         """Set the oauth token."""
