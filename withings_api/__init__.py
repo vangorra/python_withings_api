@@ -336,7 +336,7 @@ class WithingsAuth:
 
     URL: Final = "https://account.withings.com"
     PATH_AUTHORIZE: Final = "oauth2_user/authorize2"
-    PATH_TOKEN: Final = "oauth2/token"  # nosec
+    PATH_V2_OAUTH2: Final = "v2/oauth2"
 
     def __init__(
         self,
@@ -361,7 +361,7 @@ class WithingsAuth:
     def get_authorize_url(self) -> str:
         """Generate the authorize url."""
         url: Final = str(
-            self._session.authorization_url("%s/%s" % (self.URL, self.PATH_AUTHORIZE))[
+            self._session.authorization_url("%s/%s" % (WithingsAuth.URL, self.PATH_AUTHORIZE))[
                 0
             ]
         )
@@ -374,7 +374,7 @@ class WithingsAuth:
     def get_credentials(self, code: str) -> Credentials2:
         """Get the oauth credentials."""
         response: Final = self._session.fetch_token(
-            "%s/%s" % (self.URL, self.PATH_TOKEN),
+            "%s/%s" % (AbstractWithingsApi.URL, self.PATH_V2_OAUTH2),
             code=code,
             client_secret=self._consumer_secret,
             include_client_id=True,
@@ -382,7 +382,7 @@ class WithingsAuth:
 
         return Credentials2(
             **{
-                **response,
+                **response["body"],
                 **dict(
                     client_id=self._client_id, consumer_secret=self._consumer_secret
                 ),
@@ -434,7 +434,7 @@ class WithingsApi(AbstractWithingsApi):
                 token=token,
                 default_token_placement="query",
             ),
-            auto_refresh_url="%s/%s" % (WithingsAuth.URL, WithingsAuth.PATH_TOKEN),
+            auto_refresh_url="%s/%s" % (self.URL, WithingsAuth.PATH_V2_OAUTH2),
             auto_refresh_kwargs={
                 "action": "requesttoken",
                 "client_id": self._credentials.client_id,
@@ -455,7 +455,7 @@ class WithingsApi(AbstractWithingsApi):
         token_dict: Final = self._client.refresh_token(
             token_url=self._client.auto_refresh_url
         )
-        self._update_token(token=token_dict)
+        self._update_token(token=token_dict["body"])
 
     def _update_token(self, token: Dict[str, Union[str, int]]) -> None:
         """Set the oauth token."""
