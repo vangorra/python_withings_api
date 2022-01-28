@@ -74,9 +74,8 @@ def adjust_withings_token(response: Response) -> Response:
     """
     try:
         token = json.loads(response.text)
-    except Exception as ex:  # pylint: disable=broad-except
+    except Exception:  # pylint: disable=broad-except
         # If there was exception, just return unmodified response
-        print(ex)
         return response
     status = token.pop("status", 0)
     if status:
@@ -86,10 +85,8 @@ def adjust_withings_token(response: Response) -> Response:
     if body:
         # Put body content at root level
         token.update(body)
-    print(token)
     # pylint: disable=protected-access
     response._content = to_unicode(json.dumps(token)).encode("UTF-8")
-    print(response._content)
 
     return response
 
@@ -424,6 +421,7 @@ class WithingsAuth:
             code=code,
             client_secret=self._consumer_secret,
             include_client_id=True,
+            action="requesttoken",
         )
 
         return Credentials2(
