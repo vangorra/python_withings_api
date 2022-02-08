@@ -6,11 +6,14 @@ Withings Health API
 """
 from abc import abstractmethod
 import datetime
+import json
 from types import LambdaType
 from typing import Any, Callable, Dict, Iterable, Optional, Union, cast
 
 import arrow
+from oauthlib.common import to_unicode
 from oauthlib.oauth2 import WebApplicationClient
+from requests import Response
 from requests_oauthlib import OAuth2Session
 from typing_extensions import Final
 
@@ -52,6 +55,40 @@ def update_params(
         params[name] = new_value(current_value)
     else:
         params[name] = new_value or current_value
+
+
+def adjust_withings_token(response: Response) -> Response:
+    """Restructures token from withings response::
+
+        {
+            "status": [{integer} Withings API response status],
+            "body": {
+                "access_token": [{string} Your new access_token],
+                "expires_in": [{integer} Access token expiry delay in seconds],
+                "token_type": [{string] HTTP Authorization Header format: Bearer],
+                "scope": [{string} Scopes the user accepted],
+                "refresh_token": [{string} Your new refresh_token],
+                "userid": [{string} The Withings ID of the user]
+            }
+        }
+    """
+    try:
+        token = json.loads(response.text)
+    except Exception:  # pylint: disable=broad-except
+        # If there was exception, just return unmodified response
+        return response
+    status = token.pop("status", 0)
+    if status:
+        # Set the error to the status
+        token["error"] = 0
+    body = token.pop("body", None)
+    if body:
+        # Put body content at root level
+        token.update(body)
+    # pylint: disable=protected-access
+    response._content = to_unicode(json.dumps(token)).encode("UTF-8")
+
+    return response
 
 
 class AbstractWithingsApi:
@@ -357,13 +394,19 @@ class WithingsAuth:
             redirect_uri=self._callback_uri,
             scope=",".join((scope.value for scope in self._scope)),
         )
+        self._session.register_compliance_hook(
+            "access_token_response", adjust_withings_token
+        )
+        self._session.register_compliance_hook(
+            "refresh_token_response", adjust_withings_token
+        )
 
     def get_authorize_url(self) -> str:
         """Generate the authorize url."""
         url: Final = str(
-            self._session.authorization_url("%s/%s" % (WithingsAuth.URL, self.PATH_AUTHORIZE))[
-                0
-            ]
+            self._session.authorization_url(
+                "%s/%s" % (WithingsAuth.URL, self.PATH_AUTHORIZE)
+            )[0]
         )
 
         if self._mode:
@@ -378,11 +421,12 @@ class WithingsAuth:
             code=code,
             client_secret=self._consumer_secret,
             include_client_id=True,
+            action="requesttoken",
         )
 
         return Credentials2(
             **{
-                **response["body"],
+                **response,
                 **dict(
                     client_id=self._client_id, consumer_secret=self._consumer_secret
                 ),
@@ -442,6 +486,12 @@ class WithingsApi(AbstractWithingsApi):
             },
             token_updater=self._update_token,
         )
+        self._client.register_compliance_hook(
+            "access_token_response", adjust_withings_token
+        )
+        self._client.register_compliance_hook(
+            "refresh_token_response", adjust_withings_token
+        )
 
     def _blank_refresh_cb(self, creds: Credentials2) -> None:
         """The default callback which does nothing."""
@@ -455,7 +505,7 @@ class WithingsApi(AbstractWithingsApi):
         token_dict: Final = self._client.refresh_token(
             token_url=self._client.auto_refresh_url
         )
-        self._update_token(token=token_dict["body"])
+        self._update_token(token=token_dict)
 
     def _update_token(self, token: Dict[str, Union[str, int]]) -> None:
         """Set the oauth token."""

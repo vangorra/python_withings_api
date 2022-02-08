@@ -52,13 +52,16 @@ from .common import TIMEZONE0, TIMEZONE1, TIMEZONE_STR0, TIMEZONE_STR1
 _UNKNOWN_INT = 1234567
 _USERID: Final = 12345
 _FETCH_TOKEN_RESPONSE_BODY: Final = {
-    "access_token": "my_access_token",
-    "csrf_token": "CSRF_TOKEN",
-    "expires_in": 11,
-    "token_type": "Bearer",
-    "refresh_token": "my_refresh_token",
-    "scope": "user.metrics,user.activity",
-    "userid": _USERID,
+    "status": 0,
+    "body": {
+        "access_token": "my_access_token",
+        "csrf_token": "CSRF_TOKEN",
+        "expires_in": 11,
+        "token_type": "Bearer",
+        "refresh_token": "my_refresh_token",
+        "scope": "user.metrics,user.activity",
+        "userid": _USERID,
+    },
 }
 
 
@@ -109,7 +112,7 @@ def test_authorize() -> None:
 
     responses.add(
         method=responses.POST,
-        url="https://account.withings.com/oauth2/token",
+        url="https://wbsapi.withings.net/v2/oauth2",
         json=_FETCH_TOKEN_RESPONSE_BODY,
         status=200,
     )
@@ -169,20 +172,22 @@ def test_refresh_token() -> None:
 
     responses.add(
         method=responses.POST,
-        url=re.compile("https://account.withings.com/oauth2.*"),
+        url=re.compile("https://wbsapi.withings.net/v2/oauth2.*"),
         status=200,
         json=_FETCH_TOKEN_RESPONSE_BODY,
     )
     responses.add(
         method=responses.POST,
-        url=re.compile("https://account.withings.com/oauth2.*"),
+        url=re.compile("https://wbsapi.withings.net/v2/oauth2.*"),
         status=200,
         json={
-            "access_token": "my_access_token_refreshed",
-            "expires_in": 11,
-            "token_type": "Bearer",
-            "refresh_token": "my_refresh_token_refreshed",
-            "userid": _USERID,
+            "body": {
+                "access_token": "my_access_token_refreshed",
+                "expires_in": 11,
+                "token_type": "Bearer",
+                "refresh_token": "my_refresh_token_refreshed",
+                "userid": _USERID,
+            },
         },
     )
 
