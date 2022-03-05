@@ -499,6 +499,7 @@ class HeartModel(IntEnum):
     UNKNOWN = -999999
     BPM_CORE = 44
     MOVE_ECG = 91
+    SCANWATCH = 93
 
 
 class AfibClassification(IntEnum):
