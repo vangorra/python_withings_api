@@ -558,9 +558,9 @@ class HeartBloodPressure(ConfiguredBaseModel):
 class HeartListSerie(ConfiguredBaseModel):
     """HeartListSerie"""
 
-    ecg: HeartListECG
+    ecg: Optional[HeartListECG] = None
 
-    heart_rate: int
+    heart_rate: Optional[int] = None
     timestamp: ArrowType
     model: HeartModel
 
