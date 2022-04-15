@@ -216,7 +216,6 @@ class GetSleepSummaryField(Enum):
     """Fields for get sleep summary api call."""
 
     APNEA_HYPOPNEA_INDEX = "apnea_hypopnea_index"
-    ASLEEP_DURATION = "asleepduration"
     BREATHING_DISTURBANCES_INTENSITY = "breathing_disturbances_intensity"
     DEEP_SLEEP_DURATION = "deepsleepduration"
     DURATION_TO_SLEEP = "durationtosleep"
@@ -240,7 +239,7 @@ class GetSleepSummaryField(Enum):
     TOTAL_SLEEP = "total_sleep_time"
     WAKEUP_COUNT = "wakeupcount"
     WAKEUP_DURATION = "wakeupduration"
-    WAKEUP_LATENCY = "wakup_latency"
+    WAKEUP_LATENCY = "wakeup_latency"
     WASO = "waso"
 
 
@@ -341,7 +340,6 @@ class GetSleepSummaryData(
     """GetSleepSummaryData."""
 
     apnea_hypopnea_index: Optional[int]
-    asleepduration: Optional[int]
     breathing_disturbances_intensity: Optional[int]
     deepsleepduration: Optional[int]
     durationtosleep: Optional[int]
