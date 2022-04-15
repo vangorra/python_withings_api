@@ -230,6 +230,7 @@ class GetSleepSummaryField(Enum):
     SLEEP_SCORE = "sleep_score"
     SNORING = "snoring"
     SNORING_EPISODE_COUNT = "snoringepisodecount"
+    TOTAL_IN_BED = "total_timeinbed"
     WAKEUP_COUNT = "wakeupcount"
     WAKEUP_DURATION = "wakeupduration"
 
@@ -345,6 +346,7 @@ class GetSleepSummaryData(
     sleep_score: Optional[int]
     snoring: Optional[int]
     snoringepisodecount: Optional[int]
+    total_timeinbed: Optional[int]    
     wakeupcount: Optional[int]
     wakeupduration: Optional[int]
 
