@@ -215,6 +215,8 @@ class GetSleepField(Enum):
 class GetSleepSummaryField(Enum):
     """Fields for get sleep summary api call."""
 
+    APNEA_HYPOPNEA_INDEX = "apnea_hypopnea_index"
+    ASLEEP_DURATION = "asleepduration"
     BREATHING_DISTURBANCES_INTENSITY = "breathing_disturbances_intensity"
     DEEP_SLEEP_DURATION = "deepsleepduration"
     DURATION_TO_SLEEP = "durationtosleep"
@@ -223,16 +225,23 @@ class GetSleepSummaryField(Enum):
     HR_MAX = "hr_max"
     HR_MIN = "hr_min"
     LIGHT_SLEEP_DURATION = "lightsleepduration"
+    OUT_OF_BED_COUNT = "out_of_bed_count"
     REM_SLEEP_DURATION = "remsleepduration"
+    REM_COUNT = "nb_rem_episodes"
     RR_AVERAGE = "rr_average"
     RR_MAX = "rr_max"
     RR_MIN = "rr_min"
+    SLEEP_EFFICENCY = "sleep_efficiency"
+    SLEEP_LATENCY = "sleep_latency"
     SLEEP_SCORE = "sleep_score"
     SNORING = "snoring"
     SNORING_EPISODE_COUNT = "snoringepisodecount"
     TOTAL_IN_BED = "total_timeinbed"
+    TOTAL_SLEEP = "total_sleep_time"
     WAKEUP_COUNT = "wakeupcount"
     WAKEUP_DURATION = "wakeupduration"
+    WAKEUP_LATENCY = "wakup_latency"
+    WASO = "waso"
 
 
 class AuthScope(Enum):
@@ -331,6 +340,8 @@ class GetSleepSummaryData(
 ):  # pylint: disable=too-many-instance-attributes
     """GetSleepSummaryData."""
 
+    apnea_hypopnea_index: Optional[int]
+    asleepduration: Optional[int]
     breathing_disturbances_intensity: Optional[int]
     deepsleepduration: Optional[int]
     durationtosleep: Optional[int]
@@ -339,16 +350,23 @@ class GetSleepSummaryData(
     hr_max: Optional[int]
     hr_min: Optional[int]
     lightsleepduration: Optional[int]
+    out_of_bed_count: Optional[int]
     remsleepduration: Optional[int]
+    nb_rem_episodes: Optional[int]
     rr_average: Optional[int]
     rr_max: Optional[int]
     rr_min: Optional[int]
+    sleep_efficiency: Optional[int]
+    sleep_latency: Optional[int]
     sleep_score: Optional[int]
     snoring: Optional[int]
     snoringepisodecount: Optional[int]
+    total_sleep_time: Optional[int]
     total_timeinbed: Optional[int]    
     wakeupcount: Optional[int]
     wakeupduration: Optional[int]
+    wakup_latency: Optional[int]
+    waso: Optional[int]
 
 
 class GetSleepSummarySerie(ConfiguredBaseModel):
