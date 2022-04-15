@@ -363,7 +363,7 @@ class GetSleepSummaryData(
     total_timeinbed: Optional[int]    
     wakeupcount: Optional[int]
     wakeupduration: Optional[int]
-    wakup_latency: Optional[int]
+    wakeup_latency: Optional[int]
     waso: Optional[int]
 
 
