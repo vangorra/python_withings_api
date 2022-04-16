@@ -284,6 +284,8 @@ class SleepGetSerie(ConfiguredBaseModel):
     hr: Tuple[SleepGetTimestampValue, ...] = ()  # pylint: disable=invalid-name
     rr: Tuple[SleepGetTimestampValue, ...] = ()  # pylint: disable=invalid-name
     snoring: Tuple[SleepGetTimestampValue, ...] = ()
+    sdnn_1: Tuple[SleepGetTimestampValue, ...] = ()
+    rmssd: Tuple[SleepGetTimestampValue, ...] = ()
 
     @validator("hr", pre=True)
     @classmethod
@@ -298,6 +300,16 @@ class SleepGetSerie(ConfiguredBaseModel):
     @validator("snoring", pre=True)
     @classmethod
     def _snoring_to_tuple(cls, value: Dict[str, int]) -> Tuple:
+        return SleepGetSerie._timestamp_value_to_object(value)
+
+    @validator("sdnn_1", pre=True)
+    @classmethod
+    def _sdnn_1_to_tuple(cls, value: Dict[str, int]) -> Tuple:
+        return SleepGetSerie._timestamp_value_to_object(value)
+
+    @validator("rmssd", pre=True)
+    @classmethod
+    def _rmssd_to_tuple(cls, value: Dict[str, int]) -> Tuple:
         return SleepGetSerie._timestamp_value_to_object(value)
 
     @classmethod
