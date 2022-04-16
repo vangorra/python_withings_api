@@ -210,6 +210,8 @@ class GetSleepField(Enum):
     HR = "hr"
     RR = "rr"
     SNORING = "snoring"
+    SDNN_1 = "sdnn_1"
+    RMSSD = "rmssd"
 
 
 class GetSleepSummaryField(Enum):
