@@ -353,7 +353,7 @@ class GetSleepSummaryData(
 ):  # pylint: disable=too-many-instance-attributes
     """GetSleepSummaryData."""
 
-    apnea_hypopnea_index: Optional[int]
+    apnea_hypopnea_index: Optional[float]
     breathing_disturbances_intensity: Optional[int]
     deepsleepduration: Optional[int]
     durationtosleep: Optional[int]
